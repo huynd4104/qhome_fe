@@ -7,12 +7,16 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
       - name: Install Vercel CLI
         run: npm install -g vercel
+
+      - name: Link Vercel Project
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel
         run: vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
