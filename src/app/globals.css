@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.input{ @apply w-full border-0 bg-[#E8E5DC] rounded-md px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30; }
+.btn-primary{ @apply px-4 py-2.5 rounded-md bg-[#6B9B6E] text-white text-sm font-medium hover:bg-[#5d8660] transition-colors; }
+.btn-secondary{ @apply px-4 py-2.5 rounded-md border-0 bg-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-300 transition-colors; }
+
+
+::-webkit-calendar-picker-indicator {
+  opacity: 0;           
+  width: 100%;          
+  height: 100%;
+  position: absolute;   
+  cursor: pointer;
+}
+
+::-moz-calendar-picker-indicator {
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  cursor: pointer;
+}
+
+/* Animations for Forgot Password */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes check {
+  0% {
+    stroke-dasharray: 0 24;
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dasharray: 24 24;
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.5s ease-out;
+}
+
+.animate-check {
+  animation: check 0.6s ease-out forwards;
+  stroke-dasharray: 0 24;
+  stroke-dashoffset: 0;
+}
+
