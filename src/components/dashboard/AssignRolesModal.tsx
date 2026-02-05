@@ -44,7 +44,7 @@ export default function AssignRolesModal({
       );
       setSelectedRoles(globalRoles);
       setInitialRoles(new Set()); // No initial roles for add mode
-      
+
       if (globalRoles.size > 0) {
         console.log('🔄 Auto-selected global roles:', Array.from(globalRoles));
       }
@@ -54,13 +54,13 @@ export default function AssignRolesModal({
   const handleToggleRole = (roleName: string) => {
     const newSelected = new Set(selectedRoles);
     const lowerRoleName = roleName.toLowerCase();
-    
+
     if (newSelected.has(lowerRoleName)) {
       newSelected.delete(lowerRoleName);
     } else {
       newSelected.add(lowerRoleName);
     }
-    
+
     setSelectedRoles(newSelected);
   };
 
@@ -72,40 +72,40 @@ export default function AssignRolesModal({
 
     try {
       setIsSubmitting(true);
-      
+
       if (mode === 'edit') {
         // EDIT MODE: Calculate delta changes
         // 1. Roles to ADD: selected now but NOT in initial state
         const rolesToAdd = Array.from(selectedRoles).filter(role => !initialRoles.has(role));
-        
+
         // 2. Roles to REMOVE: were in initial state but NOT selected now
         const rolesToRemove = Array.from(initialRoles).filter(role => !selectedRoles.has(role));
-        
+
         if (rolesToAdd.length === 0 && rolesToRemove.length === 0) {
           alert('Không có thay đổi nào');
           setIsSubmitting(false);
           return;
         }
-        
+
         console.log('📝 Edit mode - Changes detected:');
         console.log('  ➕ Roles to ADD:', rolesToAdd);
         console.log('  ➖ Roles to REMOVE:', rolesToRemove);
-        
+
         // Execute ADD and REMOVE operations
         const promises: Promise<void>[] = [];
-        
+
         // 1. Add new roles
         if (rolesToAdd.length > 0) {
           console.log('➕ Adding roles:', rolesToAdd);
           promises.push(onAssign(rolesToAdd));
         }
-        
+
         // 2. Remove old roles
         if (rolesToRemove.length > 0 && onRemove) {
           console.log('➖ Removing roles:', rolesToRemove);
           promises.push(onRemove(rolesToRemove));
         }
-        
+
         // Wait for all operations to complete
         if (promises.length > 0) {
           await Promise.all(promises);
@@ -226,7 +226,7 @@ export default function AssignRolesModal({
                   {roles.map(role => {
                     const lowerRoleName = role.roleName.toLowerCase();
                     const isSelected = selectedRoles.has(lowerRoleName);
-                    
+
                     return (
                       <label
                         key={role.roleName}
@@ -291,4 +291,3 @@ export default function AssignRolesModal({
     </div>
   );
 }
-

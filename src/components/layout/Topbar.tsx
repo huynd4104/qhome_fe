@@ -1,13 +1,13 @@
 "use client";
 import React from "react";
-import {useAuth} from "@/src/contexts/AuthContext";
+import { useAuth } from "@/src/contexts/AuthContext";
 import Link from "next/link";
 import { getNotificationsForRoleIncludingAll, getNotificationDetail } from "@/src/services/customer-interaction/notiService";
 import { Notification } from "@/src/types/notification";
 import { getNewsList, getNewsDetail } from "@/src/services/customer-interaction/newService";
 import { News } from "@/src/types/news";
 
-export default function Topbar(){
+export default function Topbar() {
   const [q, setQ] = React.useState("");
   const [showMenu, setShowMenu] = React.useState(false);
   const [showNotiMenu, setShowNotiMenu] = React.useState(false);
@@ -23,7 +23,7 @@ export default function Topbar(){
   const [selectedNotification, setSelectedNotification] = React.useState<Notification | null>(null);
   const [selectedNews, setSelectedNews] = React.useState<News | null>(null);
   const [loadingDetail, setLoadingDetail] = React.useState(false);
-  const {user, logout} = useAuth();
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
     if (confirm("Bạn có chắc muốn đăng xuất?")) {
@@ -34,19 +34,19 @@ export default function Topbar(){
   // Handle click on notification item
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.id) return;
-    
+
     setLoadingDetail(true);
     setShowPopup(true);
     setPopupType("notification");
     setShowNotiMenu(false);
-    
+
     // Mark notification as viewed
     const newViewedIds = new Set(viewedNotificationIds);
     newViewedIds.add(notification.id);
     setViewedNotificationIds(newViewedIds);
     // Save to localStorage
     localStorage.setItem('viewedNotificationIds', JSON.stringify(Array.from(newViewedIds)));
-    
+
     try {
       const detail = await getNotificationDetail(notification.id);
       setSelectedNotification(detail);
@@ -62,19 +62,19 @@ export default function Topbar(){
   // Handle click on news item
   const handleNewsClick = async (news: News) => {
     if (!news.id) return;
-    
+
     setLoadingDetail(true);
     setShowPopup(true);
     setPopupType("news");
     setShowNotiMenu(false);
-    
+
     // Mark news as viewed
     const newViewedIds = new Set(viewedNewsIds);
     newViewedIds.add(news.id);
     setViewedNewsIds(newViewedIds);
     // Save to localStorage
     localStorage.setItem('viewedNewsIds', JSON.stringify(Array.from(newViewedIds)));
-    
+
     try {
       const detail = await getNewsDetail(news.id);
       setSelectedNews(detail);
@@ -90,7 +90,7 @@ export default function Topbar(){
   // Fetch notifications based on user role (including "ALL")
   const fetchNotifications = React.useCallback(() => {
     if (!user?.roles?.[0] || !user?.userId) return;
-    
+
     setLoadingNoti(true);
     getNotificationsForRoleIncludingAll(user.roles[0], user.userId)
       .then(notis => {
@@ -115,7 +115,7 @@ export default function Topbar(){
         console.error('Failed to parse viewedNewsIds from localStorage', e);
       }
     }
-    
+
     const storedNotis = localStorage.getItem('viewedNotificationIds');
     if (storedNotis) {
       try {
@@ -130,7 +130,7 @@ export default function Topbar(){
   // Fetch news based on user role (including "ALL") and filter published/active
   const fetchNews = React.useCallback(() => {
     if (!user?.roles?.[0]) return;
-    
+
     setLoadingNews(true);
     getNewsList()
       .then(allNews => {
@@ -141,7 +141,7 @@ export default function Topbar(){
           if (news.status !== 'PUBLISHED' && news.status !== 'SCHEDULED') {
             return false;
           }
-          
+
           // Check publishAt: must be in the past or null
           if (news.publishAt) {
             const publishDate = new Date(news.publishAt);
@@ -149,7 +149,7 @@ export default function Topbar(){
               return false;
             }
           }
-          
+
           // Check expireAt: must be in the future or null
           if (news.expireAt) {
             const expireDate = new Date(news.expireAt);
@@ -157,7 +157,7 @@ export default function Topbar(){
               return false;
             }
           }
-          
+
           // Filter by role: include if targetRole matches user role OR targetRole is "ALL" or null
           if (news.scope === "INTERNAL") {
             if (news.targetRole) {
@@ -170,17 +170,17 @@ export default function Topbar(){
             }
             // If targetRole is null, include it (for all roles)
           }
-          
+
           return true;
         });
-        
+
         // Sort by createdAt DESC (newest first)
         filtered.sort((a, b) => {
           const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return dateB - dateA;
         });
-        
+
         setNewsList(filtered);
       })
       .catch(err => {
@@ -199,7 +199,7 @@ export default function Topbar(){
   // Fetch data when tab changes (only if menu is open)
   React.useEffect(() => {
     if (!showNotiMenu) return;
-    
+
     if (activeTab === "noti") {
       fetchNotifications();
     } else if (activeTab === "news") {
@@ -231,7 +231,7 @@ export default function Topbar(){
               </svg>
             </span>
             <input
-              value={q} onChange={e=>setQ(e.target.value)}
+              value={q} onChange={e => setQ(e.target.value)}
               placeholder="Tìm kiếm nhanh (Ctrl + K)"
               className="w-full md:max-w-xl pl-9 pr-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-green-200"
             />
@@ -270,21 +270,19 @@ export default function Topbar(){
                 <div className="flex border-b border-slate-200">
                   <button
                     onClick={() => setActiveTab("noti")}
-                    className={`flex-1 px-3 py-2 text-sm font-medium transition ${
-                      activeTab === "noti"
+                    className={`flex-1 px-3 py-2 text-sm font-medium transition ${activeTab === "noti"
                         ? "text-green-600 border-b-2 border-green-600"
                         : "text-slate-600 hover:text-slate-900"
-                    }`}
+                      }`}
                   >
                     Thông báo ({notifications.length})
                   </button>
                   <button
                     onClick={() => setActiveTab("news")}
-                    className={`flex-1 px-3 py-2 text-sm font-medium transition ${
-                      activeTab === "news"
+                    className={`flex-1 px-3 py-2 text-sm font-medium transition ${activeTab === "news"
                         ? "text-green-600 border-b-2 border-green-600"
                         : "text-slate-600 hover:text-slate-900"
-                    }`}
+                      }`}
                   >
                     Tin tức ({newsList.length})
                   </button>
@@ -312,12 +310,11 @@ export default function Topbar(){
                                   <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full"></span>
                                 )}
                                 <div className="flex items-start gap-2">
-                                  <div className={`flex-shrink-0 w-2 h-2 rounded-full mt-1.5 ${
-                                    noti.type === "ALERT" ? "bg-red-500" :
-                                    noti.type === "WARNING" ? "bg-yellow-500" :
-                                    noti.type === "SUCCESS" ? "bg-green-500" :
-                                    "bg-blue-500"
-                                  }`}></div>
+                                  <div className={`flex-shrink-0 w-2 h-2 rounded-full mt-1.5 ${noti.type === "ALERT" ? "bg-red-500" :
+                                      noti.type === "WARNING" ? "bg-yellow-500" :
+                                        noti.type === "SUCCESS" ? "bg-green-500" :
+                                          "bg-blue-500"
+                                    }`}></div>
                                   <div className="flex-1">
                                     <div className={`text-sm font-medium ${isUnread ? 'text-slate-900 font-semibold' : 'text-slate-900'}`}>
                                       {noti.title}
@@ -357,8 +354,8 @@ export default function Topbar(){
                                 )}
                                 <div className="flex items-start gap-2">
                                   {news.coverImageUrl && (
-                                    <img 
-                                      src={news.coverImageUrl} 
+                                    <img
+                                      src={news.coverImageUrl}
                                       alt={news.title}
                                       className="w-12 h-12 object-cover rounded flex-shrink-0"
                                     />
@@ -391,13 +388,13 @@ export default function Topbar(){
             <div className="text-sm font-medium text-slate-700">{user?.username || 'User'}</div>
             <div className="text-xs text-slate-500">{user?.roles?.[0] || 'Guest'}</div>
           </div>
-          <button 
+          <button
             onClick={() => setShowMenu(!showMenu)}
             className="inline-flex h-8 w-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-400 items-center justify-center text-white font-semibold hover:shadow-lg transition"
           >
             {user?.username?.[0]?.toUpperCase() || 'U'}
           </button>
-          
+
           {/* Dropdown menu */}
           {showMenu && (
             <div className="absolute right-0 top-10 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
@@ -407,7 +404,7 @@ export default function Topbar(){
                   <div className="text-xs text-slate-500">{user?.email}</div>
                 </Link>
               </div>
-              <button 
+              <button
                 onClick={handleLogout}
                 className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition"
               >
@@ -417,11 +414,11 @@ export default function Topbar(){
           )}
         </div>
       </div>
-      
+
       {/* Overlay to close menus */}
       {(showMenu || showNotiMenu) && (
-        <div 
-          className="fixed inset-0 z-40 md:ml-60" 
+        <div
+          className="fixed inset-0 z-40 md:ml-60"
           onClick={() => {
             setShowMenu(false);
             setShowNotiMenu(false);
@@ -460,12 +457,11 @@ export default function Topbar(){
               ) : popupType === "notification" && selectedNotification ? (
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className={`flex-shrink-0 w-3 h-3 rounded-full mt-1 ${
-                      selectedNotification.type === "ALERT" ? "bg-red-500" :
-                      selectedNotification.type === "WARNING" ? "bg-yellow-500" :
-                      selectedNotification.type === "SUCCESS" ? "bg-green-500" :
-                      "bg-blue-500"
-                    }`}></div>
+                    <div className={`flex-shrink-0 w-3 h-3 rounded-full mt-1 ${selectedNotification.type === "ALERT" ? "bg-red-500" :
+                        selectedNotification.type === "WARNING" ? "bg-yellow-500" :
+                          selectedNotification.type === "SUCCESS" ? "bg-green-500" :
+                            "bg-blue-500"
+                      }`}></div>
                     <div className="flex-1">
                       <h4 className="text-base font-semibold text-slate-900 mb-2">{selectedNotification.title}</h4>
                       <div className="text-sm text-slate-600 whitespace-pre-wrap mb-4">{selectedNotification.message}</div>
@@ -476,12 +472,11 @@ export default function Topbar(){
                     <div>
                       <div className="text-xs text-slate-500 mb-1">Loại</div>
                       <div className="text-sm font-medium text-slate-900">
-                        <span className={`inline-block px-2 py-1 rounded text-xs ${
-                          selectedNotification.type === "ALERT" ? "bg-red-100 text-red-800" :
-                          selectedNotification.type === "WARNING" ? "bg-yellow-100 text-yellow-800" :
-                          selectedNotification.type === "SUCCESS" ? "bg-green-100 text-green-800" :
-                          "bg-blue-100 text-blue-800"
-                        }`}>
+                        <span className={`inline-block px-2 py-1 rounded text-xs ${selectedNotification.type === "ALERT" ? "bg-red-100 text-red-800" :
+                            selectedNotification.type === "WARNING" ? "bg-yellow-100 text-yellow-800" :
+                              selectedNotification.type === "SUCCESS" ? "bg-green-100 text-green-800" :
+                                "bg-blue-100 text-blue-800"
+                          }`}>
                           {selectedNotification.type}
                         </span>
                       </div>
@@ -524,36 +519,35 @@ export default function Topbar(){
               ) : popupType === "news" && selectedNews ? (
                 <div className="space-y-4">
                   {selectedNews.coverImageUrl && (
-                    <img 
-                      src={selectedNews.coverImageUrl} 
+                    <img
+                      src={selectedNews.coverImageUrl}
                       alt={selectedNews.title}
                       className="w-full h-48 object-cover rounded-lg"
                     />
                   )}
-                  
+
                   <div>
                     <h4 className="text-base font-semibold text-slate-900 mb-2">{selectedNews.title}</h4>
                     {selectedNews.summary && (
                       <div className="text-sm text-slate-600 mb-3">{selectedNews.summary}</div>
                     )}
-                    <div 
+                    <div
                       className="text-sm text-slate-700 prose prose-sm max-w-none"
                       dangerouslySetInnerHTML={{ __html: selectedNews.bodyHtml }}
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200">
                     <div>
                       <div className="text-xs text-slate-500 mb-1">Trạng thái</div>
                       <div className="text-sm font-medium text-slate-900">
-                        <span className={`inline-block px-2 py-1 rounded text-xs ${
-                          selectedNews.status === "PUBLISHED" ? "bg-green-100 text-green-800" :
-                          selectedNews.status === "SCHEDULED" ? "bg-blue-100 text-blue-800" :
-                          "bg-slate-100 text-slate-800"
-                        }`}>
+                        <span className={`inline-block px-2 py-1 rounded text-xs ${selectedNews.status === "PUBLISHED" ? "bg-green-100 text-green-800" :
+                            selectedNews.status === "SCHEDULED" ? "bg-blue-100 text-blue-800" :
+                              "bg-slate-100 text-slate-800"
+                          }`}>
                           {selectedNews.status === "PUBLISHED" ? "Đã xuất bản" :
-                           selectedNews.status === "SCHEDULED" ? "Đã lên lịch" :
-                           selectedNews.status}
+                            selectedNews.status === "SCHEDULED" ? "Đã lên lịch" :
+                              selectedNews.status}
                         </span>
                       </div>
                     </div>
