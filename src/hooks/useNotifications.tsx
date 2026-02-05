@@ -7,13 +7,13 @@ const Ctx = createContext<{show:(m:string, tone?:Tone)=>void}|null>(null);
 export function NotificationsProvider({children}:{children:React.ReactNode}) {
   const [items, set] = useState<Noti[]>([]);
   const show = useCallback((message:string, tone:Tone="info") => {
-    const id = Date.now(); 
+    const id = Date.now();
     set(v=>[...v, {id, message, tone}]);
     setTimeout(()=> set(v=>v.filter(i=>i.id!==id)), 3000);
   }, []);
-  
+
   const contextValue = useMemo(() => ({show}), [show]);
-  
+
   return (
     <Ctx.Provider value={contextValue}>
       {children}

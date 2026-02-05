@@ -369,14 +369,14 @@ export default function AccountListPage() {
 
     try {
       await deleteAccount(deleteAccountId);
-      
+
       // Close popup first
       setDeletePopupOpen(false);
       setDeleteAccountId(null);
-      
+
       // Show success notification
       show(t('messages.deleteSuccess'), 'success');
-      
+
       // Delay reload to ensure notification is visible
       setTimeout(() => {
         window.location.reload();
@@ -394,10 +394,10 @@ export default function AccountListPage() {
 
   const handleStatusChange = (id: string, accountType: 'staff' | 'resident') => {
     // Tìm account để lấy status hiện tại
-    const account = accountType === 'staff' 
+    const account = accountType === 'staff'
       ? staffAccounts.find(acc => acc.key === id)
       : residentAccounts.find(acc => acc.key === id);
-    
+
     if (account) {
       setSelectedAccountId(id);
       setSelectedAccountType(accountType);
@@ -414,14 +414,14 @@ export default function AccountListPage() {
     try {
       const newStatus = !selectedAccountStatus;
       let accountDetail: UserAccountInfo;
-      
+
       // Lấy thông tin account hiện tại và update status - dùng chung API cho cả staff và resident
       if (selectedAccountType === 'staff') {
         accountDetail = await fetchStaffAccountDetail(selectedAccountId);
       } else {
         accountDetail = await fetchResidentAccountDetail(selectedAccountId);
       }
-      
+
       // Dùng chung API updateUserProfile cho cả staff và resident khi chỉ update status
       await updateUserProfile(selectedAccountId, {
         username: accountDetail.username,
@@ -434,13 +434,13 @@ export default function AccountListPage() {
       setSelectedAccountId(null);
       setSelectedAccountType(null);
       setSelectedAccountStatus(null);
-      
+
       // Show success notification
       show(
         newStatus ? t('messages.activateSuccess') : t('messages.deactivateSuccess'),
         'success'
       );
-      
+
       // Delay reload to ensure notification is visible
       setTimeout(() => {
         window.location.reload();
@@ -523,20 +523,6 @@ export default function AccountListPage() {
                   />
                 </div>
               )
-              //  : (
-              //   <div className="w-full md:w-48">
-              //     <Select
-              //       options={buildingOptions}
-              //       value={buildingFilter}
-              //       onSelect={(option) =>
-              //         setBuildingFilter(option.id === 'ALL' ? 'ALL' : option.id)
-              //       }
-              //       renderItem={(option) => option.label}
-              //       getValue={(option) => option.id}
-              //       placeholder={t('filters.allBuildings')}
-              //     />
-              //   </div>
-              // )
               }
               <div className="w-full md:w-48">
                 <Select
@@ -616,21 +602,19 @@ export default function AccountListPage() {
           <div className="mt-6 flex gap-2 border-b border-gray-200">
             <button
               onClick={() => setActiveTab('STAFF')}
-              className={`px-6 py-2 font-medium transition-colors ${
-                activeTab === 'STAFF'
+              className={`px-6 py-2 font-medium transition-colors ${activeTab === 'STAFF'
                   ? 'text-[#02542D] border-b-2 border-[#02542D]'
                   : 'text-gray-600 hover:text-[#02542D]'
-              }`}
+                }`}
             >
               {t('tabs.staff', { count: filteredStaff.length })}
             </button>
             <button
               onClick={() => setActiveTab('RESIDENT')}
-              className={`px-6 py-2 font-medium transition-colors ${
-                activeTab === 'RESIDENT'
+              className={`px-6 py-2 font-medium transition-colors ${activeTab === 'RESIDENT'
                   ? 'text-[#02542D] border-b-2 border-[#02542D]'
                   : 'text-gray-600 hover:text-[#02542D]'
-              }`}
+                }`}
             >
               {t('tabs.resident', { count: filteredResidents.length })}
             </button>
@@ -642,10 +626,10 @@ export default function AccountListPage() {
             </div>
           ) : (
             <>
-              <Table 
-                data={tableData} 
-                headers={TABLE_HEADERS} 
-                type="account" 
+              <Table
+                data={tableData}
+                headers={TABLE_HEADERS}
+                type="account"
                 onDelete={handleDelete}
                 onStatusChange={handleStatusChange}
               />

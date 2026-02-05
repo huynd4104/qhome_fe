@@ -4,7 +4,7 @@ import Sidebar from "@/src/components/layout/Sidebar";
 import Topbar from "@/src/components/layout/Topbar";
 import ProtectedRoute from "@/src/components/auth/ProtectedRoute";
 
-export default function MainLayout({children}:{children:React.ReactNode}) {
+export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-slate-50 flex">

@@ -114,7 +114,10 @@
     "confirmApproveMessage": "Are you sure you want to approve the account request for resident {name}?",
     "confirmRejectMessage": "Are you sure you want to reject the account request for resident {name}?"
   },
-  "Common": { "language": "Language", "support": "Need help?" },
+  "Common": {
+    "language": "Language",
+    "support": "Need help?"
+  },
   "Sidebar": {
     "assetInspectionAssignments": "Asset Inspection Assignments",
     "staffContent": "Staff Content",
@@ -313,7 +316,7 @@
       "inactive": "Inactive"
     },
     "search": {
-      "placeholder": "Search by username, email or role"
+      "placeholder": "Username, email or role"
     },
     "roles": {
       "admin": "Admin",
@@ -588,20 +591,20 @@
       "usernameCannotChange": "Username cannot be changed"
     }
   },
-    "Login": {
-      "title": "Sign in",
-      "subtitle": "Welcome back",
-      "username": "Email or Phone",
-      "password": "Password",
-      "remember": "Remember me",
-      "forgot": "Forgot password?",
-      "submit": "Sign in",
-      "loading": "Processing...",
-      "success": "Signed in successfully",
-      "error": "Invalid credentials",
-      "contact_support": "Contact support"
-    },     
-  "Popup":{
+  "Login": {
+    "title": "Sign in",
+    "subtitle": "Welcome back",
+    "username": "Username, Email or Phone Number",
+    "password": "Password",
+    "remember": "Remember me",
+    "forgot": "Forgot password?",
+    "submit": "Sign in",
+    "loading": "Processing...",
+    "success": "Signed in successfully",
+    "error": "Invalid credentials",
+    "contact_support": "Contact support"
+  },
+  "Popup": {
     "yes": "Yes",
     "no": "No",
     "close": "Close",
@@ -615,31 +618,86 @@
   "Accounting": {
     "title": "Accounting Dashboard",
     "subtitle": "Manage service invoices",
-    "actions": { "create": "New invoice", "edit": "Edit", "cancel": "Cancel", "send_notify": "Send fee notice" },
-    "table": { "select": "Select", "invoiceId": "InvoiceID", "apartment": "Apartment", "period": "Period", "services": "Services", "total": "Total", "status": "Status", "empty": "No invoices yet." },
-    "services": { "electric": "Electricity", "water": "Water", "management": "Management", "parking": "Parking" },
+    "actions": {
+      "create": "New invoice",
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "send_notify": "Send fee notice"
+    },
+    "table": {
+      "select": "Select",
+      "invoiceId": "InvoiceID",
+      "apartment": "Apartment",
+      "period": "Period",
+      "services": "Services",
+      "total": "Total",
+      "status": "Status",
+      "empty": "No invoices yet."
+    },
+    "services": {
+      "electric": "Electricity",
+      "water": "Water",
+      "management": "Management",
+      "parking": "Parking"
+    },
     "fields": {
-      "invoiceId": "InvoiceID", "apartmentId": "ApartmentID", "period": "Period (MM/YYYY)",
-      "serviceTypes": "Service type", "electricityIndex": "Electricity index", "waterIndex": "Water index",
-      "managementFee": "Management fee", "parkingFee": "Parking fee", "status": "Status",
-      "total": "Total amount", "reason": "Edit reason"
+      "invoiceId": "InvoiceID",
+      "apartmentId": "ApartmentID",
+      "period": "Period (MM/YYYY)",
+      "serviceTypes": "Service type",
+      "electricityIndex": "Electricity index",
+      "waterIndex": "Water index",
+      "managementFee": "Management fee",
+      "parkingFee": "Parking fee",
+      "status": "Status",
+      "total": "Total amount",
+      "reason": "Edit reason"
     },
-    "hints": { "minPrev": "≥ previous period: {value}" },
+    "hints": {
+      "minPrev": "≥ previous period: {value}"
+    },
     "validate": {
-      "invoiceId": "InvoiceID is required", "apartmentId": "ApartmentID is required", "period": "Period is required",
-      "serviceTypes": "Select at least one service", "electricityIndex": "Electricity index must be ≥ {value}",
-      "waterIndex": "Water index must be ≥ {value}", "managementFee": "Management fee must be ≥ 0", "parkingFee": "Parking fee must be ≥ 0"
+      "invoiceId": "InvoiceID is required",
+      "apartmentId": "ApartmentID is required",
+      "period": "Period is required",
+      "serviceTypes": "Select at least one service",
+      "electricityIndex": "Electricity index must be ≥ {value}",
+      "waterIndex": "Water index must be ≥ {value}",
+      "managementFee": "Management fee must be ≥ 0",
+      "parkingFee": "Parking fee must be ≥ 0"
     },
-    "create": { "title": "Create invoice" },
-    "edit": { "title": "Update invoice" },
-    "cancel": { "reason_placeholder": "Enter cancellation reason..." },
-    "notify": { "title": "Send fee notifications", "desc": "Choose channels for {count} unpaid invoices", "send": "Send", "result": "Sent {ok}/{total} invoices" },
-    "errors": { "edit_paid": "Only invoices with status Unpaid can be edited", "cancel_paid": "Only invoices with status Unpaid can be cancelled" },
-    "messages": { "created": "Invoice created", "updated": "Invoice updated", "cancelled": "Invoice cancelled" },
-    "common": { "save": "Save", "cancel": "Cancel", "close": "Close" }
+    "create": {
+      "title": "Create invoice"
+    },
+    "edit": {
+      "title": "Update invoice"
+    },
+    "cancel": {
+      "reason_placeholder": "Enter cancellation reason..."
+    },
+    "notify": {
+      "title": "Send fee notifications",
+      "desc": "Choose channels for {count} unpaid invoices",
+      "send": "Send",
+      "result": "Sent {ok}/{total} invoices"
+    },
+    "errors": {
+      "edit_paid": "Only invoices with status Unpaid can be edited",
+      "cancel_paid": "Only invoices with status Unpaid can be cancelled"
+    },
+    "messages": {
+      "created": "Invoice created",
+      "updated": "Invoice updated",
+      "cancelled": "Invoice cancelled"
+    },
+    "common": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "close": "Close"
+    }
   },
   "customer-interaction": {
-    "Request":{
+    "Request": {
       "requestlist": "Request List",
       "requestNumber": "Request No.",
       "requestTitle": "Request Title",
@@ -694,7 +752,7 @@
       "type": "Type",
       "total": "Fix fee",
       "searchByTitleOrCode": "Request title or request number",
-      "filterBy":"Filter by:",
+      "filterBy": "Filter by:",
       "repairCost": "Repair Cost",
       "repairCostPlaceholder": "Enter repair cost...",
       "note": "Note",
@@ -745,7 +803,7 @@
       "cost": "Cost",
       "enterCost": "Enter cost (optional)"
     },
-    "Feedback":{
+    "Feedback": {
       "feedbackList": "Feedback List",
       "feedbackNumber": "Feedback No.",
       "feedbackTitle": "Feedback Title",
@@ -807,7 +865,7 @@
       "onlySupporterCanReply": "Only supporters can reply to this feedback."
     }
   },
-  "Dashboard":{
+  "Dashboard": {
     "title": "Dashboard",
     "subtitle": "Overview of system status",
     "dashboard": "Dashboard",
@@ -816,10 +874,10 @@
     "customerService": "Customer Service",
     "": ""
   },
-  "Project":{
-    "projectCode":"Project Code",
+  "Project": {
+    "projectCode": "Project Code",
     "projectName": "Project Name",
-    "requestlist":"Project List",
+    "requestlist": "Project List",
     "address": "Address",
     "status": "Status",
     "createAt": "Create At",
@@ -836,8 +894,8 @@
     "hotline": "Hotline",
     "email": "Email",
     "description": "Description",
-    "save":  "Save",
-    "cancel":  "Cancel",
+    "save": "Save",
+    "cancel": "Cancel",
     "newDescription": "New Description",
     "loading": "Data is loading...",
     "error": "Error loading data",
@@ -857,9 +915,9 @@
     "deleteProject": "Delete project"
   },
   "Building": {
-    "buildingCode":"Building Code",
+    "buildingCode": "Building Code",
     "buildingName": "Building Name",
-    "requestlist":"Building List",
+    "requestlist": "Building List",
     "projectName": "Project Name",
     "floors": "Floors",
     "status": "Status",
@@ -876,11 +934,11 @@
     "active": "Active",
     "hotline": "Hotline",
     "email": "Email",
-    "save":  "Save",
-    "cancel":  "Cancel",
+    "save": "Save",
+    "cancel": "Cancel",
     "address": "Address",
     "clear": "Clear",
-    "loading":"Data is loading...",
+    "loading": "Data is loading...",
     "deleteBuilding": "Delete building",
     "deleteBuildingConfirm": "Are you sure you want to delete building",
     "saving": "Is saving",
@@ -974,7 +1032,7 @@
     "districtRequired": "District is required",
     "wardRequired": "Ward is required",
     "addressDetailError": "Address detail is required",
-    "placeholders":{
+    "placeholders": {
       "selectCity": "Select city",
       "selectDistrict": "Select district",
       "selectWard": "Select ward",
@@ -1295,8 +1353,8 @@
     "hotline": "Hotline",
     "email": "Email",
     "description": "Description",
-    "save":  "Save",
-    "cancel":  "Cancel",
+    "save": "Save",
+    "cancel": "Cancel",
     "newDescription": "New Description",
     "load": "Data is loading...",
     "error": "Error loading data",
@@ -1342,7 +1400,7 @@
     "action": "Action",
     "noData": "No data",
     "building": "Building",
-    "selectBuilding":"Select building",
+    "selectBuilding": "Select building",
     "buildingRequired": "Building is required",
     "buildingFilter": {
       "title": "Building",
@@ -1644,7 +1702,7 @@
     }
   },
   "News": {
-    "selectTargetRole":"Select role",
+    "selectTargetRole": "Select role",
     "newsList": "News List",
     "newsDetail": "News Detail",
     "createNews": "Create News",
@@ -2020,7 +2078,7 @@
       "cannotChangeAdminStatus": "Cannot change status of admin account."
     }
   },
-  "Noti" : {
+  "Noti": {
     "fetchBuildingError": "Can not load building list",
     "titleRequired": "Please enter notification title",
     "contentRequired": "Please enter notification content",
@@ -2052,7 +2110,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "saving": "Saving...",
-    "returnNewsList":"Return news list",
+    "returnNewsList": "Return news list",
     "draft": "Draft",
     "scheduled": "Scheduled",
     "published": "Published",
@@ -2068,14 +2126,14 @@
     "announcement": "Announcement",
     "goBack": "Go back",
     "notFound": "Not found",
-    "createdAt":"Created at",
-    "status":"Status",
-    "scope":"Scope",
-    "targetRole":"Target role",
-    "referenceId":"Reference ID",
-    "referenceType":"Reference Type",
-    "updatedAt":"Updated at",
-    "editNotification":"Edit notification",
+    "createdAt": "Created at",
+    "status": "Status",
+    "scope": "Scope",
+    "targetRole": "Target role",
+    "referenceId": "Reference ID",
+    "referenceType": "Reference Type",
+    "updatedAt": "Updated at",
+    "editNotification": "Edit notification",
     "update": "Update",
     "updating": "Updating...",
     "updateNotificationSuccess": "Update notification successfully",
@@ -2089,7 +2147,7 @@
   "Contracts": {
     "title": "Apartment contract management",
     "subtitle": "Create and track rental/purchase contracts for each apartment.",
-    "asset":{
+    "asset": {
       "airConditioner": "Air conditioner",
       "kitchen": "Kitchen",
       "waterHeater": "Water heater",
