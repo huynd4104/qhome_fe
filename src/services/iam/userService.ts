@@ -142,11 +142,11 @@ export async function fetchStaffAccounts(): Promise<UserAccountInfo[]> {
   return response.data;
 }
 
-export async function fetchResidentAccounts(): Promise<UserAccountInfo[]> {
-  const response = await axios.get<UserAccountInfo[]>(
-    `${IAM_URL}/api/users/residents`,
-    { withCredentials: true }
-  );
+export async function fetchResidentAccounts(buildingId?: string): Promise<UserAccountInfo[]> {
+  const url = buildingId
+    ? `${IAM_URL}/api/users/residents?buildingId=${buildingId}`
+    : `${IAM_URL}/api/users/residents`;
+  const response = await axios.get<UserAccountInfo[]>(url, { withCredentials: true });
   return response.data;
 }
 
@@ -249,7 +249,7 @@ export async function createResidentAccount(
 }
 
 export async function deleteAccount(userId: string): Promise<void> {
-  const response = await axios.delete(`${IAM_URL}/api/users/${userId}`, 
+  const response = await axios.delete(`${IAM_URL}/api/users/${userId}`,
     { withCredentials: true });
   return response.data;
 }
@@ -284,7 +284,7 @@ export async function checkEmailExists(email: string): Promise<boolean> {
   try {
     const response = await axios.get(
       `${IAM_URL}/api/users/by-email/${encodeURIComponent(email)}`,
-      { 
+      {
         withCredentials: true,
         validateStatus: (status) => status === 200 || status === 404 // Không throw error cho 404
       }

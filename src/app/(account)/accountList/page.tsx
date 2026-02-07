@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -15,6 +15,7 @@ import {
   fetchResidentAccountDetail,
   exportAccounts,
 } from '@/src/services/iam/userService';
+import { getBuildings, Building } from '@/src/services/base/buildingService';
 import Table from '@/src/components/base-service/Table';
 import Pagination from '@/src/components/customer-interaction/Pagination';
 import Select from '@/src/components/customer-interaction/Select';
@@ -80,6 +81,9 @@ export default function AccountListPage() {
   const [deletePopupOpen, setDeletePopupOpen] = useState(false);
   const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null);
   const hasShownCreateSuccess = useRef(false);
+  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string>('ALL');
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
 
   const TABLE_HEADERS = [
     t('tableHeaders.username'),
@@ -127,6 +131,46 @@ export default function AccountListPage() {
       active = false;
     };
   }, []);
+
+  // Fetch buildings when RESIDENT tab is selected
+  useEffect(() => {
+    if (activeTab === 'RESIDENT') {
+      const loadBuildings = async () => {
+        setLoadingBuildings(true);
+        try {
+          const data = await getBuildings();
+          setBuildings(data);
+        } catch (err) {
+          console.error('Failed to load buildings:', err);
+        } finally {
+          setLoadingBuildings(false);
+        }
+      };
+      loadBuildings();
+    }
+  }, [activeTab]);
+
+  // Load residents by building
+  const loadResidentsByBuilding = useCallback(async (buildingId: string) => {
+    setLoadingResidents(true);
+    try {
+      const residentRes = await fetchResidentAccounts(
+        buildingId === 'ALL' ? undefined : buildingId
+      );
+      setResidentAccounts(residentRes.map((row) => toAccountRow(row, 'resident')));
+    } catch (err) {
+      console.error('Error loading residents:', err);
+    } finally {
+      setLoadingResidents(false);
+    }
+  }, []);
+
+  // Handle building tab click
+  const handleBuildingTabClick = (buildingId: string) => {
+    setSelectedBuildingId(buildingId);
+    loadResidentsByBuilding(buildingId);
+    setResidentPage(1);
+  };
 
   // Check for success message from create/update operations
   useEffect(() => {
@@ -286,6 +330,7 @@ export default function AccountListPage() {
   useEffect(() => {
     if (activeTab === 'STAFF') {
       setBuildingFilter('ALL');
+      setSelectedBuildingId('ALL');
     } else {
       setRoleFilter('ALL');
     }
@@ -603,8 +648,8 @@ export default function AccountListPage() {
             <button
               onClick={() => setActiveTab('STAFF')}
               className={`px-6 py-2 font-medium transition-colors ${activeTab === 'STAFF'
-                  ? 'text-[#02542D] border-b-2 border-[#02542D]'
-                  : 'text-gray-600 hover:text-[#02542D]'
+                ? 'text-[#02542D] border-b-2 border-[#02542D]'
+                : 'text-gray-600 hover:text-[#02542D]'
                 }`}
             >
               {t('tabs.staff', { count: filteredStaff.length })}
@@ -612,13 +657,42 @@ export default function AccountListPage() {
             <button
               onClick={() => setActiveTab('RESIDENT')}
               className={`px-6 py-2 font-medium transition-colors ${activeTab === 'RESIDENT'
-                  ? 'text-[#02542D] border-b-2 border-[#02542D]'
-                  : 'text-gray-600 hover:text-[#02542D]'
+                ? 'text-[#02542D] border-b-2 border-[#02542D]'
+                : 'text-gray-600 hover:text-[#02542D]'
                 }`}
             >
               {t('tabs.resident', { count: filteredResidents.length })}
             </button>
           </div>
+
+          {/* Building sub-tabs for RESIDENT tab */}
+          {activeTab === 'RESIDENT' && (
+            <div className="mt-4 flex gap-2 flex-wrap pb-2">
+              <button
+                onClick={() => handleBuildingTabClick('ALL')}
+                disabled={loadingBuildings}
+                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${selectedBuildingId === 'ALL'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                {t('filters.allBuildings')}
+              </button>
+              {buildings.map((building) => (
+                <button
+                  key={building.id}
+                  onClick={() => handleBuildingTabClick(building.id)}
+                  disabled={loadingBuildings}
+                  className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${selectedBuildingId === building.id
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                >
+                  {building.name || building.code}
+                </button>
+              ))}
+            </div>
+          )}
 
           {currentLoading ? (
             <div className="px-6 py-10 text-center text-sm text-gray-500">
