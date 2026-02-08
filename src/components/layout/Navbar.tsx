@@ -22,21 +22,24 @@ export default function Navbar() {
   const user = useDisplayUser();
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200">
-      <div className="w-full px-4 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-3 select-none">
-          <img src="/logo.svg" alt="QHome Logo" className="h-10 w-10" />
-          <span className="text-lg sm:text-xl font-bold tracking-tight">QHome PMS</span>
+    <header className="sticky top-0 z-50 bg-white border-b border-slate-100 shadow-sm transition-all duration-200">
+      <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-3 select-none cursor-pointer hover:opacity-90 transition-opacity">
+          <img src="/logo.svg" alt="QHome Logo" className="h-9 w-9" />
+          <span className="text-xl font-bold tracking-tight text-slate-900">QHome PMS</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <LocaleSwitcher />
           {user && (
-            <span
-              title={user}
-              className="text-sm text-slate-700 max-w-[180px] truncate"
-            >
-              {user}
-            </span>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-full border border-slate-100">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span
+                title={user}
+                className="text-sm font-medium text-slate-700 max-w-[150px] truncate"
+              >
+                {user}
+              </span>
+            </div>
           )}
         </div>
       </div>

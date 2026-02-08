@@ -614,7 +614,7 @@
   "Login": {
     "title": "Đăng nhập",
     "subtitle": "Chào mừng trở lại",
-    "username": "Tên đăng nhập, Email hoặc Số điện thoại",
+    "username": "Tên đăng nhập, email hoặc số điện thoại",
     "password": "Mật khẩu",
     "remember": "Ghi nhớ đăng nhập",
     "forgot": "Quên mật khẩu?",

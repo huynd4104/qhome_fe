@@ -594,7 +594,7 @@
   "Login": {
     "title": "Sign in",
     "subtitle": "Welcome back",
-    "username": "Username, Email or Phone Number",
+    "username": "Username, email or phone number",
     "password": "Password",
     "remember": "Remember me",
     "forgot": "Forgot password?",
