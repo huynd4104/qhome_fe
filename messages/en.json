@@ -3766,10 +3766,8 @@
       "emailPlaceholder": "you@example.com",
       "logoAlt": "Qhome Base Logo",
       "copyright": "© {year} Qhome Base. All rights reserved.",
-      "buttons": {
-        "submit": "Send New Password",
-        "processing": "Processing..."
-      },
+      "submit": "Send New Password",
+      "submitting": "Processing...",
       "backToLogin": "Back to login",
       "validation": {
         "emailRequired": "Email cannot be empty",
@@ -3777,7 +3775,9 @@
       },
       "messages": {
         "otpSent": "If the email exists in the system, an OTP code has been sent to your email. Please check your inbox.",
-        "success": "If the email exists in the system, an OTP code has been sent to your email. Please check your inbox."
+        "success": "If the email exists in the system, an OTP code has been sent to your email. Please check your inbox.",
+        "checkEmail": "An email has been sent to {email}. Please check your inbox.",
+        "redirecting": "Redirecting..."
       },
       "errors": {
         "general": "An error occurred. Please try again.",
