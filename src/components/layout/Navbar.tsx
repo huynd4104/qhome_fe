@@ -25,7 +25,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200">
       <div className="w-full px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3 select-none">
-          <img src="/logo.svg" alt="QHome Logo" className="h-8 w-8" />
+          <img src="/logo.svg" alt="QHome Logo" className="h-10 w-10" />
           <span className="text-lg sm:text-xl font-bold tracking-tight">QHome PMS</span>
         </div>
         <div className="flex items-center gap-3">

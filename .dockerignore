@@ -1,6 +1,0 @@
-node_modules
-npm-debug.log
-.next/cache
-Dockerfile
-docker-compose.yml
-.dockerignore
