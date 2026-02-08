@@ -2,8 +2,6 @@
  * IAM Service - Authentication & Authorization
  */
 import axios from "@/src/lib/axios";
-import { th } from "zod/locales";
-
 export type LoginPayload = { 
   username: string; 
   password: string; 
@@ -68,11 +66,25 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
 /**
  * Logout API
  */
-export async function logout(): Promise<void> {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('user');
-}
+export const logout = async (): Promise<void> => {
+  const apiUrl = process.env.NEXT_PUBLIC_IAM_URL || "http://localhost:8088";
+  const endpoint = `${apiUrl}/api/auth/logout`;
 
+  try {
+    await axios.post(
+      endpoint,
+      {},
+      {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } finally {
+    localStorage.removeItem("accessToken");
+  }
+};
 /**
  * Request Password Reset API
  * POST /api/auth/request-reset

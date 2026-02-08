@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import * as authService from "@/src/services/iam/authService";
 
 export type UserInfo = {
   userId: string;
@@ -17,7 +18,7 @@ type AuthContextType = {
   hasRole: (role: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;
   hasPermission: (permission: string) => boolean;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
 };
 
@@ -89,12 +90,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return user?.permissions?.includes(permission) ?? false;
   };
 
-  const logout = () => {
+  const logout = async (): Promise<void> => {
     setUser(null);
-    // Clear localStorage
-    localStorage.removeItem('accessToken');
-    // Redirect to login
-    window.location.href = '/login';
+    try {
+      await authService.logout();
+    } finally {
+      // Redirect to login
+      window.location.href = "/login";
+    }
   };
 
   return (
