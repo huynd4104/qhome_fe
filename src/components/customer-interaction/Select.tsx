@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { useTranslations } from 'next-intl';
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
- 
+
 interface SelectProp<T> {
   options: T[];
   value?: string;
@@ -20,19 +20,19 @@ const Select = <T,>({ options, value, onSelect, renderItem, getValue, placeholde
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [keyword, setKeyword] = useState<string>("");
   const t = useTranslations('customer-interaction.Request');
- 
+
   const selectItem = useMemo(() => {
     return options.find(option => getValue(option) === value);
   }, [options, value, getValue]);
 
- 
+
   const onOpen = () => setIsOpen(true);
   const onClose = () => setIsOpen(false);
- 
+
   const filteredOptions = options.filter(
-        (item) => renderItem(item).toLowerCase().includes(keyword.toLowerCase())
+    (item) => renderItem(item).toLowerCase().includes(keyword.toLowerCase())
   );
- 
+
   const onSelectItem = (item: T) => () => {
     if (typeof onSelect === "function") {
       onSelect(item);
@@ -40,7 +40,7 @@ const Select = <T,>({ options, value, onSelect, renderItem, getValue, placeholde
     setKeyword("");
     onClose();
   };
- 
+
   const divRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -53,19 +53,18 @@ const Select = <T,>({ options, value, onSelect, renderItem, getValue, placeholde
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [divRef]);
- 
+
   return (
     <div className="relative w-full" ref={divRef}>
       <div
-        className={`h-10 w-full rounded-md border-[1px] px-3 py-2.5 cursor-pointer flex flex-row items-center justify-between gap-x-3 ${
-          error ? "border-red-300" : "border-[#739559]"
-        } ${disable ? "bg-gray-300" : "bg-white"}`}
+        className={`h-10 w-full rounded-md border-[1px] px-3 py-2.5 cursor-pointer flex flex-row items-center justify-between gap-x-3 ${error ? "border-red-300" : "border-[#739559]"
+          } ${disable ? "bg-gray-300" : "bg-white"}`}
         onClick={isOpen ? onClose : onOpen}
       >
         <div
           className={clsx(
             "font-normal text-sm",
-            selectItem ? "text-primary-2" : "text-[#81a996]"
+            selectItem ? "text-slate-900" : "text-gray-400"
           )}
         >
           {selectItem ? renderItem(selectItem) : placeholder}
@@ -83,7 +82,7 @@ const Select = <T,>({ options, value, onSelect, renderItem, getValue, placeholde
           <input
             type="text"
             placeholder={placeholder}
-            className="w-full h-10 min-h-10 flex-none rounded-md border-[1px] border-[#E7E7E7] bg-white font-normal text-sm placeholder-[#81A996] text-primary-2 px-3 whitespace-nowrap"
+            className="w-full h-10 min-h-10 flex-none rounded-md border-[1px] border-[#E7E7E7] bg-white font-normal text-sm placeholder-gray-400 text-slate-900 px-3 whitespace-nowrap"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
           />
@@ -99,14 +98,14 @@ const Select = <T,>({ options, value, onSelect, renderItem, getValue, placeholde
                 </div>
               );
             })}
-             {filteredOptions.length === 0 && (
-                 <div className="mx-1 px-2 py-1.5 text-sm text-gray-500 italic">{t("noData")}</div>
-             )}
+            {filteredOptions.length === 0 && (
+              <div className="mx-1 px-2 py-1.5 text-sm text-gray-500 italic">{t("noData")}</div>
+            )}
           </div>
         </div>
       )}
     </div>
   );
 };
- 
+
 export default Select;

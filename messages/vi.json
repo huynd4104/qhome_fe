@@ -342,7 +342,7 @@
       "resident": "Cư dân ({count})"
     },
     "buttons": {
-      "addAccount": "+ Thêm tài khoản",
+      "addAccount": "Thêm tài khoản",
       "reload": "Tải lại",
       "exportExcel": "Xuất Excel",
       "exporting": "Đang xuất..."
