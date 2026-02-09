@@ -55,7 +55,7 @@ function resolveFileUrl(url?: string | null, contractId?: string, fileId?: strin
   if (contractId && fileId) {
     return `/api/contract-files/${contractId}/${fileId}`;
   }
-  
+
   // Fallback to using fileUrl/proxyUrl if provided
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) {
@@ -93,14 +93,14 @@ export default function ContractManagementPage() {
   const [generatingContractNumber, setGeneratingContractNumber] = useState(false);
   const [activeTab, setActiveTab] = useState<'active' | 'unavailable'>('active');
   const [minStartDate, setMinStartDate] = useState<string>('');
-  
+
   // Asset checking state
   const [unitAssets, setUnitAssets] = useState<Asset[]>([]);
   const [checkingAssets, setCheckingAssets] = useState(false);
   const [missingAssetTypes, setMissingAssetTypes] = useState<AssetType[]>([]);
   const [creatingMissingAssets, setCreatingMissingAssets] = useState(false);
   const [showCreateAssetsConfirm, setShowCreateAssetsConfirm] = useState(false);
-  
+
   // Meter checking state
   const [unitMeters, setUnitMeters] = useState<MeterDto[]>([]);
   const [checkingMeters, setCheckingMeters] = useState(false);
@@ -137,7 +137,7 @@ export default function ContractManagementPage() {
     try {
       const start = new Date(startDate);
       const end = new Date(endDate);
-      
+
       if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
         return null;
       }
@@ -149,7 +149,7 @@ export default function ContractManagementPage() {
       const startMonth = start.getMonth();
       const endYear = end.getFullYear();
       const endMonth = end.getMonth();
-      
+
       // Calculate number of months (since endDate has same day as startDate, this is straightforward)
       const months = (endYear - startYear) * 12 + (endMonth - startMonth);
 
@@ -169,7 +169,7 @@ export default function ContractManagementPage() {
     try {
       const start = new Date(startDate);
       const end = new Date(endDate);
-      
+
       if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
         return null;
       }
@@ -184,10 +184,10 @@ export default function ContractManagementPage() {
       const startMonth = start.getMonth();
       const endYear = end.getFullYear();
       const endMonth = end.getMonth();
-      
+
       // Calculate number of months
       const months = (endYear - startYear) * 12 + (endMonth - startMonth);
-      
+
       // Total rent = number of months * monthly rent
       const totalRent = months * monthlyRent;
 
@@ -238,7 +238,7 @@ export default function ContractManagementPage() {
 
   // State for end month selection (month-year format: YYYY-MM)
   const [endMonth, setEndMonth] = useState<string>('');
-  
+
   // Calculate min date for month input (format: YYYY-MM)
   const minMonthValue = useMemo(() => {
     if (!formState.startDate) return '';
@@ -285,18 +285,18 @@ export default function ContractManagementPage() {
       // endMonth is in format YYYY-MM
       const [year, month] = endMonth.split('-');
       if (!year || !month) return; // Safety check
-      
+
       const monthIndex = parseInt(month) - 1; // JavaScript months are 0-indexed
-      
+
       // Create date with the same day as startDate
       // If the day doesn't exist in the target month, use the last day of that month
       const tempDate = new Date(parseInt(year), monthIndex + 1, 0); // Last day of target month
       const maxDayInMonth = tempDate.getDate();
       const targetDay = Math.min(startDateDay, maxDayInMonth);
-      
+
       // Format as YYYY-MM-DD
       const formattedEndDate = `${year}-${month}-${targetDay.toString().padStart(2, '0')}`;
-      
+
       // Update endDate (setFormState will prevent unnecessary updates if value is the same)
       setFormState(prev => {
         // Only update if different to avoid unnecessary re-renders
@@ -337,7 +337,7 @@ export default function ContractManagementPage() {
   ) => {
     const state = currentFormState || formState;
     const newErrors = { ...formErrors };
-    
+
     switch (field) {
       case 'unitId':
         if (!value || (typeof value === 'string' && !value.trim())) {
@@ -371,13 +371,13 @@ export default function ContractManagementPage() {
         } else if (typeof value === 'string' && value.trim()) {
           const startDate = new Date(value);
           startDate.setHours(0, 0, 0, 0);
-          
+
           // Check if startDate > endDate of latest expired RENTAL contract or CANCELLED contract that's still active
           let referenceContract = latestExpiredRentalContract;
           if (!referenceContract && latestActiveCancelledRentalContract) {
             referenceContract = latestActiveCancelledRentalContract;
           }
-          
+
           if (referenceContract && referenceContract.endDate) {
             const referenceEndDate = new Date(referenceContract.endDate);
             referenceEndDate.setHours(0, 0, 0, 0);
@@ -422,7 +422,7 @@ export default function ContractManagementPage() {
             startDate.setHours(0, 0, 0, 0);
             const endDate = new Date(value);
             endDate.setHours(0, 0, 0, 0);
-            
+
             // Check: endDate must be after startDate
             if (endDate <= startDate) {
               newErrors.endDate = t('validation.endDateAfterStartDate') || 'Ngày kết thúc phải sau ngày bắt đầu';
@@ -509,7 +509,7 @@ export default function ContractManagementPage() {
         }
         break;
     }
-    
+
     setFormErrors(newErrors);
   };
 
@@ -519,20 +519,20 @@ export default function ContractManagementPage() {
   ) => {
     setFormState((prev) => {
       const newState = {
-      ...prev,
-      [field]: value,
+        ...prev,
+        [field]: value,
       };
-      
+
       // Auto-update paymentTerms for RENTAL contracts when startDate or endDate changes
       if (prev.contractType === 'RENTAL' && (field === 'startDate' || field === 'endDate')) {
         const startDate = field === 'startDate' ? (value as string) : prev.startDate;
         const endDate = field === 'endDate' ? (value as string) : prev.endDate;
-        
+
         // Only auto-update if paymentTerms is empty or was previously auto-generated
         const currentTerms = prev.paymentTerms?.trim() || '';
-        const isAutoGenerated = currentTerms.includes('Thanh toán') && 
-                                (currentTerms.includes('từ') || currentTerms.includes('đến'));
-        
+        const isAutoGenerated = currentTerms.includes('Thanh toán') &&
+          (currentTerms.includes('từ') || currentTerms.includes('đến'));
+
         if (startDate && endDate && (!currentTerms || isAutoGenerated)) {
           try {
             const start = new Date(startDate);
@@ -541,14 +541,14 @@ export default function ContractManagementPage() {
               const startStr = start.toLocaleDateString('vi-VN');
               const endStr = end.toLocaleDateString('vi-VN');
               const months = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30));
-              
+
               let suggestedTerms = '';
               if (months <= 1) {
                 suggestedTerms = t('paymentTerms.oneTimePayment', { start: startStr, end: endStr });
               } else {
                 suggestedTerms = t('paymentTerms.monthlyPayment', { start: startStr, end: endStr, months });
               }
-              
+
               newState.paymentTerms = suggestedTerms;
             }
           } catch (e) {
@@ -556,7 +556,7 @@ export default function ContractManagementPage() {
           }
         }
       }
-      
+
       // Validate field after state update
       setTimeout(() => {
         validateField(field, value, newState);
@@ -573,8 +573,8 @@ export default function ContractManagementPage() {
         const data = await getBuildings();
         setBuildingsState({ data, loading: false, error: null });
       } catch (err: any) {
-      const message =
-        err?.response?.data?.message || err?.message || t('errors.loadBuildings');
+        const message =
+          err?.response?.data?.message || err?.message || t('errors.loadBuildings');
         setBuildingsState({ data: [], loading: false, error: message });
       }
     };
@@ -651,20 +651,19 @@ export default function ContractManagementPage() {
   // Check unit assets
   const checkUnitAssets = async (unitId: string) => {
     if (!unitId) return;
-    
+
     setCheckingAssets(true);
     try {
       const assets = await getAssetsByUnit(unitId);
       setUnitAssets(assets);
-      
-      // Required asset types: AIR_CONDITIONER, KITCHEN, WATER_HEATER, FURNITURE
+
+      // Required asset types for contract: AIR_CONDITIONER, ELECTRIC_STOVE, WATER_HEATER
       const requiredTypes: AssetType[] = [
         AssetType.AIR_CONDITIONER,
-        AssetType.KITCHEN,
+        AssetType.ELECTRIC_STOVE,
         AssetType.WATER_HEATER,
-        AssetType.FURNITURE,
       ];
-      
+
       const existingTypes = new Set(assets.map(a => a.assetType));
       const missing = requiredTypes.filter(type => !existingTypes.has(type));
       setMissingAssetTypes(missing);
@@ -680,23 +679,23 @@ export default function ContractManagementPage() {
 
   const checkUnitMeters = async (unitId: string) => {
     if (!unitId) return;
-    
+
     setCheckingMeters(true);
     try {
       // Get all meters for this unit
       const meters = await getMeters({ unitId, active: true });
       setUnitMeters(meters);
-      
+
       // Get all services that require meters (water and electric only)
       const allServices = await getAllServices();
-      const servicesRequiringMeter = allServices.filter(s => 
+      const servicesRequiringMeter = allServices.filter(s =>
         s.requiresMeter && ALLOWED_SERVICE_CODES.includes(s.code)
       );
-      
+
       // Find which services are missing meters
       const existingServiceIds = new Set(meters.map(m => m.serviceId));
       const missing = servicesRequiringMeter.filter(service => !existingServiceIds.has(service.id));
-      
+
       setMissingMeterServices(missing);
     } catch (error: any) {
       console.error('Failed to check unit meters:', error);
@@ -711,11 +710,11 @@ export default function ContractManagementPage() {
   // Create missing meters
   const handleCreateMissingMeters = async () => {
     if (!formState.unitId || missingMeterServices.length === 0) return;
-    
+
     setCreatingMissingMeters(true);
     const errors: string[] = [];
     let successCount = 0;
-    
+
     try {
       for (const service of missingMeterServices) {
         try {
@@ -724,7 +723,7 @@ export default function ContractManagementPage() {
             serviceId: service.id,
             installedAt: new Date().toISOString().split('T')[0], // Today's date
           };
-          
+
           await createMeter(meterReq);
           successCount++;
         } catch (err: any) {
@@ -732,14 +731,14 @@ export default function ContractManagementPage() {
           errors.push(`${service.name || service.code}: ${errorMsg}`);
         }
       }
-      
+
       if (successCount > 0) {
         // Reload meters to update the UI
         await checkUnitMeters(formState.unitId);
         setShowCreateMetersConfirm(false);
         setCreateSuccess(`Đã tạo thành công ${successCount} đồng hồ đo${errors.length > 0 ? `. ${errors.length} lỗi.` : ''}`);
       }
-      
+
       if (errors.length > 0 && successCount === 0) {
         setCreateError(`Không thể tạo đồng hồ đo: ${errors.join('; ')}`);
       } else if (errors.length > 0) {
@@ -752,54 +751,132 @@ export default function ContractManagementPage() {
       setCreatingMissingMeters(false);
     }
   };
-  
+
   // Create missing assets
   const handleCreateMissingAssets = async () => {
     if (!formState.unitId || missingAssetTypes.length === 0) return;
-    
+
     setCreatingMissingAssets(true);
     const errors: string[] = [];
     let successCount = 0;
-    
+
     try {
-      // Asset type labels and prefixes (same as asset management)
+      // Asset type labels and prefixes (same as asset management - 25 types)
       const ASSET_TYPE_LABELS: Record<AssetType, string> = {
-        [AssetType.AIR_CONDITIONER]: t('asset.airConditioner'),
-        [AssetType.KITCHEN]: t('asset.kitchen'),
-        [AssetType.WATER_HEATER]: t('asset.waterHeater'),
-        [AssetType.FURNITURE]: t('asset.furniture'),
-        [AssetType.OTHER]: t('asset.other'),
+        // Nhà tắm & Vệ sinh
+        [AssetType.TOILET]: 'Bồn cầu',
+        [AssetType.BATHROOM_SINK]: 'Chậu rửa nhà tắm',
+        [AssetType.WATER_HEATER]: 'Bình nóng lạnh',
+        [AssetType.SHOWER_SYSTEM]: 'Hệ sen vòi nhà tắm',
+        [AssetType.BATHROOM_FAUCET]: 'Vòi chậu rửa',
+        [AssetType.BATHROOM_LIGHT]: 'Đèn nhà tắm',
+        [AssetType.BATHROOM_DOOR]: 'Cửa nhà tắm',
+        [AssetType.BATHROOM_ELECTRICAL]: 'Hệ thống điện nhà vệ sinh',
+        // Phòng khách
+        [AssetType.LIVING_ROOM_DOOR]: 'Cửa phòng khách',
+        [AssetType.LIVING_ROOM_LIGHT]: 'Đèn phòng khách',
+        [AssetType.AIR_CONDITIONER]: 'Điều hòa',
+        [AssetType.INTERNET_SYSTEM]: 'Hệ thống mạng Internet',
+        [AssetType.FAN]: 'Quạt',
+        [AssetType.LIVING_ROOM_ELECTRICAL]: 'Hệ thống điện phòng khách',
+        // Phòng ngủ
+        [AssetType.BEDROOM_ELECTRICAL]: 'Hệ thống điện phòng ngủ',
+        [AssetType.BEDROOM_AIR_CONDITIONER]: 'Điều hòa phòng ngủ',
+        [AssetType.BEDROOM_DOOR]: 'Cửa phòng ngủ',
+        [AssetType.BEDROOM_WINDOW]: 'Cửa sổ phòng ngủ',
+        // Nhà bếp
+        [AssetType.KITCHEN_LIGHT]: 'Hệ thống đèn nhà bếp',
+        [AssetType.KITCHEN_ELECTRICAL]: 'Hệ thống điện nhà bếp',
+        [AssetType.ELECTRIC_STOVE]: 'Bếp điện',
+        [AssetType.KITCHEN_DOOR]: 'Cửa bếp và logia',
+        // Hành lang
+        [AssetType.HALLWAY_LIGHT]: 'Hệ thống đèn hành lang',
+        [AssetType.HALLWAY_ELECTRICAL]: 'Hệ thống điện hành lang',
+        // Khác
+        [AssetType.OTHER]: 'Khác',
       };
-      
+
       const ASSET_TYPE_PREFIX: Record<AssetType, string> = {
-        [AssetType.AIR_CONDITIONER]: 'AC',
-        [AssetType.KITCHEN]: 'KIT',
+        // Nhà tắm & Vệ sinh
+        [AssetType.TOILET]: 'TLT',
+        [AssetType.BATHROOM_SINK]: 'BSK',
         [AssetType.WATER_HEATER]: 'WH',
-        [AssetType.FURNITURE]: 'FUR',
+        [AssetType.SHOWER_SYSTEM]: 'SHW',
+        [AssetType.BATHROOM_FAUCET]: 'BFC',
+        [AssetType.BATHROOM_LIGHT]: 'BLT',
+        [AssetType.BATHROOM_DOOR]: 'BDR',
+        [AssetType.BATHROOM_ELECTRICAL]: 'BEL',
+        // Phòng khách
+        [AssetType.LIVING_ROOM_DOOR]: 'LRD',
+        [AssetType.LIVING_ROOM_LIGHT]: 'LRL',
+        [AssetType.AIR_CONDITIONER]: 'AC',
+        [AssetType.INTERNET_SYSTEM]: 'INT',
+        [AssetType.FAN]: 'FAN',
+        [AssetType.LIVING_ROOM_ELECTRICAL]: 'LRE',
+        // Phòng ngủ
+        [AssetType.BEDROOM_ELECTRICAL]: 'BRE',
+        [AssetType.BEDROOM_AIR_CONDITIONER]: 'BAC',
+        [AssetType.BEDROOM_DOOR]: 'BRD',
+        [AssetType.BEDROOM_WINDOW]: 'BRW',
+        // Nhà bếp
+        [AssetType.KITCHEN_LIGHT]: 'KLT',
+        [AssetType.KITCHEN_ELECTRICAL]: 'KEL',
+        [AssetType.ELECTRIC_STOVE]: 'EST',
+        [AssetType.KITCHEN_DOOR]: 'KDR',
+        // Hành lang
+        [AssetType.HALLWAY_LIGHT]: 'HLT',
+        [AssetType.HALLWAY_ELECTRICAL]: 'HEL',
+        // Khác
         [AssetType.OTHER]: 'OTH',
       };
-      
+
       const ASSET_TYPE_DEFAULT_PRICE: Record<AssetType, number> = {
-        [AssetType.AIR_CONDITIONER]: 8000000,
-        [AssetType.KITCHEN]: 5000000,
+        // Nhà tắm & Vệ sinh
+        [AssetType.TOILET]: 3000000,
+        [AssetType.BATHROOM_SINK]: 1500000,
         [AssetType.WATER_HEATER]: 3000000,
-        [AssetType.FURNITURE]: 2000000,
+        [AssetType.SHOWER_SYSTEM]: 2000000,
+        [AssetType.BATHROOM_FAUCET]: 500000,
+        [AssetType.BATHROOM_LIGHT]: 300000,
+        [AssetType.BATHROOM_DOOR]: 2000000,
+        [AssetType.BATHROOM_ELECTRICAL]: 1000000,
+        // Phòng khách
+        [AssetType.LIVING_ROOM_DOOR]: 3000000,
+        [AssetType.LIVING_ROOM_LIGHT]: 500000,
+        [AssetType.AIR_CONDITIONER]: 8000000,
+        [AssetType.INTERNET_SYSTEM]: 1000000,
+        [AssetType.FAN]: 500000,
+        [AssetType.LIVING_ROOM_ELECTRICAL]: 1500000,
+        // Phòng ngủ
+        [AssetType.BEDROOM_ELECTRICAL]: 1500000,
+        [AssetType.BEDROOM_AIR_CONDITIONER]: 8000000,
+        [AssetType.BEDROOM_DOOR]: 2000000,
+        [AssetType.BEDROOM_WINDOW]: 1500000,
+        // Nhà bếp
+        [AssetType.KITCHEN_LIGHT]: 300000,
+        [AssetType.KITCHEN_ELECTRICAL]: 1000000,
+        [AssetType.ELECTRIC_STOVE]: 3000000,
+        [AssetType.KITCHEN_DOOR]: 2000000,
+        // Hành lang
+        [AssetType.HALLWAY_LIGHT]: 300000,
+        [AssetType.HALLWAY_ELECTRICAL]: 1000000,
+        // Khác
         [AssetType.OTHER]: 1000000,
       };
-      
+
       const unit = unitsState.data.find(u => u.id === formState.unitId);
       if (!unit) {
         setCreateError('Không tìm thấy thông tin căn hộ');
         return;
       }
-      
+
       for (const assetType of missingAssetTypes) {
         // Generate asset code
         const prefix = ASSET_TYPE_PREFIX[assetType];
         const existingAssetsOfType = unitAssets.filter(
           a => a.assetType === assetType && a.assetCode.startsWith(`${prefix}-${unit.code}-`)
         );
-        
+
         let nextNumber = 1;
         if (existingAssetsOfType.length > 0) {
           const numbers = existingAssetsOfType
@@ -808,15 +885,15 @@ export default function ContractManagementPage() {
               return match ? parseInt(match[1], 10) : 0;
             })
             .filter(n => n > 0);
-          
+
           if (numbers.length > 0) {
             nextNumber = Math.max(...numbers) + 1;
           }
         }
-        
+
         const numberStr = nextNumber.toString().padStart(3, '0');
         const assetCode = `${prefix}-${unit.code}-${numberStr}`;
-        
+
         try {
           const payload: CreateAssetRequest = {
             unitId: formState.unitId,
@@ -827,7 +904,7 @@ export default function ContractManagementPage() {
             installedAt: new Date().toISOString().split('T')[0],
             purchasePrice: ASSET_TYPE_DEFAULT_PRICE[assetType],
           };
-          
+
           await createAsset(payload);
           successCount++;
         } catch (error: any) {
@@ -835,7 +912,7 @@ export default function ContractManagementPage() {
           errors.push(`${ASSET_TYPE_LABELS[assetType]}: ${errorMsg}`);
         }
       }
-      
+
       if (successCount > 0) {
         setCreateSuccess(`Đã tạo thành công ${successCount} thiết bị${errors.length > 0 ? `. ${errors.length} lỗi.` : ''}`);
         // Refresh asset list
@@ -843,7 +920,7 @@ export default function ContractManagementPage() {
         // Refresh meter list
         await checkUnitMeters(formState.unitId);
       }
-      
+
       if (errors.length > 0 && successCount === 0) {
         setCreateError(`Không thể tạo thiết bị. Lỗi: ${errors.join('; ')}`);
       }
@@ -886,13 +963,13 @@ export default function ContractManagementPage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    
+
     // Calculate min start date from latest expired RENTAL contract or CANCELLED contract that's still active
     let referenceContract = latestExpiredRentalContract;
     if (!referenceContract && latestActiveCancelledRentalContract) {
       referenceContract = latestActiveCancelledRentalContract;
     }
-    
+
     if (referenceContract && referenceContract.endDate) {
       const referenceEndDate = new Date(referenceContract.endDate);
       referenceEndDate.setHours(0, 0, 0, 0);
@@ -909,7 +986,7 @@ export default function ContractManagementPage() {
       const tomorrowStr = tomorrow.toISOString().split('T')[0];
       setMinStartDate(tomorrowStr);
     }
-    
+
     // Generate contract number
     setGeneratingContractNumber(true);
     try {
@@ -955,24 +1032,24 @@ export default function ContractManagementPage() {
   // Generate auto contract number: HD<unitCode>-<ddmmyy>
   const generateAutoContractNumber = async (unitId?: string): Promise<string> => {
     const targetUnitId = unitId || formState.unitId || selectedUnitId;
-    
+
     if (!targetUnitId) {
       throw new Error('Unit ID is required to generate contract number');
     }
-    
+
     // Find unit code from unitsState
     const unit = unitsState.data.find(u => u.id === targetUnitId);
     if (!unit || !unit.code) {
       throw new Error('Unit code not found');
     }
-    
+
     const unitCode = unit.code.trim();
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = String(now.getFullYear()).slice(-2);
     const datePart = `${day}${month}${year}`;
-    
+
     // Try to get all contracts to check existing numbers
     let existingContracts: ContractSummary[] = [];
     try {
@@ -980,24 +1057,24 @@ export default function ContractManagementPage() {
     } catch (err) {
       console.warn('Could not fetch all contracts for uniqueness check:', err);
     }
-    
+
     // Extract existing numbers with same prefix (HD<unitCode>-<datePart>)
     const prefix = `HD${unitCode}-${datePart}`;
     const existingNumbers = existingContracts
       .map(c => c.contractNumber)
       .filter((num): num is string => num !== null && num.startsWith(prefix));
-    
+
     // If no existing numbers with this prefix, return base format
     if (existingNumbers.length === 0) {
       return prefix;
     }
-    
+
     // If there are existing numbers, check if base format exists
     const baseExists = existingNumbers.some(num => num === prefix);
     if (!baseExists) {
       return prefix;
     }
-    
+
     // If base exists, add numeric suffix (1, 2, 3, ...)
     const existingSuffixes = existingNumbers
       .map(num => {
@@ -1011,14 +1088,14 @@ export default function ContractManagementPage() {
         return -1;
       })
       .filter(n => n >= 0);
-    
+
     // Find next available suffix
     let nextSuffix = 1;
     if (existingSuffixes.length > 0) {
       const maxSuffix = Math.max(...existingSuffixes);
       nextSuffix = maxSuffix + 1;
     }
-    
+
     return `${prefix}-${nextSuffix}`;
   };
 
@@ -1026,7 +1103,7 @@ export default function ContractManagementPage() {
     if (!files || files.length === 0 || !detailState.data) {
       return;
     }
-    
+
     // Validate that all files are images
     const fileArray = Array.from(files);
     const invalidFiles = fileArray.filter(file => !file.type.startsWith('image/'));
@@ -1034,7 +1111,7 @@ export default function ContractManagementPage() {
       setDetailUploadError(t('validation.onlyImagesAllowed') || 'Chỉ được phép tải lên file ảnh');
       return;
     }
-    
+
     setDetailUploadError(null);
     setDetailUploading(true);
     try {
@@ -1042,7 +1119,7 @@ export default function ContractManagementPage() {
       for (const file of fileArray) {
         await uploadNewsImageFile(file, detailState.data!.id);
       }
-      
+
       // Then upload to backend (for compatibility)
       await uploadContractFiles(detailState.data.id, files);
       const refreshed = await fetchContractDetail(detailState.data.id);
@@ -1085,13 +1162,13 @@ export default function ContractManagementPage() {
     } else {
       const startDate = new Date(formState.startDate);
       startDate.setHours(0, 0, 0, 0);
-      
+
       // Check if startDate > endDate of latest expired RENTAL contract or CANCELLED contract that's still active
       let referenceContract = latestExpiredRentalContract;
       if (!referenceContract && latestActiveCancelledRentalContract) {
         referenceContract = latestActiveCancelledRentalContract;
       }
-      
+
       if (referenceContract && referenceContract.endDate) {
         const referenceEndDate = new Date(referenceContract.endDate);
         referenceEndDate.setHours(0, 0, 0, 0);
@@ -1124,7 +1201,7 @@ export default function ContractManagementPage() {
         startDate.setHours(0, 0, 0, 0);
         const endDate = new Date(formState.endDate);
         endDate.setHours(0, 0, 0, 0);
-        
+
         // First check: endDate must be after startDate
         if (endDate <= startDate) {
           errors.endDate = t('validation.endDateAfterStartDate') || 'Ngày kết thúc phải sau ngày bắt đầu';
@@ -1159,9 +1236,9 @@ export default function ContractManagementPage() {
         const hasEndDate = formState.endDate && paymentTerms.includes(
           new Date(formState.endDate).toLocaleDateString('vi-VN').toLowerCase()
         );
-        const hasDateRange = paymentTerms.includes('từ') || paymentTerms.includes('đến') || 
-                            paymentTerms.includes('from') || paymentTerms.includes('to');
-        
+        const hasDateRange = paymentTerms.includes('từ') || paymentTerms.includes('đến') ||
+          paymentTerms.includes('from') || paymentTerms.includes('to');
+
         // Warning (not error) if paymentTerms doesn't mention rental period
         // This is just a suggestion, not a hard requirement
         if (!hasStartDate && !hasEndDate && !hasDateRange) {
@@ -1209,7 +1286,7 @@ export default function ContractManagementPage() {
         setCreateError(t('meterWarning.checking', { defaultValue: 'Đang kiểm tra đồng hồ đo...' }));
         return;
       }
-      
+
       if (missingMeterServices.length > 0) {
         const missingServicesList = missingMeterServices.map(s => s.name || s.code || 'Unknown').join(', ');
         errors.meters = t('validation.metersRequiredForRental', {
@@ -1268,17 +1345,17 @@ export default function ContractManagementPage() {
       let attempts = 0;
       let success = false;
       let contract: ContractDetail | null = null;
-      
+
       while (attempts < 5 && !success) {
         try {
           contract = await createContract(payload);
           success = true;
         } catch (err: any) {
-          if (err?.response?.status === 409 || 
-              err?.response?.data?.message?.includes('already exists') ||
-              err?.response?.data?.message?.includes('duplicate') ||
-              err?.message?.includes('already exists') ||
-              err?.message?.includes('duplicate')) {
+          if (err?.response?.status === 409 ||
+            err?.response?.data?.message?.includes('already exists') ||
+            err?.response?.data?.message?.includes('duplicate') ||
+            err?.message?.includes('already exists') ||
+            err?.message?.includes('duplicate')) {
             // Contract number conflict, regenerate and retry
             attempts++;
             if (attempts < 5) {
@@ -1298,7 +1375,7 @@ export default function ContractManagementPage() {
           }
         }
       }
-      
+
       if (!contract) {
         throw new Error('Failed to create contract after retries');
       }
@@ -1310,7 +1387,7 @@ export default function ContractManagementPage() {
           for (const file of fileArray) {
             await uploadNewsImageFile(file, contract.id);
           }
-          
+
           // Then upload to backend (for compatibility)
           await uploadContractFiles(contract.id, createFiles);
         } catch (fileError: any) {
@@ -1327,20 +1404,20 @@ export default function ContractManagementPage() {
         const services = await getAllServices();
         // Filter to only water and electric services
         const filteredServices = services.filter(s => ALLOWED_SERVICE_CODES.includes(s.code));
-        const waterService = services.find(s => 
-          s.code?.toUpperCase() === 'WATER' || 
+        const waterService = services.find(s =>
+          s.code?.toUpperCase() === 'WATER' ||
           s.name?.toLowerCase().includes('nước') ||
           s.name?.toLowerCase().includes('water')
         );
-        const electricityService = services.find(s => 
-          s.code?.toUpperCase() === 'ELECTRICITY' || 
-          s.code?.toUpperCase() === 'ELECTRIC' || 
+        const electricityService = services.find(s =>
+          s.code?.toUpperCase() === 'ELECTRICITY' ||
+          s.code?.toUpperCase() === 'ELECTRIC' ||
           s.name?.toLowerCase().includes('điện') ||
           s.name?.toLowerCase().includes('electricity')
         );
-        
+
         const meterCreationPromises: Promise<any>[] = [];
-        
+
         if (waterService && waterService.requiresMeter) {
           const waterMeterReq: MeterCreateReq = {
             unitId: payload.unitId,
@@ -1354,7 +1431,7 @@ export default function ContractManagementPage() {
             })
           );
         }
-        
+
         if (electricityService && electricityService.requiresMeter) {
           const electricityMeterReq: MeterCreateReq = {
             unitId: payload.unitId,
@@ -1368,11 +1445,11 @@ export default function ContractManagementPage() {
             })
           );
         }
-        
+
         // Wait for all meter creations to complete (or fail gracefully)
         const results = await Promise.allSettled(meterCreationPromises);
         const successCount = results.filter(r => r.status === 'fulfilled' && r.value !== null).length;
-        
+
         if (successCount > 0) {
           console.log(`✅ Created ${successCount} meter(s) for unit ${payload.unitId}`);
         }
@@ -1414,11 +1491,11 @@ export default function ContractManagementPage() {
     } catch (err: any) {
       const status = err?.response?.status;
       const errorMessage = err?.response?.data?.message || err?.message || '';
-      const isNotFoundError = status === 404 || 
-                              status === 400 ||
-                              errorMessage.toLowerCase().includes('not found') ||
-                              errorMessage.toLowerCase().includes('không tìm thấy');
-      
+      const isNotFoundError = status === 404 ||
+        status === 400 ||
+        errorMessage.toLowerCase().includes('not found') ||
+        errorMessage.toLowerCase().includes('không tìm thấy');
+
       if (isNotFoundError) {
         setDetailState({
           data: null,
@@ -1452,7 +1529,7 @@ export default function ContractManagementPage() {
     }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     return contractsState.data.some((contract) => {
       if (contract.status === 'ACTIVE') {
         // If no endDate, contract is still active
@@ -1484,7 +1561,7 @@ export default function ContractManagementPage() {
     }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const expiredRentals = contractsState.data
       .filter((contract) => {
         // Must be RENTAL type
@@ -1511,7 +1588,7 @@ export default function ContractManagementPage() {
         const dateB = new Date(b.endDate!);
         return dateB.getTime() - dateA.getTime();
       });
-    
+
     return expiredRentals.length > 0 ? expiredRentals[0] : null;
   }, [contractsState.data]);
 
@@ -1522,7 +1599,7 @@ export default function ContractManagementPage() {
     }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const activeCancelledRentals = contractsState.data
       .filter((contract) => {
         // Must be RENTAL type
@@ -1550,7 +1627,7 @@ export default function ContractManagementPage() {
         const dateB = new Date(b.endDate);
         return dateB.getTime() - dateA.getTime();
       });
-    
+
     return activeCancelledRentals.length > 0 ? activeCancelledRentals[0] : null;
   }, [contractsState.data]);
 
@@ -1561,16 +1638,16 @@ export default function ContractManagementPage() {
     if (!selectedUnitId) {
       return false;
     }
-    
+
     // If no contracts at all, allow creating
     if (!contractsState.data || contractsState.data.length === 0) {
       return true;
     }
-    
+
     // Check if there's an ACTIVE contract that's still valid (not expired)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const hasActiveValidContract = contractsState.data.some((contract) => {
       // Only check ACTIVE status contracts (ignore CANCELLED)
       if (contract.status !== 'ACTIVE') {
@@ -1585,7 +1662,7 @@ export default function ContractManagementPage() {
       endDate.setHours(0, 0, 0, 0);
       return endDate > today;
     });
-    
+
     // Can create if there's no active valid contract
     return !hasActiveValidContract;
   }, [selectedUnitId, contractsState.data]);
@@ -1594,22 +1671,22 @@ export default function ContractManagementPage() {
   const getContractDisplayStatus = (contract: ContractSummary) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     // If status is CANCELLED or CANCELED, show as is
     if (contract.status === 'CANCELLED' || contract.status === 'CANCELED') {
       return { label: t('status.cancelled'), className: 'bg-red-100 text-red-700' };
     }
-    
+
     // If status is EXPIRED, show as expired
     if (contract.status === 'EXPIRED') {
       return { label: t('status.expired'), className: 'bg-orange-100 text-orange-700' };
     }
-    
+
     // If status is INACTIVE, show as inactive
     if (contract.status === 'INACTIVE') {
       return { label: t('status.inactive'), className: 'bg-gray-100 text-gray-700' };
     }
-    
+
     // For ACTIVE contracts, check if actually expired based on endDate
     if (contract.status === 'ACTIVE') {
       if (contract.endDate) {
@@ -1623,7 +1700,7 @@ export default function ContractManagementPage() {
       // Contract is truly active
       return { label: t('status.active'), className: 'bg-[#C7E8D2] text-[#02542D]' };
     }
-    
+
     // Default: show status as is
     return { label: contract.status ?? t('status.unknown'), className: 'bg-gray-200 text-gray-700' };
   };
@@ -1633,7 +1710,7 @@ export default function ContractManagementPage() {
     if (!contractsState.data || contractsState.data.length === 0) {
       return [];
     }
-    
+
     return contractsState.data
       .filter((contract) => {
         // Show all CANCELLED contracts (regardless of endDate)
@@ -1675,7 +1752,7 @@ export default function ContractManagementPage() {
     }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     return contractsState.data
       .filter((contract) => {
         // Exclude all CANCELLED contracts (they go to unavailable tab)
@@ -1803,11 +1880,10 @@ export default function ContractManagementPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('active')}
-                    className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium transition ${
-                      activeTab === 'active'
-                        ? 'border-[#14AE5C] text-[#02542D]'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                    }`}
+                    className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium transition ${activeTab === 'active'
+                      ? 'border-[#14AE5C] text-[#02542D]'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                      }`}
                   >
                     {t('tabs.active')} ({activeContracts.length})
                   </button>
@@ -1815,11 +1891,10 @@ export default function ContractManagementPage() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('unavailable')}
-                      className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium transition ${
-                        activeTab === 'unavailable'
-                          ? 'border-[#14AE5C] text-[#02542D]'
-                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                      }`}
+                      className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium transition ${activeTab === 'unavailable'
+                        ? 'border-[#14AE5C] text-[#02542D]'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                        }`}
                     >
                       {t('tabs.unavailable', { defaultValue: 'Unavailable Contracts' })} ({unavailableContracts.length})
                     </button>
@@ -1841,9 +1916,9 @@ export default function ContractManagementPage() {
             ) : filteredContracts.length === 0 ? (
               <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-600">
                 {selectedUnitId
-                  ? (activeTab === 'active' 
-                      ? t('empty.noActiveContracts') 
-                      : t('empty.noUnavailableContracts', { defaultValue: 'This apartment currently has no unavailable contracts (cancelled or expired).' }))
+                  ? (activeTab === 'active'
+                    ? t('empty.noActiveContracts')
+                    : t('empty.noUnavailableContracts', { defaultValue: 'This apartment currently has no unavailable contracts (cancelled or expired).' }))
                   : t('empty.selectToView')}
               </div>
             ) : (
@@ -1969,13 +2044,13 @@ export default function ContractManagementPage() {
                         {t('loading.generatingContractNumber')}
                       </div>
                     ) : (
-                    <input
-                      type="text"
-                      value={formState.contractNumber}
-                      readOnly
+                      <input
+                        type="text"
+                        value={formState.contractNumber}
+                        readOnly
                         className="rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-[#02542D] shadow-sm cursor-not-allowed"
                         required
-                    />
+                      />
                     )}
                     {formErrors.contractNumber && (
                       <span className="mt-1 text-xs text-red-500">{formErrors.contractNumber}</span>
@@ -2029,11 +2104,10 @@ export default function ContractManagementPage() {
 
                 {/* Meter check warning/error */}
                 {formState.unitId && (
-                  <div className={`rounded-lg border p-4 ${
-                    formState.contractType === 'RENTAL' && missingMeterServices.length > 0 && !checkingMeters
-                      ? 'border-red-300 bg-red-50'
-                      : 'border-blue-300 bg-blue-50'
-                  }`}>
+                  <div className={`rounded-lg border p-4 ${formState.contractType === 'RENTAL' && missingMeterServices.length > 0 && !checkingMeters
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-blue-300 bg-blue-50'
+                    }`}>
                     {checkingMeters ? (
                       <div className={`text-sm ${formState.contractType === 'RENTAL' ? 'text-red-800' : 'text-blue-800'}`}>
                         {t('meterWarning.checking', { defaultValue: 'Đang kiểm tra đồng hồ đo...' })}
@@ -2041,9 +2115,8 @@ export default function ContractManagementPage() {
                     ) : missingMeterServices.length > 0 ? (
                       <div>
                         <div className="flex items-start">
-                          <svg className={`h-5 w-5 mt-0.5 mr-2 flex-shrink-0 ${
-                            formState.contractType === 'RENTAL' ? 'text-red-600' : 'text-blue-600'
-                          }`} viewBox="0 0 20 20" fill="currentColor">
+                          <svg className={`h-5 w-5 mt-0.5 mr-2 flex-shrink-0 ${formState.contractType === 'RENTAL' ? 'text-red-600' : 'text-blue-600'
+                            }`} viewBox="0 0 20 20" fill="currentColor">
                             {formState.contractType === 'RENTAL' ? (
                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                             ) : (
@@ -2051,23 +2124,21 @@ export default function ContractManagementPage() {
                             )}
                           </svg>
                           <div className="flex-1">
-                            <h3 className={`text-sm font-medium mb-1 ${
-                              formState.contractType === 'RENTAL' ? 'text-red-800' : 'text-blue-800'
-                            }`}>
-                              {formState.contractType === 'RENTAL' 
+                            <h3 className={`text-sm font-medium mb-1 ${formState.contractType === 'RENTAL' ? 'text-red-800' : 'text-blue-800'
+                              }`}>
+                              {formState.contractType === 'RENTAL'
                                 ? t('meterWarning.requiredForRental', {
-                                    count: missingMeterServices.length,
-                                    defaultValue: `BẮT BUỘC: Thiếu ${missingMeterServices.length} đồng hồ đo cho hợp đồng cho thuê`
-                                  })
-                                : t('meterWarning.missingTypes', { 
-                                    count: missingMeterServices.length,
-                                    defaultValue: `Thiếu ${missingMeterServices.length} đồng hồ đo`
-                                  })
+                                  count: missingMeterServices.length,
+                                  defaultValue: `BẮT BUỘC: Thiếu ${missingMeterServices.length} đồng hồ đo cho hợp đồng cho thuê`
+                                })
+                                : t('meterWarning.missingTypes', {
+                                  count: missingMeterServices.length,
+                                  defaultValue: `Thiếu ${missingMeterServices.length} đồng hồ đo`
+                                })
                               }
                             </h3>
-                            <p className={`text-sm mb-3 ${
-                              formState.contractType === 'RENTAL' ? 'text-red-700' : 'text-blue-700'
-                            }`}>
+                            <p className={`text-sm mb-3 ${formState.contractType === 'RENTAL' ? 'text-red-700' : 'text-blue-700'
+                              }`}>
                               {t('meterWarning.missingList', {
                                 list: missingMeterServices.map(s => s.name || s.code || 'Unknown').join(', '),
                                 defaultValue: `Cần thêm đồng hồ đo: ${missingMeterServices.map(s => s.name || s.code || 'Unknown').join(', ')}`
@@ -2084,13 +2155,12 @@ export default function ContractManagementPage() {
                               type="button"
                               onClick={() => setShowCreateMetersConfirm(true)}
                               disabled={creatingMissingMeters}
-                              className={`px-4 py-2 text-white text-sm rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed ${
-                                formState.contractType === 'RENTAL'
-                                  ? 'bg-red-600 hover:bg-red-700'
-                                  : 'bg-blue-600 hover:bg-blue-700'
-                              }`}
+                              className={`px-4 py-2 text-white text-sm rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed ${formState.contractType === 'RENTAL'
+                                ? 'bg-red-600 hover:bg-red-700'
+                                : 'bg-blue-600 hover:bg-blue-700'
+                                }`}
                             >
-                              {t('meterWarning.createMissing', { 
+                              {t('meterWarning.createMissing', {
                                 count: missingMeterServices.length,
                                 defaultValue: `Tạo ${missingMeterServices.length} đồng hồ đo`
                               })}
@@ -2108,7 +2178,7 @@ export default function ContractManagementPage() {
                     )}
                   </div>
                 )}
-                
+
                 {/* Show meter validation error if exists */}
                 {formErrors.meters && (
                   <div className="rounded-lg border border-red-300 bg-red-50 p-3">
@@ -2121,7 +2191,7 @@ export default function ContractManagementPage() {
                     <label className="text-sm font-medium text-[#02542D]">{t('fields.contractType')}</label>
                     <select
                       value={formState.contractType ?? 'RENTAL'}
-                        onChange={(event) => {
+                      onChange={(event) => {
                         const nextType = event.target.value as CreateContractPayload['contractType'];
                         setFormState((prev) => ({
                           ...prev,
@@ -2260,8 +2330,8 @@ export default function ContractManagementPage() {
                           {formState.startDate && formState.endDate && rentBreakdown && (
                             <div className="mt-2 space-y-1 text-xs text-gray-600">
                               <p className="font-medium">
-                                {t('rentCalculation.breakdown', { 
-                                  defaultValue: 'Chi tiết tính toán:' 
+                                {t('rentCalculation.breakdown', {
+                                  defaultValue: 'Chi tiết tính toán:'
                                 }) || 'Chi tiết tính toán:'}
                               </p>
                               <ul className="list-disc list-inside space-y-0.5 ml-2">
@@ -2353,19 +2423,19 @@ export default function ContractManagementPage() {
                                 const end = new Date(formState.endDate!);
                                 const startStr = start.toLocaleDateString('vi-VN');
                                 const endStr = end.toLocaleDateString('vi-VN');
-                                
+
                                 // Calculate number of months
                                 const months = Math.ceil(
                                   (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30)
                                 );
-                                
+
                                 let suggestedTerms = '';
                                 if (months <= 1) {
                                   suggestedTerms = t('paymentTerms.oneTimePayment', { start: startStr, end: endStr });
                                 } else {
                                   suggestedTerms = t('paymentTerms.monthlyPayment', { start: startStr, end: endStr, months });
                                 }
-                                
+
                                 setFieldValue('paymentTerms', suggestedTerms);
                               }}
                               className="whitespace-nowrap rounded-lg border border-[#14AE5C] bg-white px-3 py-2 text-sm font-medium text-[#02542D] shadow-sm transition hover:bg-[#E9F4EE]"
@@ -2461,7 +2531,7 @@ export default function ContractManagementPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={createSubmitting || missingAssetTypes.length > 0 || missingMeterServices.length > 0  }
+                    disabled={createSubmitting || missingAssetTypes.length > 0 || missingMeterServices.length > 0}
                     className="inline-flex items-center justify-center rounded-lg bg-[#14AE5C] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c793f] disabled:cursor-not-allowed disabled:bg-[#A3D9B1]"
                   >
                     {createSubmitting ? t('buttons.creating') : t('buttons.create')}
@@ -2499,7 +2569,7 @@ export default function ContractManagementPage() {
                 {detailState.error && (
                   <div className="space-y-4">
                     <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                      {detailState.error === 'contractNotFound' 
+                      {detailState.error === 'contractNotFound'
                         ? 'Không tìm thấy hợp đồng. Hợp đồng có thể đã bị xóa hoặc không tồn tại.'
                         : detailState.error}
                     </div>
@@ -2708,7 +2778,7 @@ export default function ContractManagementPage() {
                                       type="application/pdf"
                                       className="h-96 w-full"
                                     >
-                                  <p className="p-4 text-sm text-gray-500">
+                                      <p className="p-4 text-sm text-gray-500">
                                         {t('detail.cannotDisplayPdf')}{' '}
                                         <a
                                           href={displayUrl}
@@ -2901,12 +2971,12 @@ export default function ContractManagementPage() {
                   disabled={creatingMissingMeters}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
                 >
-                  {creatingMissingMeters 
+                  {creatingMissingMeters
                     ? t('meterWarning.creating', { defaultValue: 'Đang tạo...' })
-                    : t('meterWarning.confirmCreate', { 
-                        count: missingMeterServices.length,
-                        defaultValue: `Xác nhận tạo ${missingMeterServices.length} đồng hồ đo`
-                      })
+                    : t('meterWarning.confirmCreate', {
+                      count: missingMeterServices.length,
+                      defaultValue: `Xác nhận tạo ${missingMeterServices.length} đồng hồ đo`
+                    })
                   }
                 </button>
               </div>

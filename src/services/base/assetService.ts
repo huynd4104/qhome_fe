@@ -1,5 +1,5 @@
 import axios from "@/src/lib/axios";
-import { Asset, AssetType, CreateAssetRequest, UpdateAssetRequest } from "@/src/types/asset";
+import { Asset, AssetType, RoomType, CreateAssetRequest, UpdateAssetRequest } from "@/src/types/asset";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8081';
 
@@ -22,8 +22,19 @@ export async function getAssetById(id: string): Promise<Asset> {
 /**
  * GET /api/assets/unit/:unitId
  */
-export async function getAssetsByUnit(unitId: string): Promise<Asset[]> {
-  const response = await axios.get(`${BASE_URL}/api/assets/unit/${unitId}`);
+export async function getAssetsByUnit(unitId: string, roomType?: RoomType): Promise<Asset[]> {
+  const params: Record<string, string> = {};
+  if (roomType) params.roomType = roomType;
+
+  const response = await axios.get(`${BASE_URL}/api/assets/unit/${unitId}`, { params });
+  return response.data;
+}
+
+/**
+ * GET /api/assets/unit/:unitId/grouped-by-room
+ */
+export async function getAssetsGroupedByRoom(unitId: string): Promise<Record<RoomType, Asset[]>> {
+  const response = await axios.get(`${BASE_URL}/api/assets/unit/${unitId}/grouped-by-room`);
   return response.data;
 }
 
@@ -86,7 +97,7 @@ export async function exportAssetsToExcel(
   if (buildingId) params.buildingId = buildingId;
   if (unitId) params.unitId = unitId;
   if (assetType) params.assetType = assetType;
-  
+
   const response = await axios.get(`${BASE_URL}/api/assets/export`, {
     params,
     responseType: 'blob',
@@ -94,9 +105,5 @@ export async function exportAssetsToExcel(
   });
   return response.data as Blob;
 }
-
-
-
-
 
 
