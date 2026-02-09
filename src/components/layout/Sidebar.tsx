@@ -1,17 +1,43 @@
 "use client";
-import React, {useState, useMemo} from "react";
+import React, { useState, useMemo, Fragment } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import {usePathname} from "next/navigation";
-import {useAuth} from "@/src/contexts/AuthContext";
-import {useTranslations} from "next-intl";
-import DropdownArrow from "@/src/assets/DropdownArrow.svg";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/src/contexts/AuthContext";
+import { useTranslations } from "next-intl";
+import {
+  LayoutDashboard,
+  Users,
+  UserPlus,
+  Building2,
+  Home,
+  FileText,
+  Car,
+  CreditCard,
+  Wrench,
+  Settings,
+  Receipt,
+  TrendingUp,
+  Lightbulb,
+  Banknote,
+  Newspaper,
+  Bell,
+  Mail,
+  Search,
+  Menu,
+  ChevronDown,
+  X,
+  ClipboardList,
+  CheckSquare,
+  UserCheck,
+  UserCog,
+  Briefcase
+} from "lucide-react";
 
 type SidebarVariant = "admin" | "tenant-owner" | "technician" | "supporter" | "accountant";
 
 type NavItem = {
   href: string;
-  icon: string;
+  icon: React.ReactNode;
   labelKey?: string;
   label?: string;
 };
@@ -21,69 +47,71 @@ type NavSection = {
   items: NavItem[];
 };
 
+const ICON_SIZE = 18;
+
 const adminSections: NavSection[] = [
   {
     titleKey: "overview",
     items: [
-      {href: "/dashboard", labelKey: "dashboard", icon: "📊"},
+      { href: "/dashboard", labelKey: "dashboard", icon: <LayoutDashboard size={ICON_SIZE} /> },
     ],
   },
   {
     titleKey: "accounts",
     items: [
-      {href: "/accountList", labelKey: "accountList", icon: "👥"},
-      {href: "/accountNewStaff", labelKey: "createStaffAccount", icon: "🧑‍💼"},
-      {href: "/accountNewRe", labelKey: "createResidentAccount", icon: "🏘️"},
+      { href: "/accountList", labelKey: "accountList", icon: <Users size={ICON_SIZE} /> },
+      { href: "/accountNewStaff", labelKey: "createStaffAccount", icon: <UserPlus size={ICON_SIZE} /> },
+      { href: "/accountNewRe", labelKey: "createResidentAccount", icon: <UserPlus size={ICON_SIZE} /> },
     ],
   },
   {
     titleKey: "buildingsAndResidents",
     items: [
-      {href: "/base/building/buildingList", labelKey: "buildingManagement", icon: "🏢"},
-      {href: "/base/unit/unitList", labelKey: "unitManagement", icon: "🏠"},
-      {href: "/base/residentView", labelKey: "residentList", icon: "👨‍👩‍👧‍👦"},
-      {href: "/base/regisresiView", labelKey: "approveResidentAccount", icon: "📝"},
-      {href: "/base/household/householdMemberRequests", labelKey: "approveFamilyMember", icon: "👪"},
-      {href: "/base/contract/contracts", labelKey: "unitContracts", icon: "📄"},
-      {href: "/base/contract/rental-review", labelKey: "rentalContractReview", icon: "📋"},
-      {href: "/base/vehicles/vehicleAll", labelKey: "vehicleManagement", icon: "🚗"},
-      {href: "/base/cards/elevator", labelKey: "elevatorCard", icon: "🛗"},
-      {href: "/base/cards/resident", labelKey: "residentCard", icon: "🔑"},
-      {href: "/base/cards/approved", labelKey: "approvedCard", icon: "✅"},
-      {href: "/base/cards/pricing", labelKey: "cardPricingManagement", icon: "💰"},
+      { href: "/base/building/buildingList", labelKey: "buildingManagement", icon: <Building2 size={ICON_SIZE} /> },
+      { href: "/base/unit/unitList", labelKey: "unitManagement", icon: <Home size={ICON_SIZE} /> },
+      { href: "/base/residentView", labelKey: "residentList", icon: <Users size={ICON_SIZE} /> },
+      { href: "/base/regisresiView", labelKey: "approveResidentAccount", icon: <UserCheck size={ICON_SIZE} /> },
+      { href: "/base/household/householdMemberRequests", labelKey: "approveFamilyMember", icon: <UserCog size={ICON_SIZE} /> },
+      { href: "/base/contract/contracts", labelKey: "unitContracts", icon: <FileText size={ICON_SIZE} /> },
+      { href: "/base/contract/rental-review", labelKey: "rentalContractReview", icon: <ClipboardList size={ICON_SIZE} /> },
+      { href: "/base/vehicles/vehicleAll", labelKey: "vehicleManagement", icon: <Car size={ICON_SIZE} /> },
+      { href: "/base/cards/elevator", labelKey: "elevatorCard", icon: <CreditCard size={ICON_SIZE} /> },
+      { href: "/base/cards/resident", labelKey: "residentCard", icon: <CreditCard size={ICON_SIZE} /> },
+      { href: "/base/cards/approved", labelKey: "approvedCard", icon: <CheckSquare size={ICON_SIZE} /> },
+      { href: "/base/cards/pricing", labelKey: "cardPricingManagement", icon: <Banknote size={ICON_SIZE} /> },
     ],
   },
   {
     titleKey: "assetManagement",
     items: [
-      {href: "/base/asset-management", labelKey: "assetManagement", icon: "🔧"},
-      {href: "/base/meter-management", labelKey: "meterManagement", icon: "⚙️"},
+      { href: "/base/asset-management", labelKey: "assetManagement", icon: <Wrench size={ICON_SIZE} /> },
+      { href: "/base/meter-management", labelKey: "meterManagement", icon: <Settings size={ICON_SIZE} /> },
     ],
   },
   {
     titleKey: "services",
     items: [
-      {href: "/base/serviceCateList", labelKey: "serviceCategories", icon: "🗂️"},
-      {href: "/base/serviceList", labelKey: "serviceList", icon: "🧾"},
-      {href: "/base/serviceNew", labelKey: "createService", icon: "➕"}
+      { href: "/base/serviceCateList", labelKey: "serviceCategories", icon: <Briefcase size={ICON_SIZE} /> },
+      { href: "/base/serviceList", labelKey: "serviceList", icon: <Receipt size={ICON_SIZE} /> },
+      { href: "/base/serviceNew", labelKey: "createService", icon: <FileText size={ICON_SIZE} /> }
     ],
   },
   {
     titleKey: "waterElectric",
     items: [
-      {href: "/base/readingCycles", labelKey: "readingCycles", icon: "📈"},
-      {href: "/base/readingAssign", labelKey: "assignReading", icon: "📝"},
-      {href: "/base/billingCycles", labelKey: "billingCycles", icon: "💡"},
-      {href: "/base/finance/invoices", labelKey: "incomeExpenseManagement", icon: "💰"},
-      {href: "/base/finance/pricing-tiers", labelKey: "pricingTiersManagement", icon: "📊"},
+      { href: "/base/readingCycles", labelKey: "readingCycles", icon: <TrendingUp size={ICON_SIZE} /> },
+      { href: "/base/readingAssign", labelKey: "assignReading", icon: <ClipboardList size={ICON_SIZE} /> },
+      { href: "/base/billingCycles", labelKey: "billingCycles", icon: <Lightbulb size={ICON_SIZE} /> },
+      { href: "/base/finance/invoices", labelKey: "incomeExpenseManagement", icon: <Banknote size={ICON_SIZE} /> },
+      { href: "/base/finance/pricing-tiers", labelKey: "pricingTiersManagement", icon: <Banknote size={ICON_SIZE} /> },
     ],
   },
   {
     titleKey: "residentInteraction",
     items: [
-      {href: "/customer-interaction/new/newList", labelKey: "news", icon: "📰"},
-      {href: "/customer-interaction/notiList", labelKey: "notifications", icon: "🔔"},
-      {href: "/customer-interaction/request", labelKey: "supportRequests", icon: "📨"},
+      { href: "/customer-interaction/new/newList", labelKey: "news", icon: <Newspaper size={ICON_SIZE} /> },
+      { href: "/customer-interaction/notiList", labelKey: "notifications", icon: <Bell size={ICON_SIZE} /> },
+      { href: "/customer-interaction/request", labelKey: "supportRequests", icon: <Mail size={ICON_SIZE} /> },
     ],
   },
 ];
@@ -92,23 +120,23 @@ const accounttantSections: NavSection[] = [
   {
     titleKey: "overview",
     items: [
-      {href: "/dashboard", labelKey: "dashboard", icon: "📊"},
+      { href: "/dashboard", labelKey: "dashboard", icon: <LayoutDashboard size={ICON_SIZE} /> },
     ],
   },
   {
     titleKey: "waterElectric",
     items: [
-      {href: "/base/readingCycles", labelKey: "readingCycles", icon: "📈"},
-      {href: "/base/billingCycles", labelKey: "billingCycles", icon: "💡"},
-      {href: "/base/finance/invoices", labelKey: "incomeExpenseManagement", icon: "💰"},
-      {href: "/base/finance/pricing-tiers", labelKey: "pricingTiersManagement", icon: "📊"},
+      { href: "/base/readingCycles", labelKey: "readingCycles", icon: <TrendingUp size={ICON_SIZE} /> },
+      { href: "/base/billingCycles", labelKey: "billingCycles", icon: <Lightbulb size={ICON_SIZE} /> },
+      { href: "/base/finance/invoices", labelKey: "incomeExpenseManagement", icon: <Banknote size={ICON_SIZE} /> },
+      { href: "/base/finance/pricing-tiers", labelKey: "pricingTiersManagement", icon: <Banknote size={ICON_SIZE} /> },
     ],
   },
   {
     titleKey: "residentInteraction",
     items: [
-      {href: "/customer-interaction/new/newList", labelKey: "news", icon: "📰"},
-      {href: "/customer-interaction/notiList", labelKey: "notifications", icon: "🔔"},
+      { href: "/customer-interaction/new/newList", labelKey: "news", icon: <Newspaper size={ICON_SIZE} /> },
+      { href: "/customer-interaction/notiList", labelKey: "notifications", icon: <Bell size={ICON_SIZE} /> },
     ],
   },
 ];
@@ -117,14 +145,14 @@ const supportSections: NavSection[] = [
   {
     titleKey: "overview",
     items: [
-      {href: "/dashboard", labelKey: "dashboard", icon: "📊"},
+      { href: "/dashboard", labelKey: "dashboard", icon: <LayoutDashboard size={ICON_SIZE} /> },
     ],
   },
   {
     titleKey: "residentInteraction",
     items: [
-      {href: "/customer-interaction/new/newList", labelKey: "news", icon: "📰"},
-      {href: "/customer-interaction/notiList", labelKey: "notifications", icon: "🔔"},
+      { href: "/customer-interaction/new/newList", labelKey: "news", icon: <Newspaper size={ICON_SIZE} /> },
+      { href: "/customer-interaction/notiList", labelKey: "notifications", icon: <Bell size={ICON_SIZE} /> },
     ],
   },
 ];
@@ -133,27 +161,27 @@ const technicianSections: NavSection[] = [
   {
     titleKey: "overview",
     items: [
-      {href: "/dashboard", labelKey: "dashboard", icon: "📊"},
+      { href: "/dashboard", labelKey: "dashboard", icon: <LayoutDashboard size={ICON_SIZE} /> },
     ],
   },
   {
     titleKey: "services",
     items: [
-      {href: "/base/asset-inspection-assignments", labelKey: "assetInspectionAssignments", icon: "🔍"},
+      { href: "/base/asset-inspection-assignments", labelKey: "assetInspectionAssignments", icon: <Search size={ICON_SIZE} /> },
     ],
   },
   {
     titleKey: "waterElectric",
     items: [
-      {href: "/base/showAssign", labelKey: "taskList", icon: "🧾"},
+      { href: "/base/showAssign", labelKey: "taskList", icon: <ClipboardList size={ICON_SIZE} /> },
     ],
   },
   {
     titleKey: "residentInteraction",
     items: [
-      {href: "/customer-interaction/new/newList", labelKey: "news", icon: "📰"},
-      {href: "/customer-interaction/notiList", labelKey: "notifications", icon: "🔔"},
-      {href: "/customer-interaction/request", labelKey: "supportRequests", icon: "📨"},
+      { href: "/customer-interaction/new/newList", labelKey: "news", icon: <Newspaper size={ICON_SIZE} /> },
+      { href: "/customer-interaction/notiList", labelKey: "notifications", icon: <Bell size={ICON_SIZE} /> },
+      { href: "/customer-interaction/request", labelKey: "supportRequests", icon: <Mail size={ICON_SIZE} /> },
     ],
   },
 ];
@@ -162,14 +190,14 @@ const tenantOwnerSections: NavSection[] = [
   {
     titleKey: "overview",
     items: [
-      {href: "/tenant-owner", labelKey: "home", icon: "🏠"},
+      { href: "/tenant-owner", labelKey: "home", icon: <Home size={ICON_SIZE} /> },
     ],
   },
   {
     titleKey: "management",
     items: [
-      {href: "/tenant-owner/buildings", labelKey: "buildings", icon: "🏢"},
-      {href: "/tenant-owner/employees", labelKey: "employees", icon: "👥"},
+      { href: "/tenant-owner/buildings", labelKey: "buildings", icon: <Building2 size={ICON_SIZE} /> },
+      { href: "/tenant-owner/employees", labelKey: "employees", icon: <Users size={ICON_SIZE} /> },
     ],
   },
 ];
@@ -186,10 +214,11 @@ interface SidebarProps {
   variant?: SidebarVariant;
 }
 
-export default function Sidebar({variant = "admin"}: SidebarProps) {
+export default function Sidebar({ variant = "admin" }: SidebarProps) {
   const pathname = usePathname();
-  const {user} = useAuth();
+  const { user } = useAuth();
   const t = useTranslations('Sidebar');
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const normalizedRoles = user?.roles?.map(role => role.toLowerCase()) ?? [];
 
@@ -200,10 +229,10 @@ export default function Sidebar({variant = "admin"}: SidebarProps) {
         : normalizedRoles.includes("technician")
           ? "technician"
           : normalizedRoles.includes("supporter")
-          ? "supporter"
-          : normalizedRoles.includes("accountant")
-            ? "accountant"
-          : "admin"
+            ? "supporter"
+            : normalizedRoles.includes("accountant")
+              ? "accountant"
+              : "admin"
       : variant;
 
   const sections = menuConfig[resolvedVariant];
@@ -259,6 +288,9 @@ export default function Sidebar({variant = "admin"}: SidebarProps) {
         return newSet;
       });
     }
+
+    // Auto-close mobile menu on route change
+    setMobileOpen(false);
   }, [resolvedVariant, pathname, sections]);
 
   const toggleSection = (sectionKey: string) => {
@@ -274,52 +306,79 @@ export default function Sidebar({variant = "admin"}: SidebarProps) {
   };
 
   return (
-    <aside className="w-60 hidden md:flex flex-col border-r border-slate-200 bg-white fixed h-screen max-h-screen overflow-hidden z-50">
-      <nav className="p-3 space-y-6 overflow-y-auto overflow-x-hidden flex-1 min-h-0 max-h-full">
-        {sections.map((section) => {
-          const isCollapsed = collapsedSections.has(section.titleKey);
-          return (
-            <div key={section.titleKey} className="space-y-2">
-              <button
-                onClick={() => toggleSection(section.titleKey)}
-                className="w-full flex items-center justify-between px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <span>{t(section.titleKey)}</span>
-                <Image
-                  src={DropdownArrow}
-                  alt="Toggle"
-                  width={12}
-                  height={12}
-                  className={`transition-transform ${isCollapsed ? "rotate-180" : ""}`}
-                />
-              </button>
-              {!isCollapsed && (
-                <div className="space-y-1">
-                  {section.items.map((item: NavItem) => {
-                    const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                          active ? "bg-[#6B9B6E] text-white" : "text-slate-700 hover:bg-slate-100"
-                        }`}
-                      >
-                        <span aria-hidden className="w-5 text-center flex items-center justify-center">
-                          {item.icon}
-                        </span>
-                        <span className="truncate">
-                          {item.labelKey ? t(item.labelKey) : item.label ?? item.href}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </nav>
-    </aside>
+    <Fragment>
+      {/* Mobile Menu Toggle Button */}
+      <button
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="fixed top-[72px] left-4 z-[60] p-2 bg-white rounded-lg shadow-md border border-slate-200 text-slate-600 md:hidden hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+        aria-label="Toggle Menu"
+      >
+        {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Overlay Background for Mobile */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Content */}
+      <aside
+        className={`
+          fixed top-16 left-0 h-[calc(100vh-64px)] w-64 bg-white border-r border-slate-200 flex flex-col z-40 transition-transform duration-300 ease-in-out shadow-2xl shadow-slate-200/50 md:shadow-none
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+          md:flex
+        `}
+      >
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-6">
+          {sections.map((section) => {
+            const isCollapsed = collapsedSections.has(section.titleKey);
+            return (
+              <div key={section.titleKey} className="space-y-1">
+                <button
+                  onClick={() => toggleSection(section.titleKey)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-emerald-600 transition-colors group"
+                >
+                  <span className="group-hover:translate-x-0.5 transition-transform duration-200">{t(section.titleKey)}</span>
+                  <ChevronDown
+                    size={14}
+                    className={`text-slate-300 transition-transform duration-200 group-hover:text-emerald-500 ${isCollapsed ? "rotate-90" : ""}`}
+                  />
+                </button>
+                {!isCollapsed && (
+                  <div className="space-y-1 animate-in slide-in-from-top-1 duration-200">
+                    {section.items.map((item: NavItem) => {
+                      const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={`
+                            flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                            ${active
+                              ? "bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-100"
+                              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            }
+                          `}
+                        >
+                          <span className={`${active ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600"}`}>
+                            {item.icon}
+                          </span>
+                          <span className="truncate">
+                            {item.labelKey ? t(item.labelKey) : item.label ?? item.href}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+      </aside>
+    </Fragment>
   );
 }
