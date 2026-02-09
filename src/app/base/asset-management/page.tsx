@@ -6,6 +6,7 @@ import { useNotifications } from '@/src/hooks/useNotifications';
 import {
   Asset,
   AssetType,
+  RoomType,
   CreateAssetRequest,
   UpdateAssetRequest,
 } from '@/src/types/asset';
@@ -29,6 +30,7 @@ interface AssetFormState {
   id?: string;
   unitId: string;
   assetType: AssetType;
+  roomType?: RoomType;
   assetCode: string;
   name: string;
   active: boolean;
@@ -39,6 +41,7 @@ interface AssetFormState {
 const EMPTY_FORM: AssetFormState = {
   unitId: '',
   assetType: AssetType.AIR_CONDITIONER,
+  roomType: RoomType.LIVING_ROOM,
   assetCode: '',
   name: '',
   active: true,
@@ -46,36 +49,159 @@ const EMPTY_FORM: AssetFormState = {
   purchasePrice: null,
 };
 
+// Labels tiếng Việt cho RoomType
+const ROOM_TYPE_LABELS: Record<RoomType, string> = {
+  [RoomType.BATHROOM]: 'Nhà tắm & Vệ sinh',
+  [RoomType.LIVING_ROOM]: 'Phòng khách',
+  [RoomType.BEDROOM]: 'Phòng ngủ',
+  [RoomType.KITCHEN]: 'Nhà bếp',
+  [RoomType.HALLWAY]: 'Hành lang',
+};
+
+// Labels tiếng Việt cho AssetType (24 loại)
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
+  // Nhà tắm & Vệ sinh
+  [AssetType.TOILET]: 'Bồn cầu',
+  [AssetType.BATHROOM_SINK]: 'Chậu rửa nhà tắm',
+  [AssetType.WATER_HEATER]: 'Bình nóng lạnh',
+  [AssetType.SHOWER_SYSTEM]: 'Hệ sen vòi nhà tắm',
+  [AssetType.BATHROOM_FAUCET]: 'Vòi chậu rửa',
+  [AssetType.BATHROOM_LIGHT]: 'Đèn nhà tắm',
+  [AssetType.BATHROOM_DOOR]: 'Cửa nhà tắm',
+  [AssetType.BATHROOM_ELECTRICAL]: 'Hệ thống điện nhà vệ sinh',
+  // Phòng khách
+  [AssetType.LIVING_ROOM_DOOR]: 'Cửa phòng khách',
+  [AssetType.LIVING_ROOM_LIGHT]: 'Đèn phòng khách',
   [AssetType.AIR_CONDITIONER]: 'Điều hòa',
-  [AssetType.KITCHEN]: 'Bếp',
-  [AssetType.WATER_HEATER]: 'Nóng lạnh',
-  [AssetType.FURNITURE]: 'Nội thất',
+  [AssetType.INTERNET_SYSTEM]: 'Hệ thống mạng Internet',
+  [AssetType.FAN]: 'Quạt',
+  [AssetType.LIVING_ROOM_ELECTRICAL]: 'Hệ thống điện phòng khách',
+  // Phòng ngủ
+  [AssetType.BEDROOM_ELECTRICAL]: 'Hệ thống điện phòng ngủ',
+  [AssetType.BEDROOM_AIR_CONDITIONER]: 'Điều hòa phòng ngủ',
+  [AssetType.BEDROOM_DOOR]: 'Cửa phòng ngủ',
+  [AssetType.BEDROOM_WINDOW]: 'Cửa sổ phòng ngủ',
+  // Nhà bếp
+  [AssetType.KITCHEN_LIGHT]: 'Hệ thống đèn nhà bếp',
+  [AssetType.KITCHEN_ELECTRICAL]: 'Hệ thống điện nhà bếp',
+  [AssetType.ELECTRIC_STOVE]: 'Bếp điện',
+  [AssetType.KITCHEN_DOOR]: 'Cửa bếp và logia',
+  // Hành lang
+  [AssetType.HALLWAY_LIGHT]: 'Hệ thống đèn hành lang',
+  [AssetType.HALLWAY_ELECTRICAL]: 'Hệ thống điện hành lang',
+  // Khác
   [AssetType.OTHER]: 'Khác',
 };
 
 // Map AssetType to prefix for asset code generation
 const ASSET_TYPE_PREFIX: Record<AssetType, string> = {
-  [AssetType.AIR_CONDITIONER]: 'AC',
-  [AssetType.KITCHEN]: 'KT',
+  // Nhà tắm & Vệ sinh
+  [AssetType.TOILET]: 'TLT',
+  [AssetType.BATHROOM_SINK]: 'BSK',
   [AssetType.WATER_HEATER]: 'WH',
-  [AssetType.FURNITURE]: 'FT',
-  [AssetType.OTHER]: 'OT',
+  [AssetType.SHOWER_SYSTEM]: 'SHW',
+  [AssetType.BATHROOM_FAUCET]: 'BFC',
+  [AssetType.BATHROOM_LIGHT]: 'BLT',
+  [AssetType.BATHROOM_DOOR]: 'BDR',
+  [AssetType.BATHROOM_ELECTRICAL]: 'BEL',
+  // Phòng khách
+  [AssetType.LIVING_ROOM_DOOR]: 'LRD',
+  [AssetType.LIVING_ROOM_LIGHT]: 'LRL',
+  [AssetType.AIR_CONDITIONER]: 'AC',
+  [AssetType.INTERNET_SYSTEM]: 'INT',
+  [AssetType.FAN]: 'FAN',
+  [AssetType.LIVING_ROOM_ELECTRICAL]: 'LRE',
+  // Phòng ngủ
+  [AssetType.BEDROOM_ELECTRICAL]: 'BRE',
+  [AssetType.BEDROOM_AIR_CONDITIONER]: 'BAC',
+  [AssetType.BEDROOM_DOOR]: 'BRD',
+  [AssetType.BEDROOM_WINDOW]: 'BRW',
+  // Nhà bếp
+  [AssetType.KITCHEN_LIGHT]: 'KLT',
+  [AssetType.KITCHEN_ELECTRICAL]: 'KEL',
+  [AssetType.ELECTRIC_STOVE]: 'EST',
+  [AssetType.KITCHEN_DOOR]: 'KDR',
+  // Hành lang
+  [AssetType.HALLWAY_LIGHT]: 'HLT',
+  [AssetType.HALLWAY_ELECTRICAL]: 'HEL',
+  // Khác
+  [AssetType.OTHER]: 'OTH',
 };
 
 // Map AssetType to default purchase price (VND)
 const ASSET_TYPE_DEFAULT_PRICE: Record<AssetType, number> = {
-  [AssetType.AIR_CONDITIONER]: 8000000,    // 8 triệu VND
-  [AssetType.KITCHEN]: 5000000,            // 5 triệu VND
-  [AssetType.WATER_HEATER]: 3000000,       // 3 triệu VND
-  [AssetType.FURNITURE]: 2000000,          // 2 triệu VND
-  [AssetType.OTHER]: 1000000,              // 1 triệu VND
+  // Nhà tắm & Vệ sinh
+  [AssetType.TOILET]: 3000000,
+  [AssetType.BATHROOM_SINK]: 1500000,
+  [AssetType.WATER_HEATER]: 3000000,
+  [AssetType.SHOWER_SYSTEM]: 2000000,
+  [AssetType.BATHROOM_FAUCET]: 500000,
+  [AssetType.BATHROOM_LIGHT]: 300000,
+  [AssetType.BATHROOM_DOOR]: 2000000,
+  [AssetType.BATHROOM_ELECTRICAL]: 1000000,
+  // Phòng khách
+  [AssetType.LIVING_ROOM_DOOR]: 3000000,
+  [AssetType.LIVING_ROOM_LIGHT]: 500000,
+  [AssetType.AIR_CONDITIONER]: 8000000,
+  [AssetType.INTERNET_SYSTEM]: 1000000,
+  [AssetType.FAN]: 500000,
+  [AssetType.LIVING_ROOM_ELECTRICAL]: 1500000,
+  // Phòng ngủ
+  [AssetType.BEDROOM_ELECTRICAL]: 1500000,
+  [AssetType.BEDROOM_AIR_CONDITIONER]: 8000000,
+  [AssetType.BEDROOM_DOOR]: 2500000,
+  [AssetType.BEDROOM_WINDOW]: 1500000,
+  // Nhà bếp
+  [AssetType.KITCHEN_LIGHT]: 400000,
+  [AssetType.KITCHEN_ELECTRICAL]: 1500000,
+  [AssetType.ELECTRIC_STOVE]: 5000000,
+  [AssetType.KITCHEN_DOOR]: 2000000,
+  // Hành lang
+  [AssetType.HALLWAY_LIGHT]: 300000,
+  [AssetType.HALLWAY_ELECTRICAL]: 1000000,
+  // Khác
+  [AssetType.OTHER]: 1000000,
+};
+
+// Map AssetType to RoomType for auto-selection
+const ASSET_TYPE_TO_ROOM: Record<AssetType, RoomType> = {
+  // Nhà tắm & Vệ sinh
+  [AssetType.TOILET]: RoomType.BATHROOM,
+  [AssetType.BATHROOM_SINK]: RoomType.BATHROOM,
+  [AssetType.WATER_HEATER]: RoomType.BATHROOM,
+  [AssetType.SHOWER_SYSTEM]: RoomType.BATHROOM,
+  [AssetType.BATHROOM_FAUCET]: RoomType.BATHROOM,
+  [AssetType.BATHROOM_LIGHT]: RoomType.BATHROOM,
+  [AssetType.BATHROOM_DOOR]: RoomType.BATHROOM,
+  [AssetType.BATHROOM_ELECTRICAL]: RoomType.BATHROOM,
+  // Phòng khách
+  [AssetType.LIVING_ROOM_DOOR]: RoomType.LIVING_ROOM,
+  [AssetType.LIVING_ROOM_LIGHT]: RoomType.LIVING_ROOM,
+  [AssetType.AIR_CONDITIONER]: RoomType.LIVING_ROOM,
+  [AssetType.INTERNET_SYSTEM]: RoomType.LIVING_ROOM,
+  [AssetType.FAN]: RoomType.LIVING_ROOM,
+  [AssetType.LIVING_ROOM_ELECTRICAL]: RoomType.LIVING_ROOM,
+  // Phòng ngủ
+  [AssetType.BEDROOM_ELECTRICAL]: RoomType.BEDROOM,
+  [AssetType.BEDROOM_AIR_CONDITIONER]: RoomType.BEDROOM,
+  [AssetType.BEDROOM_DOOR]: RoomType.BEDROOM,
+  [AssetType.BEDROOM_WINDOW]: RoomType.BEDROOM,
+  // Nhà bếp
+  [AssetType.KITCHEN_LIGHT]: RoomType.KITCHEN,
+  [AssetType.KITCHEN_ELECTRICAL]: RoomType.KITCHEN,
+  [AssetType.ELECTRIC_STOVE]: RoomType.KITCHEN,
+  [AssetType.KITCHEN_DOOR]: RoomType.KITCHEN,
+  // Hành lang
+  [AssetType.HALLWAY_LIGHT]: RoomType.HALLWAY,
+  [AssetType.HALLWAY_ELECTRICAL]: RoomType.HALLWAY,
+  // Khác
+  [AssetType.OTHER]: RoomType.LIVING_ROOM,
 };
 
 export default function AssetManagementPage() {
   const t = useTranslations('AssetManagement');
   const { show } = useNotifications();
-  
+
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -88,13 +214,13 @@ export default function AssetManagementPage() {
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [checkingActiveAsset, setCheckingActiveAsset] = useState(false);
   const [exporting, setExporting] = useState(false);
-  
+
   // Filters
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
   const [selectedAssetType, setSelectedAssetType] = useState<AssetType | ''>('');
   const [showActiveOnly, setShowActiveOnly] = useState(false);
-  
+
   // Buildings and Units for dropdowns
   const [buildings, setBuildings] = useState<Array<{ id: string; code: string; name: string }>>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -119,11 +245,11 @@ export default function AssetManagementPage() {
     purchasePrice: 0,
   });
   const [bulkCreating, setBulkCreating] = useState(false);
-  
+
   // State for create all units in building
   const [showCreateAllConfirm, setShowCreateAllConfirm] = useState(false);
   const [creatingAll, setCreatingAll] = useState(false);
-  
+
   // Pagination
   const initialPageSize = 10;
   const [pageNo, setPageNo] = useState<number>(0);
@@ -181,8 +307,8 @@ export default function AssetManagementPage() {
       if (generatedCode && (!currentCode || currentCode.trim() === '')) {
         setEditingAsset((prev) => {
           if (prev && prev.assetCode === currentCode) {
-            return { 
-              ...prev, 
+            return {
+              ...prev,
               assetCode: generatedCode,
               name: autoName, // Auto-update name when asset type changes
               purchasePrice: defaultPrice, // Auto-update price when asset type changes
@@ -226,7 +352,7 @@ export default function AssetManagementPage() {
     setLoading(true);
     try {
       let data: Asset[] = [];
-      
+
       if (selectedUnitId) {
         data = await getAssetsByUnit(selectedUnitId);
       } else if (selectedBuildingId) {
@@ -254,26 +380,26 @@ export default function AssetManagementPage() {
   const handleExportExcel = async () => {
     try {
       setExporting(true);
-      
+
       const blob = await exportAssetsToExcel(
         selectedBuildingId || undefined,
         selectedUnitId || undefined,
         selectedAssetType || undefined
       );
-      
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      
+
       const filename = `danh_sach_thiet_bi_${new Date().toISOString().split('T')[0]}.xlsx`;
       link.setAttribute('download', filename);
-      
+
       document.body.appendChild(link);
       link.click();
-      
+
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       show('Xuất Excel thành công', 'success');
     } catch (error: any) {
       console.error('Failed to export Excel:', error);
@@ -288,7 +414,7 @@ export default function AssetManagementPage() {
     const finalAssetType = assetType || AssetType.AIR_CONDITIONER;
     const autoGeneratedName = ASSET_TYPE_LABELS[finalAssetType]; // Auto-generate name from asset type
     const defaultPrice = ASSET_TYPE_DEFAULT_PRICE[finalAssetType]; // Auto-generate default price
-    
+
     setEditingAsset({
       ...EMPTY_FORM,
       assetType: finalAssetType,
@@ -297,7 +423,7 @@ export default function AssetManagementPage() {
       purchasePrice: defaultPrice,
     });
     setIsCreateMode(true);
-    
+
     if (unitId && buildingId) {
       // Pre-fill form with unit and building info
       setSelectedBuildingId(buildingId);
@@ -321,7 +447,7 @@ export default function AssetManagementPage() {
       });
     }
     // Don't reset filters if called without parameters - preserve existing filter state
-    
+
     setShowForm(true);
     setFormErrors({});
     setTouchedFields({});
@@ -342,7 +468,7 @@ export default function AssetManagementPage() {
     setShowForm(true);
     setFormErrors({});
     setTouchedFields({});
-    
+
     // Load units for selected building if available, but don't override existing filter
     // Only set building if it's different from current filter to preserve user's filter choice
     if (asset.buildingId && asset.buildingId !== selectedBuildingId) {
@@ -383,20 +509,20 @@ export default function AssetManagementPage() {
   // Generate asset code automatically based on asset type and unit
   const generateAssetCode = (assetType: AssetType, unitId: string): string => {
     if (!unitId || !assetType) return '';
-    
+
     const unit = units.find(u => u.id === unitId);
     if (!unit) return '';
-    
+
     const prefix = ASSET_TYPE_PREFIX[assetType];
     const unitCode = unit.code;
-    
+
     // Find existing assets of the same type in the same unit
     const existingAssets = assets.filter(
-      a => a.unitId === unitId && 
-           a.assetType === assetType &&
-           a.assetCode.startsWith(`${prefix}-${unitCode}-`)
+      a => a.unitId === unitId &&
+        a.assetType === assetType &&
+        a.assetCode.startsWith(`${prefix}-${unitCode}-`)
     );
-    
+
     // Extract numbers from existing asset codes and find the next number
     let nextNumber = 1;
     if (existingAssets.length > 0) {
@@ -406,12 +532,12 @@ export default function AssetManagementPage() {
           return match ? parseInt(match[1], 10) : 0;
         })
         .filter(n => n > 0);
-      
+
       if (numbers.length > 0) {
         nextNumber = Math.max(...numbers) + 1;
       }
     }
-    
+
     // Format number with leading zeros (001, 002, ...)
     const numberStr = nextNumber.toString().padStart(3, '0');
     return `${prefix}-${unitCode}-${numberStr}`;
@@ -419,23 +545,23 @@ export default function AssetManagementPage() {
 
   const validateForm = (): { isValid: boolean; errors: Record<string, string> } => {
     const errors: Record<string, string> = {};
-    
+
     if (!editingAsset) {
       return { isValid: false, errors };
     }
-    
+
     if (isCreateMode && !selectedBuildingId) {
       errors.buildingId = 'Vui lòng chọn tòa nhà';
     }
-    
+
     if (!editingAsset.unitId) {
       errors.unitId = 'Vui lòng chọn căn hộ';
     }
-    
+
     if (!editingAsset.assetCode.trim()) {
       errors.assetCode = 'Mã thiết bị không được để trống';
     }
-    
+
     return {
       isValid: Object.keys(errors).length === 0,
       errors
@@ -444,7 +570,7 @@ export default function AssetManagementPage() {
 
   const validateField = (fieldName: string, value: any) => {
     const errors = { ...formErrors };
-    
+
     if (!editingAsset) {
       setFormErrors(errors);
       return;
@@ -473,7 +599,7 @@ export default function AssetManagementPage() {
         }
         break;
     }
-    
+
     setFormErrors(errors);
   };
 
@@ -495,7 +621,7 @@ export default function AssetManagementPage() {
       const existingActiveAsset = allUnitAssets.find(
         asset => asset.assetType === assetType && asset.active && asset.id !== currentAssetId
       );
-      
+
       setFormErrors(prev => {
         const newErrors = { ...prev };
         if (existingActiveAsset) {
@@ -526,7 +652,7 @@ export default function AssetManagementPage() {
       setFormErrors(validation.errors);
       return;
     }
-    
+
     if (!editingAsset) {
       return;
     }
@@ -568,10 +694,10 @@ export default function AssetManagementPage() {
           // Reactivate the existing inactive asset
           // If user provided new information, update it; otherwise just reactivate
           const hasNewInfo = editingAsset.assetCode.trim() !== existingInactiveAsset.assetCode ||
-                           (editingAsset.name.trim() && editingAsset.name.trim() !== existingInactiveAsset.name) ||
-                           editingAsset.installedAt !== existingInactiveAsset.installedAt ||
-                           (editingAsset.purchasePrice !== null && editingAsset.purchasePrice !== existingInactiveAsset.purchasePrice);
-          
+            (editingAsset.name.trim() && editingAsset.name.trim() !== existingInactiveAsset.name) ||
+            editingAsset.installedAt !== existingInactiveAsset.installedAt ||
+            (editingAsset.purchasePrice !== null && editingAsset.purchasePrice !== existingInactiveAsset.purchasePrice);
+
           const payload: UpdateAssetRequest = {
             active: true, // Always reactivate
             // Update fields only if user provided new information
@@ -588,9 +714,9 @@ export default function AssetManagementPage() {
               purchasePrice: editingAsset.purchasePrice
             }),
           };
-          
+
           await updateAsset(existingInactiveAsset.id, payload);
-          const message = hasNewInfo 
+          const message = hasNewInfo
             ? `Đã kích hoạt lại và cập nhật thông tin thiết bị "${existingInactiveAsset.assetCode}"`
             : `Đã kích hoạt lại thiết bị "${existingInactiveAsset.name || existingInactiveAsset.assetCode}"`;
           show(message, 'success');
@@ -648,12 +774,12 @@ export default function AssetManagementPage() {
     } catch (error: any) {
       console.error('Failed to save asset:', error);
       let errorMessage = error?.response?.data?.message || error?.message || 'Không thể lưu thiết bị';
-      
+
       // Improve error message for constraint violations
       if (errorMessage.includes('uq_asset_code')) {
         errorMessage = 'Mã thiết bị đã tồn tại. Vui lòng chọn mã khác.';
       }
-      
+
       show(errorMessage, 'error');
     } finally {
       setSaving(false);
@@ -699,11 +825,11 @@ export default function AssetManagementPage() {
     try {
       // Get all units in building
       const allUnits = await getUnitsByBuilding(missingAssetsBuildingId);
-      
+
       // Get all assets of this type in this building
       const existingAssets = await getAssetsByBuilding(missingAssetsBuildingId);
       const assetsOfType = existingAssets.filter(a => a.assetType === missingAssetsType && a.active);
-      
+
       // Find units that don't have this asset type
       const unitsWithAsset = new Set(assetsOfType.map(a => a.unitId));
       const unitsWithout = allUnits
@@ -712,7 +838,7 @@ export default function AssetManagementPage() {
           ...unit,
           buildingCode: buildings.find(b => b.id === missingAssetsBuildingId)?.code || '',
         }));
-      
+
       setUnitsWithoutAsset(unitsWithout);
       setSelectedUnitsForBulkCreate(new Set());
     } catch (error: any) {
@@ -743,12 +869,12 @@ export default function AssetManagementPage() {
     try {
       const unitArray = Array.from(selectedUnitsForBulkCreate);
       const prefix = bulkCreateForm.assetCodePrefix.trim() || (missingAssetsType ? ASSET_TYPE_PREFIX[missingAssetsType] : '');
-      
+
       // Use form values, fallback to auto-generated if empty
       const name = bulkCreateForm.name.trim() || ASSET_TYPE_LABELS[missingAssetsType];
       const price = bulkCreateForm.purchasePrice || ASSET_TYPE_DEFAULT_PRICE[missingAssetsType];
       const installedAt = bulkCreateForm.installedAt || new Date().toISOString().split('T')[0]; // Use form value or today
-      
+
       for (let i = 0; i < unitArray.length; i++) {
         const unitId = unitArray[i];
         const unit = unitsWithoutAsset.find(u => u.id === unitId);
@@ -756,11 +882,11 @@ export default function AssetManagementPage() {
 
         // Generate asset code with number (same logic as handleCreateAllUnitsInBuilding)
         const existingAssets = assets.filter(
-          a => a.unitId === unit.id && 
-               a.assetType === missingAssetsType &&
-               a.assetCode.startsWith(`${prefix}-${unit.code}-`)
+          a => a.unitId === unit.id &&
+            a.assetType === missingAssetsType &&
+            a.assetCode.startsWith(`${prefix}-${unit.code}-`)
         );
-        
+
         let nextNumber = 1;
         if (existingAssets.length > 0) {
           const numbers = existingAssets
@@ -769,15 +895,15 @@ export default function AssetManagementPage() {
               return match ? parseInt(match[1], 10) : 0;
             })
             .filter(n => n > 0);
-          
+
           if (numbers.length > 0) {
             nextNumber = Math.max(...numbers) + 1;
           }
         }
-        
+
         const numberStr = nextNumber.toString().padStart(3, '0');
         const assetCode = `${prefix}-${unit.code}-${numberStr}`;
-        
+
         try {
           const payload: CreateAssetRequest = {
             unitId,
@@ -788,17 +914,17 @@ export default function AssetManagementPage() {
             installedAt: installedAt || undefined,
             purchasePrice: price,
           };
-          
+
           await createAsset(payload);
           successCount++;
         } catch (error: any) {
           let errorMsg = error?.response?.data?.message || error?.message || 'Lỗi không xác định';
-          
+
           // Improve error message for constraint violations
           if (errorMsg.includes('uq_asset_code')) {
             errorMsg = 'Mã thiết bị đã tồn tại';
           }
-          
+
           errors.push(`${unit.code}: ${errorMsg}`);
         }
       }
@@ -821,7 +947,7 @@ export default function AssetManagementPage() {
         active: true,
         purchasePrice: missingAssetsType ? ASSET_TYPE_DEFAULT_PRICE[missingAssetsType] : 0,
       });
-      
+
       await loadUnitsWithoutAsset();
       if (activeTab === 'list') {
         await loadAssets();
@@ -873,11 +999,11 @@ export default function AssetManagementPage() {
       for (const unit of unitsWithoutAsset) {
         // Generate asset code
         const existingAssets = assets.filter(
-          a => a.unitId === unit.id && 
-               a.assetType === missingAssetsType &&
-               a.assetCode.startsWith(`${prefix}-${unit.code}-`)
+          a => a.unitId === unit.id &&
+            a.assetType === missingAssetsType &&
+            a.assetCode.startsWith(`${prefix}-${unit.code}-`)
         );
-        
+
         let nextNumber = 1;
         if (existingAssets.length > 0) {
           const numbers = existingAssets
@@ -886,12 +1012,12 @@ export default function AssetManagementPage() {
               return match ? parseInt(match[1], 10) : 0;
             })
             .filter(n => n > 0);
-          
+
           if (numbers.length > 0) {
             nextNumber = Math.max(...numbers) + 1;
           }
         }
-        
+
         const numberStr = nextNumber.toString().padStart(3, '0');
         const assetCode = `${prefix}-${unit.code}-${numberStr}`;
 
@@ -905,7 +1031,7 @@ export default function AssetManagementPage() {
             installedAt: today,
             purchasePrice: defaultPrice,
           };
-          
+
           await createAsset(payload);
           successCount++;
         } catch (error: any) {
@@ -985,21 +1111,19 @@ export default function AssetManagementPage() {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('list')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'list'
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'list'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
           >
             Danh sách thiết bị
           </button>
           <button
             onClick={() => setActiveTab('missing')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'missing'
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'missing'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
           >
             Căn hộ chưa có thiết bị
           </button>
@@ -1009,622 +1133,617 @@ export default function AssetManagementPage() {
       {activeTab === 'list' ? (
         <>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tòa nhà
-            </label>
-            <select
-              value={selectedBuildingId}
-              onChange={(e) => {
-                setSelectedBuildingId(e.target.value);
-                setSelectedUnitId('');
-                setPageNo(0);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={loadingBuildings}
-            >
-              <option value="">Tất cả tòa nhà</option>
-              {buildings.map((building) => (
-                <option key={building.id} value={building.id}>
-                  {building.code} - {building.name}
-                </option>
-              ))}
-            </select>
+          {/* Filters */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tòa nhà
+                </label>
+                <select
+                  value={selectedBuildingId}
+                  onChange={(e) => {
+                    setSelectedBuildingId(e.target.value);
+                    setSelectedUnitId('');
+                    setPageNo(0);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loadingBuildings}
+                >
+                  <option value="">Tất cả tòa nhà</option>
+                  {buildings.map((building) => (
+                    <option key={building.id} value={building.id}>
+                      {building.code} - {building.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Căn hộ
+                </label>
+                <select
+                  value={selectedUnitId}
+                  onChange={(e) => {
+                    setSelectedUnitId(e.target.value);
+                    setPageNo(0);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={!selectedBuildingId || loadingUnits}
+                >
+                  <option value="">Tất cả căn hộ</option>
+                  {units.map((unit) => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.code} - {unit.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Loại thiết bị
+                </label>
+                <select
+                  value={selectedAssetType}
+                  onChange={(e) => {
+                    setSelectedAssetType(e.target.value as AssetType | '');
+                    setPageNo(0);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Tất cả loại</option>
+                  {Object.entries(ASSET_TYPE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showActiveOnly}
+                    onChange={(e) => {
+                      setShowActiveOnly(e.target.checked);
+                      setPageNo(0);
+                    }}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Chỉ hiển thị thiết bị đang hoạt động</span>
+                </label>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Căn hộ
-            </label>
-            <select
-              value={selectedUnitId}
-              onChange={(e) => {
-                setSelectedUnitId(e.target.value);
-                setPageNo(0);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={!selectedBuildingId || loadingUnits}
-            >
-              <option value="">Tất cả căn hộ</option>
-              {units.map((unit) => (
-                <option key={unit.id} value={unit.id}>
-                  {unit.code} - {unit.name}
-                </option>
-              ))}
-            </select>
+          {/* Actions */}
+          <div className="mb-4 flex justify-between items-center">
+            <div className="text-sm text-gray-600">
+              Tổng số: {assets.length} thiết bị
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleExportExcel}
+                disabled={exporting || assets.length === 0}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {exporting ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Đang xuất...
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Xuất Excel
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => startCreate()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                + Thêm thiết bị
+              </button>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Loại thiết bị
-            </label>
-            <select
-              value={selectedAssetType}
-              onChange={(e) => {
-                setSelectedAssetType(e.target.value as AssetType | '');
-                setPageNo(0);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Tất cả loại</option>
-              {Object.entries(ASSET_TYPE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-end">
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showActiveOnly}
-                onChange={(e) => {
-                  setShowActiveOnly(e.target.checked);
-                  setPageNo(0);
-                }}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <span className="ml-2 text-sm text-gray-700">Chỉ hiển thị thiết bị đang hoạt động</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="mb-4 flex justify-between items-center">
-        <div className="text-sm text-gray-600">
-          Tổng số: {assets.length} thiết bị
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={handleExportExcel}
-            disabled={exporting || assets.length === 0}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {exporting ? (
-              <>
-                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Đang xuất...
-              </>
-            ) : (
-              <>
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Xuất Excel
-              </>
-            )}
-          </button>
-          <button
-            onClick={() => startCreate()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            + Thêm thiết bị
-          </button>
-        </div>
-      </div>
-
-      {/* Assets List */}
-      {loading ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <div className="text-gray-500">Đang tải...</div>
-        </div>
-      ) : assets.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <p className="text-gray-500 mb-4">Chưa có thiết bị nào</p>
-          <button
-            onClick={() => startCreate()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Thêm thiết bị đầu tiên
-          </button>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Mã thiết bị
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tên/Model
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Loại
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Căn hộ
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ngày lắp đặt
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Trạng thái
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Thao tác
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {assetsToDisplay.map((asset) => (
-                  <tr key={asset.id} className={`hover:bg-gray-50 ${!asset.active ? 'opacity-60' : ''}`}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`text-sm font-medium ${asset.active ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {asset.assetCode}
-                      </div>
-                      {asset.serialNumber && (
-                        <div className="text-xs text-gray-500">
-                          SN: {asset.serialNumber}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className={`text-sm ${asset.active ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {asset.name || '-'}
-                      </div>
-                      {asset.model && (
-                        <div className="text-xs text-gray-500">
-                          {asset.model}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`text-sm ${asset.active ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {ASSET_TYPE_LABELS[asset.assetType]}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`text-sm ${asset.active ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {asset.unitCode || '-'}
-                      </div>
-                      {asset.buildingCode && (
-                        <div className="text-xs text-gray-500">
-                          {asset.buildingCode}
-                          {asset.floor !== undefined && ` - Tầng ${asset.floor}`}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`text-sm ${asset.active ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {formatDate(asset.installedAt)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded ${
-                          asset.active
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        {asset.active ? 'Đang hoạt động' : 'Đã ngừng'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => startEdit(asset)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                      >
-                        Sửa
-                      </button>
-                      {asset.active && (
-                        <button
-                          onClick={() => handleDeactivate(asset)}
-                          className="text-yellow-600 hover:text-yellow-900 mr-4"
-                        >
-                          Vô hiệu hóa
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDeleteClick(asset)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Xóa
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {totalPages > 0 && (
-            <div className="px-6 py-4 border-t border-gray-200">
-              <Pagination
-                currentPage={pageNo + 1}
-                totalPages={totalPages}
-                onPageChange={(page) => handlePageChange(page - 1)}
-              />
+          {/* Assets List */}
+          {loading ? (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+              <div className="text-gray-500">Đang tải...</div>
+            </div>
+          ) : assets.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+              <p className="text-gray-500 mb-4">Chưa có thiết bị nào</p>
+              <button
+                onClick={() => startCreate()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Thêm thiết bị đầu tiên
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Mã thiết bị
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Tên/Model
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Loại
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Căn hộ
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ngày lắp đặt
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Trạng thái
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Thao tác
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {assetsToDisplay.map((asset) => (
+                      <tr key={asset.id} className={`hover:bg-gray-50 ${!asset.active ? 'opacity-60' : ''}`}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm font-medium ${asset.active ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {asset.assetCode}
+                          </div>
+                          {asset.serialNumber && (
+                            <div className="text-xs text-gray-500">
+                              SN: {asset.serialNumber}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className={`text-sm ${asset.active ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {asset.name || '-'}
+                          </div>
+                          {asset.model && (
+                            <div className="text-xs text-gray-500">
+                              {asset.model}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm ${asset.active ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {ASSET_TYPE_LABELS[asset.assetType]}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm ${asset.active ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {asset.unitCode || '-'}
+                          </div>
+                          {asset.buildingCode && (
+                            <div className="text-xs text-gray-500">
+                              {asset.buildingCode}
+                              {asset.floor !== undefined && ` - Tầng ${asset.floor}`}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm ${asset.active ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {formatDate(asset.installedAt)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded ${asset.active
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-100 text-gray-700'
+                              }`}
+                          >
+                            {asset.active ? 'Đang hoạt động' : 'Đã ngừng'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => startEdit(asset)}
+                            className="text-blue-600 hover:text-blue-900 mr-4"
+                          >
+                            Sửa
+                          </button>
+                          {asset.active && (
+                            <button
+                              onClick={() => handleDeactivate(asset)}
+                              className="text-yellow-600 hover:text-yellow-900 mr-4"
+                            >
+                              Vô hiệu hóa
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteClick(asset)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Xóa
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {totalPages > 0 && (
+                <div className="px-6 py-4 border-t border-gray-200">
+                  <Pagination
+                    currentPage={pageNo + 1}
+                    totalPages={totalPages}
+                    onPageChange={(page) => handlePageChange(page - 1)}
+                  />
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      {/* Form Modal */}
-      {showForm && editingAsset && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]" onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            setShowForm(false);
-            setEditingAsset(null);
-            setFormErrors({});
-            setTouchedFields({});
-          }
-        }}>
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col relative z-[10000]" style={{ overflow: 'visible' }}>
-            <div className="p-6 flex-shrink-0 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                {isCreateMode ? 'Thêm thiết bị mới' : 'Chỉnh sửa thiết bị'}
-              </h2>
-            </div>
-            
-            <div className="px-6 py-6 flex-1 min-h-0" style={{ maxHeight: 'calc(90vh - 180px)', overflowY: 'auto', overflowX: 'visible' }}>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tòa nhà <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={isCreateMode ? selectedBuildingId : (editingAsset.unitId ? assets.find(a => a.unitId === editingAsset.unitId)?.buildingId || '' : '')}
-                      onChange={(e) => {
-                        const buildingId = e.target.value;
-                        setSelectedBuildingId(buildingId);
-                        setTouchedFields({ ...touchedFields, buildingId: true });
-                        validateField('buildingId', buildingId);
-                        if (isCreateMode) {
-                          // Reset unitId and assetCode when building changes
-                          setEditingAsset({ ...editingAsset, unitId: '', assetCode: '' });
-                          if (buildingId) {
-                            loadUnits(buildingId);
-                          } else {
-                            setUnits([]);
-                          }
-                        }
-                      }}
-                      onBlur={() => {
-                        setTouchedFields({ ...touchedFields, buildingId: true });
-                        validateField('buildingId', isCreateMode ? selectedBuildingId : (editingAsset.unitId ? assets.find(a => a.unitId === editingAsset.unitId)?.buildingId || '' : ''));
-                      }}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                        touchedFields.buildingId && formErrors.buildingId
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:ring-blue-500'
-                      }`}
-                      disabled={!isCreateMode}
-                      required
-                    >
-                      <option value="">Chọn tòa nhà</option>
-                      {buildings.map((building) => (
-                        <option key={building.id} value={building.id}>
-                          {building.code} - {building.name}
-                        </option>
-                      ))}
-                    </select>
-                    {touchedFields.buildingId && formErrors.buildingId && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.buildingId}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Căn hộ <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={editingAsset.unitId}
-                      onChange={(e) => {
-                        const newUnitId = e.target.value;
-                        let newAssetCode = editingAsset.assetCode;
-                        
-                        // Auto-generate asset code in create mode
-                        if (isCreateMode && newUnitId && editingAsset.assetType) {
-                          newAssetCode = generateAssetCode(editingAsset.assetType, newUnitId);
-                        }
-                        
-                        setEditingAsset({ ...editingAsset, unitId: newUnitId, assetCode: newAssetCode });
-                        setTouchedFields({ ...touchedFields, unitId: true });
-                        validateField('unitId', newUnitId);
-                        if (newAssetCode) {
-                          validateField('assetCode', newAssetCode);
-                        }
-                        // Validate duplicate active asset when unit changes
-                        if (editingAsset.active && editingAsset.assetType && newUnitId) {
-                          validateActiveAsset(newUnitId, editingAsset.assetType, editingAsset.active, editingAsset.id);
-                        }
-                      }}
-                      onBlur={() => {
-                        setTouchedFields({ ...touchedFields, unitId: true });
-                        validateField('unitId', editingAsset.unitId);
-                      }}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                        touchedFields.unitId && formErrors.unitId
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:ring-blue-500'
-                      }`}
-                      disabled={!selectedBuildingId && isCreateMode}
-                      required
-                    >
-                      <option value="">
-                        {isCreateMode && !selectedBuildingId ? 'Vui lòng chọn tòa nhà trước' : 'Chọn căn hộ'}
-                      </option>
-                      {units.map((unit) => (
-                        <option key={unit.id} value={unit.id}>
-                          {unit.code} - {unit.name}
-                        </option>
-                      ))}
-                    </select>
-                    {touchedFields.unitId && formErrors.unitId ? (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.unitId}</p>
-                    ) : isCreateMode && !selectedBuildingId ? (
-                      <p className="mt-1 text-sm text-gray-500">
-                        Vui lòng chọn tòa nhà trước để hiển thị danh sách căn hộ
-                      </p>
-                    ) : null}
-                  </div>
+          {/* Form Modal */}
+          {showForm && editingAsset && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]" onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowForm(false);
+                setEditingAsset(null);
+                setFormErrors({});
+                setTouchedFields({});
+              }
+            }}>
+              <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col relative z-[10000]" style={{ overflow: 'visible' }}>
+                <div className="p-6 flex-shrink-0 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">
+                    {isCreateMode ? 'Thêm thiết bị mới' : 'Chỉnh sửa thiết bị'}
+                  </h2>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Loại thiết bị <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={editingAsset.assetType}
-                      onChange={(e) => {
-                        const newAssetType = e.target.value as AssetType;
-                        let newAssetCode = editingAsset.assetCode;
-                        // Only auto-update name if it's empty or matches the current asset type label (preserve user edits)
-                        const currentNameLabel = editingAsset.assetType ? ASSET_TYPE_LABELS[editingAsset.assetType] : '';
-                        const newName = (isCreateMode && (!editingAsset.name || editingAsset.name === currentNameLabel)) 
-                          ? ASSET_TYPE_LABELS[newAssetType] 
-                          : editingAsset.name;
-                        const currentPriceDefault = editingAsset.assetType ? ASSET_TYPE_DEFAULT_PRICE[editingAsset.assetType] : 0;
-                        const newPrice = (isCreateMode && (!editingAsset.purchasePrice || editingAsset.purchasePrice === currentPriceDefault)) 
-                          ? ASSET_TYPE_DEFAULT_PRICE[newAssetType] 
-                          : editingAsset.purchasePrice;
-                        
-                        // Auto-generate asset code in create mode
-                        if (isCreateMode && editingAsset.unitId && newAssetType) {
-                          newAssetCode = generateAssetCode(newAssetType, editingAsset.unitId);
-                        }
-                        
-                        const updatedAsset = { 
-                          ...editingAsset, 
-                          assetType: newAssetType, 
-                          assetCode: newAssetCode,
-                          name: newName,
-                          purchasePrice: newPrice,
-                        };
-                        setEditingAsset(updatedAsset);
-                        // Validate duplicate active asset when asset type changes
-                        if (updatedAsset.active && updatedAsset.unitId && newAssetType) {
-                          validateActiveAsset(updatedAsset.unitId, newAssetType, updatedAsset.active, updatedAsset.id);
-                        }
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {Object.entries(ASSET_TYPE_LABELS).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="px-6 py-6 flex-1 min-h-0" style={{ maxHeight: 'calc(90vh - 180px)', overflowY: 'auto', overflowX: 'visible' }}>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Tòa nhà <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={isCreateMode ? selectedBuildingId : (editingAsset.unitId ? assets.find(a => a.unitId === editingAsset.unitId)?.buildingId || '' : '')}
+                          onChange={(e) => {
+                            const buildingId = e.target.value;
+                            setSelectedBuildingId(buildingId);
+                            setTouchedFields({ ...touchedFields, buildingId: true });
+                            validateField('buildingId', buildingId);
+                            if (isCreateMode) {
+                              // Reset unitId and assetCode when building changes
+                              setEditingAsset({ ...editingAsset, unitId: '', assetCode: '' });
+                              if (buildingId) {
+                                loadUnits(buildingId);
+                              } else {
+                                setUnits([]);
+                              }
+                            }
+                          }}
+                          onBlur={() => {
+                            setTouchedFields({ ...touchedFields, buildingId: true });
+                            validateField('buildingId', isCreateMode ? selectedBuildingId : (editingAsset.unitId ? assets.find(a => a.unitId === editingAsset.unitId)?.buildingId || '' : ''));
+                          }}
+                          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${touchedFields.buildingId && formErrors.buildingId
+                              ? 'border-red-500 focus:ring-red-500'
+                              : 'border-gray-300 focus:ring-blue-500'
+                            }`}
+                          disabled={!isCreateMode}
+                          required
+                        >
+                          <option value="">Chọn tòa nhà</option>
+                          {buildings.map((building) => (
+                            <option key={building.id} value={building.id}>
+                              {building.code} - {building.name}
+                            </option>
+                          ))}
+                        </select>
+                        {touchedFields.buildingId && formErrors.buildingId && (
+                          <p className="mt-1 text-sm text-red-600">{formErrors.buildingId}</p>
+                        )}
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Mã thiết bị <span className="text-red-500">*</span>
-                      {isCreateMode && (
-                        <span className="ml-2 text-xs text-gray-500 font-normal">
-                          (Tự động tạo)
-                        </span>
-                      )}
-                    </label>
-                    <input
-                      type="text"
-                      value={editingAsset.assetCode}
-                      onChange={(e) => {
-                        setEditingAsset({ ...editingAsset, assetCode: e.target.value });
-                        setTouchedFields({ ...touchedFields, assetCode: true });
-                        validateField('assetCode', e.target.value);
-                      }}
-                      onBlur={() => {
-                        setTouchedFields({ ...touchedFields, assetCode: true });
-                        validateField('assetCode', editingAsset.assetCode);
-                      }}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 bg-gray-50 ${
-                        touchedFields.assetCode && formErrors.assetCode
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:ring-blue-500'
-                      }`}
-                      placeholder={isCreateMode ? "Mã sẽ được tạo tự động" : "VD: AC-A101-001"}
-                      readOnly={isCreateMode}
-                    />
-                    {touchedFields.assetCode && formErrors.assetCode ? (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.assetCode}</p>
-                    ) : isCreateMode && editingAsset.assetCode ? (
-                      <p className="mt-1 text-xs text-gray-500">
-                        Mã được tạo tự động dựa trên loại thiết bị và căn hộ
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Căn hộ <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={editingAsset.unitId}
+                          onChange={(e) => {
+                            const newUnitId = e.target.value;
+                            let newAssetCode = editingAsset.assetCode;
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tên thiết bị
-                      {isCreateMode && (
-                        <span className="ml-2 text-xs text-gray-500 font-normal">
-                          (Tạo sẵn, có thể sửa)
-                        </span>
-                      )}
-                    </label>
-                    <input
-                      type="text"
-                      value={editingAsset.name || (isCreateMode && editingAsset.assetType ? ASSET_TYPE_LABELS[editingAsset.assetType] : '')}
-                      onChange={(e) => setEditingAsset({ ...editingAsset, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="VD: Điều hòa phòng khách"
-                    />
-                    {isCreateMode && editingAsset.name && (
-                      <p className="mt-1 text-xs text-gray-500">
-                        Tên được tạo sẵn theo loại thiết bị, bạn có thể chỉnh sửa
-                      </p>
-                    )}
-                  </div>
+                            // Auto-generate asset code in create mode
+                            if (isCreateMode && newUnitId && editingAsset.assetType) {
+                              newAssetCode = generateAssetCode(editingAsset.assetType, newUnitId);
+                            }
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ngày lắp đặt
-                      {isCreateMode && (
-                        <span className="ml-2 text-xs text-gray-500 font-normal">
-                          (Mặc định: hôm nay)
-                        </span>
-                      )}
-                    </label>
-                    <input
-                      type="date"
-                      value={editingAsset.installedAt}
-                      onChange={(e) => setEditingAsset({ ...editingAsset, installedAt: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      max={new Date().toISOString().split('T')[0]} // Prevent future dates
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Giá mua (VND)
-                      {isCreateMode && (
-                        <span className="ml-2 text-xs text-gray-500 font-normal">
-                          (Tự động tạo)
-                        </span>
-                      )}
-                    </label>
-                    <input
-                      type="text"
-                      value={formatNumberWithDots(editingAsset.purchasePrice)}
-                      onChange={(e) => {
-                        const parsedValue = parseFormattedNumber(e.target.value);
-                        setEditingAsset({ ...editingAsset, purchasePrice: parsedValue });
-                      }}
-                      onBlur={(e) => {
-                        // Re-format on blur to ensure proper formatting
-                        const parsedValue = parseFormattedNumber(e.target.value);
-                        if (parsedValue !== null) {
-                          setEditingAsset({ ...editingAsset, purchasePrice: parsedValue });
-                        }
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="VD: 5.000.000"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      {isCreateMode 
-                        ? 'Giá mặc định theo loại thiết bị. Có thể chỉnh sửa nếu cần.'
-                        : 'Dùng để tính tiền bồi thường khi kiểm tra tài sản'
-                      }
-                    </p>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center h-10">
-                      <input
-                        type="checkbox"
-                        id="active"
-                        checked={editingAsset.active}
-                        onChange={(e) => {
-                          const newActive = e.target.checked;
-                          setEditingAsset({ ...editingAsset, active: newActive });
-                          // Validate duplicate active asset when checkbox changes
-                          if (editingAsset.unitId && editingAsset.assetType) {
-                            validateActiveAsset(editingAsset.unitId, editingAsset.assetType, newActive, editingAsset.id);
-                          }
-                        }}
-                        className={`h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded ${
-                          formErrors.activeAsset ? 'border-red-500' : ''
-                        }`}
-                      />
-                      <label htmlFor="active" className="ml-2 text-sm text-gray-700">
-                        Đang hoạt động
-                      </label>
+                            setEditingAsset({ ...editingAsset, unitId: newUnitId, assetCode: newAssetCode });
+                            setTouchedFields({ ...touchedFields, unitId: true });
+                            validateField('unitId', newUnitId);
+                            if (newAssetCode) {
+                              validateField('assetCode', newAssetCode);
+                            }
+                            // Validate duplicate active asset when unit changes
+                            if (editingAsset.active && editingAsset.assetType && newUnitId) {
+                              validateActiveAsset(newUnitId, editingAsset.assetType, editingAsset.active, editingAsset.id);
+                            }
+                          }}
+                          onBlur={() => {
+                            setTouchedFields({ ...touchedFields, unitId: true });
+                            validateField('unitId', editingAsset.unitId);
+                          }}
+                          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 disabled:bg-gray-100 disabled:cursor-not-allowed ${touchedFields.unitId && formErrors.unitId
+                              ? 'border-red-500 focus:ring-red-500'
+                              : 'border-gray-300 focus:ring-blue-500'
+                            }`}
+                          disabled={!selectedBuildingId && isCreateMode}
+                          required
+                        >
+                          <option value="">
+                            {isCreateMode && !selectedBuildingId ? 'Vui lòng chọn tòa nhà trước' : 'Chọn căn hộ'}
+                          </option>
+                          {units.map((unit) => (
+                            <option key={unit.id} value={unit.id}>
+                              {unit.code} - {unit.name}
+                            </option>
+                          ))}
+                        </select>
+                        {touchedFields.unitId && formErrors.unitId ? (
+                          <p className="mt-1 text-sm text-red-600">{formErrors.unitId}</p>
+                        ) : isCreateMode && !selectedBuildingId ? (
+                          <p className="mt-1 text-sm text-gray-500">
+                            Vui lòng chọn tòa nhà trước để hiển thị danh sách căn hộ
+                          </p>
+                        ) : null}
+                      </div>
                     </div>
-                    {formErrors.activeAsset && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.activeAsset}</p>
-                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Loại thiết bị <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={editingAsset.assetType}
+                          onChange={(e) => {
+                            const newAssetType = e.target.value as AssetType;
+                            let newAssetCode = editingAsset.assetCode;
+                            // Only auto-update name if it's empty or matches the current asset type label (preserve user edits)
+                            const currentNameLabel = editingAsset.assetType ? ASSET_TYPE_LABELS[editingAsset.assetType] : '';
+                            const newName = (isCreateMode && (!editingAsset.name || editingAsset.name === currentNameLabel))
+                              ? ASSET_TYPE_LABELS[newAssetType]
+                              : editingAsset.name;
+                            const currentPriceDefault = editingAsset.assetType ? ASSET_TYPE_DEFAULT_PRICE[editingAsset.assetType] : 0;
+                            const newPrice = (isCreateMode && (!editingAsset.purchasePrice || editingAsset.purchasePrice === currentPriceDefault))
+                              ? ASSET_TYPE_DEFAULT_PRICE[newAssetType]
+                              : editingAsset.purchasePrice;
+
+                            // Auto-generate asset code in create mode
+                            if (isCreateMode && editingAsset.unitId && newAssetType) {
+                              newAssetCode = generateAssetCode(newAssetType, editingAsset.unitId);
+                            }
+
+                            const updatedAsset = {
+                              ...editingAsset,
+                              assetType: newAssetType,
+                              assetCode: newAssetCode,
+                              name: newName,
+                              purchasePrice: newPrice,
+                            };
+                            setEditingAsset(updatedAsset);
+                            // Validate duplicate active asset when asset type changes
+                            if (updatedAsset.active && updatedAsset.unitId && newAssetType) {
+                              validateActiveAsset(updatedAsset.unitId, newAssetType, updatedAsset.active, updatedAsset.id);
+                            }
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {Object.entries(ASSET_TYPE_LABELS).map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Mã thiết bị <span className="text-red-500">*</span>
+                          {isCreateMode && (
+                            <span className="ml-2 text-xs text-gray-500 font-normal">
+                              (Tự động tạo)
+                            </span>
+                          )}
+                        </label>
+                        <input
+                          type="text"
+                          value={editingAsset.assetCode}
+                          onChange={(e) => {
+                            setEditingAsset({ ...editingAsset, assetCode: e.target.value });
+                            setTouchedFields({ ...touchedFields, assetCode: true });
+                            validateField('assetCode', e.target.value);
+                          }}
+                          onBlur={() => {
+                            setTouchedFields({ ...touchedFields, assetCode: true });
+                            validateField('assetCode', editingAsset.assetCode);
+                          }}
+                          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 bg-gray-50 ${touchedFields.assetCode && formErrors.assetCode
+                              ? 'border-red-500 focus:ring-red-500'
+                              : 'border-gray-300 focus:ring-blue-500'
+                            }`}
+                          placeholder={isCreateMode ? "Mã sẽ được tạo tự động" : "VD: AC-A101-001"}
+                          readOnly={isCreateMode}
+                        />
+                        {touchedFields.assetCode && formErrors.assetCode ? (
+                          <p className="mt-1 text-sm text-red-600">{formErrors.assetCode}</p>
+                        ) : isCreateMode && editingAsset.assetCode ? (
+                          <p className="mt-1 text-xs text-gray-500">
+                            Mã được tạo tự động dựa trên loại thiết bị và căn hộ
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Tên thiết bị
+                          {isCreateMode && (
+                            <span className="ml-2 text-xs text-gray-500 font-normal">
+                              (Tạo sẵn, có thể sửa)
+                            </span>
+                          )}
+                        </label>
+                        <input
+                          type="text"
+                          value={editingAsset.name || (isCreateMode && editingAsset.assetType ? ASSET_TYPE_LABELS[editingAsset.assetType] : '')}
+                          onChange={(e) => setEditingAsset({ ...editingAsset, name: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="VD: Điều hòa phòng khách"
+                        />
+                        {isCreateMode && editingAsset.name && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            Tên được tạo sẵn theo loại thiết bị, bạn có thể chỉnh sửa
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Ngày lắp đặt
+                          {isCreateMode && (
+                            <span className="ml-2 text-xs text-gray-500 font-normal">
+                              (Mặc định: hôm nay)
+                            </span>
+                          )}
+                        </label>
+                        <input
+                          type="date"
+                          value={editingAsset.installedAt}
+                          onChange={(e) => setEditingAsset({ ...editingAsset, installedAt: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          max={new Date().toISOString().split('T')[0]} // Prevent future dates
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Giá mua (VND)
+                          {isCreateMode && (
+                            <span className="ml-2 text-xs text-gray-500 font-normal">
+                              (Tự động tạo)
+                            </span>
+                          )}
+                        </label>
+                        <input
+                          type="text"
+                          value={formatNumberWithDots(editingAsset.purchasePrice)}
+                          onChange={(e) => {
+                            const parsedValue = parseFormattedNumber(e.target.value);
+                            setEditingAsset({ ...editingAsset, purchasePrice: parsedValue });
+                          }}
+                          onBlur={(e) => {
+                            // Re-format on blur to ensure proper formatting
+                            const parsedValue = parseFormattedNumber(e.target.value);
+                            if (parsedValue !== null) {
+                              setEditingAsset({ ...editingAsset, purchasePrice: parsedValue });
+                            }
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="VD: 5.000.000"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">
+                          {isCreateMode
+                            ? 'Giá mặc định theo loại thiết bị. Có thể chỉnh sửa nếu cần.'
+                            : 'Dùng để tính tiền bồi thường khi kiểm tra tài sản'
+                          }
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center h-10">
+                          <input
+                            type="checkbox"
+                            id="active"
+                            checked={editingAsset.active}
+                            onChange={(e) => {
+                              const newActive = e.target.checked;
+                              setEditingAsset({ ...editingAsset, active: newActive });
+                              // Validate duplicate active asset when checkbox changes
+                              if (editingAsset.unitId && editingAsset.assetType) {
+                                validateActiveAsset(editingAsset.unitId, editingAsset.assetType, newActive, editingAsset.id);
+                              }
+                            }}
+                            className={`h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded ${formErrors.activeAsset ? 'border-red-500' : ''
+                              }`}
+                          />
+                          <label htmlFor="active" className="ml-2 text-sm text-gray-700">
+                            Đang hoạt động
+                          </label>
+                        </div>
+                        {formErrors.activeAsset && (
+                          <p className="mt-1 text-sm text-red-600">{formErrors.activeAsset}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-6 pb-6 flex-shrink-0 border-t border-gray-200 pt-4 bg-white relative z-[10001]">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleSave}
+                      disabled={saving || Object.keys(formErrors).length > 0 || checkingActiveAsset}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed relative z-[10001]"
+                    >
+                      {saving ? 'Đang lưu...' : checkingActiveAsset ? 'Đang kiểm tra...' : 'Lưu'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowForm(false);
+                        setEditingAsset(null);
+                        setFormErrors({});
+                        setTouchedFields({});
+                      }}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 relative z-[10001]"
+                    >
+                      Hủy
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <div className="px-6 pb-6 flex-shrink-0 border-t border-gray-200 pt-4 bg-white relative z-[10001]">
-              <div className="flex gap-3">
-                <button
-                  onClick={handleSave}
-                  disabled={saving || Object.keys(formErrors).length > 0 || checkingActiveAsset}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed relative z-[10001]"
-                >
-                  {saving ? 'Đang lưu...' : checkingActiveAsset ? 'Đang kiểm tra...' : 'Lưu'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingAsset(null);
-                    setFormErrors({});
-                    setTouchedFields({});
-                  }}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 relative z-[10001]"
-                >
-                  Hủy
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* Delete Confirm Popup */}
-      <PopupComfirm
-        isOpen={showDeleteConfirm}
-        onClose={() => {
-          setShowDeleteConfirm(false);
-          setPendingDeleteAsset(null);
-        }}
-        onConfirm={handleDelete}
-        popupTitle={pendingDeleteAsset ? `Bạn có chắc muốn xóa thiết bị "${pendingDeleteAsset.assetCode}"?` : ''}
-        popupContext=""
-        isDanger={true}
-      />
+          {/* Delete Confirm Popup */}
+          <PopupComfirm
+            isOpen={showDeleteConfirm}
+            onClose={() => {
+              setShowDeleteConfirm(false);
+              setPendingDeleteAsset(null);
+            }}
+            onConfirm={handleDelete}
+            popupTitle={pendingDeleteAsset ? `Bạn có chắc muốn xóa thiết bị "${pendingDeleteAsset.assetCode}"?` : ''}
+            popupContext=""
+            isDanger={true}
+          />
         </>
       ) : (
         <>
@@ -1702,7 +1821,7 @@ export default function AssetManagementPage() {
                     </h3>
                     <div className="mt-2 text-sm text-yellow-700">
                       <p>
-                        Các căn hộ trong tòa nhà {buildings.find(b => b.id === missingAssetsBuildingId)?.code} chưa có thiết bị {ASSET_TYPE_LABELS[missingAssetsType]}. 
+                        Các căn hộ trong tòa nhà {buildings.find(b => b.id === missingAssetsBuildingId)?.code} chưa có thiết bị {ASSET_TYPE_LABELS[missingAssetsType]}.
                         Bạn có thể tạo thiết bị cho từng căn hộ bằng nút "Tạo thiết bị" hoặc chọn nhiều căn hộ để tạo hàng loạt.
                       </p>
                     </div>
