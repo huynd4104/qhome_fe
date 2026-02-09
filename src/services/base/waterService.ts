@@ -186,6 +186,7 @@ export interface MeterReadingAssignmentDto {
   floorTo?: number;
   unitIds?: string[];
   progressPercentage?: number; // Progress percentage for this assignment
+  status?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -272,9 +273,9 @@ export async function getReadingCycleById(cycleId: string): Promise<ReadingCycle
 export async function getCycleUnassignedInfo(cycleId: string, onlyWithOwner: boolean = true): Promise<ReadingCycleUnassignedInfoDto> {
   const response = await axios.get(
     `${BASE_URL}/api/reading-cycles/${cycleId}/unassigned`,
-    { 
+    {
       params: { onlyWithOwner },
-      withCredentials: true 
+      withCredentials: true
     }
   );
   return response.data;
@@ -297,9 +298,9 @@ export async function getReadingCyclesByStatus(status: ReadingCycleStatus): Prom
 export async function getReadingCyclesByPeriod(fromDate: string, toDate: string): Promise<ReadingCycleDto[]> {
   const response = await axios.get(
     `${BASE_URL}/api/reading-cycles/period`,
-    { 
+    {
       params: { from: fromDate, to: toDate },
-      withCredentials: true 
+      withCredentials: true
     }
   );
   const data = response.data;
@@ -320,7 +321,7 @@ export async function createReadingCycle(req: ReadingCycleCreateReq): Promise<Re
     description: req.description,
     createdBy: req.createdBy,
   };
-  
+
   const response = await axios.post(
     `${BASE_URL}/api/reading-cycles`,
     requestBody,
@@ -335,7 +336,7 @@ export async function createReadingCycle(req: ReadingCycleCreateReq): Promise<Re
 }
 
 export async function updateReadingCycle(
-  cycleId: string, 
+  cycleId: string,
   req: ReadingCycleUpdateReq
 ): Promise<ReadingCycleDto> {
   // Map fromDate/toDate to periodFrom/periodTo if provided
@@ -346,7 +347,7 @@ export async function updateReadingCycle(
   if (req.periodTo !== undefined) requestBody.periodTo = req.periodTo;
   else if (req.toDate !== undefined) requestBody.periodTo = req.toDate;
   if (req.description !== undefined) requestBody.description = req.description;
-  
+
   const response = await axios.put(
     `${BASE_URL}/api/reading-cycles/${cycleId}`,
     requestBody,
@@ -362,15 +363,15 @@ export async function updateReadingCycle(
 }
 
 export async function changeReadingCycleStatus(
-  cycleId: string, 
+  cycleId: string,
   status: ReadingCycleStatus
 ): Promise<ReadingCycleDto> {
   const response = await axios.patch(
     `${BASE_URL}/api/reading-cycles/${cycleId}/status`,
     null,
-    { 
+    {
       params: { status },
-      withCredentials: true 
+      withCredentials: true
     }
   );
   const data = response.data;
@@ -398,9 +399,9 @@ export async function getAllMeters(params?: {
 }): Promise<MeterDto[]> {
   const response = await axios.get(
     `${BASE_URL}/api/meters`,
-    { 
+    {
       params,
-      withCredentials: true 
+      withCredentials: true
     }
   );
   return response.data;
@@ -552,24 +553,24 @@ export async function createMeterReading(req: MeterReadingCreateReq): Promise<Me
   if (!req || Object.keys(req).length === 0) {
     throw new Error("MeterReadingCreateReq is empty or undefined");
   }
-  
+
   // assignmentId is optional - can use cycleId instead
   // if (!req.assignmentId && !req.cycleId) {
   //   throw new Error("Either assignmentId or cycleId is required");
   // }
-  
+
   if (!req.meterId) {
     throw new Error("meterId is required");
   }
-  
+
   if (!req.readingDate) {
     throw new Error("readingDate is required");
   }
-  
+
   if (req.currIndex === undefined || req.currIndex === null) {
     throw new Error("currIndex is required");
   }
-  
+
   // Remove undefined fields to avoid validation issues
   // Backend allows prevIndex to be null (will auto-calculate from previous reading)
   const cleanedReq: any = {
@@ -577,7 +578,7 @@ export async function createMeterReading(req: MeterReadingCreateReq): Promise<Me
     readingDate: req.readingDate,
     currIndex: req.currIndex,
   };
-  
+
   // Only include optional fields if they have values (not undefined)
   if (req.assignmentId !== undefined && req.assignmentId !== null) {
     cleanedReq.assignmentId = req.assignmentId;
@@ -598,7 +599,7 @@ export async function createMeterReading(req: MeterReadingCreateReq): Promise<Me
   if (req.readerId !== undefined && req.readerId !== null) {
     cleanedReq.readerId = req.readerId;
   }
-  
+
   try {
     const response = await axios.post(
       `${BASE_URL}/api/meter-readings`,
@@ -898,7 +899,7 @@ export async function getCompletedSessionsByStaff(staffId: string): Promise<Mete
 
 // Meter Reading Export API
 export async function exportReadingsByCycle(cycleId: string, unitId?: string): Promise<MeterReadingImportResponse> {
-  const url = unitId 
+  const url = unitId
     ? `${BASE_URL}/api/meter-readings/export/cycle/${cycleId}?unitId=${unitId}`
     : `${BASE_URL}/api/meter-readings/export/cycle/${cycleId}`;
   const response = await axios.post(

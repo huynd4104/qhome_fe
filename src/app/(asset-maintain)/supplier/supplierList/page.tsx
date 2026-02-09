@@ -77,8 +77,9 @@ export default function SupplierListPage() {
       <div className="max-w-screen overflow-x-hidden">
         <h1 className="text-2xl font-semibold text-[#02542D] mb-4">{t('title')}</h1>
         <div className="bg-white p-6 rounded-xl w-full min-h-[200px]">
-          <Table 
-            data={tableData} 
+          <Table
+            type="supplier"
+            data={tableData}
             headers={headers}
             onRowClick={handleRowClick}
           />

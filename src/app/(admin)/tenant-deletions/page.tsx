@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { getAllDeletionRequests, getMyDeletionRequests, TenantDeletionRequest, TenantDeletionStatus } from '@/src/services/base';
 import { useAuth } from '@/src/contexts/AuthContext';
 import Delete from '@/src/assets/Delete.svg';
+import PopupComfirm from '@/src/components/common/PopupComfirm';
 
 export default function AdminDeletionRequestsPage() {
   const { user, hasRole } = useAuth();
@@ -25,7 +26,7 @@ export default function AdminDeletionRequestsPage() {
     try {
       setLoading(true);
       // Admin sees all requests, tenant_owner sees only their requests
-      const data = hasRole('admin') 
+      const data = hasRole('admin')
         ? await getAllDeletionRequests()
         : await getMyDeletionRequests();
       setRequests(data);
@@ -41,7 +42,7 @@ export default function AdminDeletionRequestsPage() {
   // Filter requests
   const filteredRequests = requests.filter(req => {
     const matchesStatus = statusFilter === 'all' || req.status === statusFilter;
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       req.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       req.tenantId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       req.reason.toLowerCase().includes(searchQuery.toLowerCase());

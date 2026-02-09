@@ -62,21 +62,13 @@ export default function TenantPermissionModal({ tenant, onClose }: Props) {
         <div className="flex border-b border-slate-200">
           <button
             onClick={() => setViewMode('users')}
-            className={`flex-1 px-6 py-3 font-medium transition ${
-              viewMode === 'users'
-                ? 'text-[#6B9B6E] border-b-2 border-[#6B9B6E] bg-green-50'
-                : 'text-slate-600 hover:text-slate-800 hover:bg-slate-50'
-            }`}
+            className="flex-1 px-6 py-3 font-medium transition text-[#6B9B6E] border-b-2 border-[#6B9B6E] bg-green-50"
           >
             👥 User Management
           </button>
           <button
             onClick={() => setViewMode('permissions')}
-            className={`flex-1 px-6 py-3 font-medium transition ${
-              viewMode === 'permissions'
-                ? 'text-[#6B9B6E] border-b-2 border-[#6B9B6E] bg-green-50'
-                : 'text-slate-600 hover:text-slate-800 hover:bg-slate-50'
-            }`}
+            className="flex-1 px-6 py-3 font-medium transition text-slate-600 hover:text-slate-800 hover:bg-slate-50"
           >
             🔑 Role Permissions
           </button>

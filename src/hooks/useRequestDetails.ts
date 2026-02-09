@@ -11,7 +11,7 @@ const requestListService = new RequestListService();
 export const useRequestDetails = (requestId: string | string[] | undefined) => {
     const { user } = useAuth();
     const [requestData, setRequestData] = useState<Request | null>(null);
-    
+
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<Error | null>(null);
 
@@ -26,7 +26,7 @@ export const useRequestDetails = (requestId: string | string[] | undefined) => {
         setLoading(true);
         setError(null);
         try {
-            const request = await requestService.getRequestDetails(requestId.toString());
+            const { request } = await requestService.getRequestDetails(requestId.toString());
             setRequestData(request);
         } catch (err) {
             setError(err as Error);
@@ -34,11 +34,11 @@ export const useRequestDetails = (requestId: string | string[] | undefined) => {
         } finally {
             setLoading(false);
         }
-    }, [requestId]); 
+    }, [requestId]);
 
     useEffect(() => {
         fetchData();
-    }, [fetchData]); 
+    }, [fetchData]);
 
     const addLog = async (data: LogUpdateData) => {
         if (!requestId) return;
@@ -47,7 +47,7 @@ export const useRequestDetails = (requestId: string | string[] | undefined) => {
         setError(null);
         try {
             await requestService.addRequestLog(requestId as string, data);
-            await fetchData(); 
+            await fetchData();
         } catch (err) {
             setError(err as Error);
             throw err;
@@ -63,7 +63,7 @@ export const useRequestDetails = (requestId: string | string[] | undefined) => {
         setError(null);
         try {
             await requestListService.updateFee(requestId as string, fee);
-            await fetchData(); 
+            await fetchData();
         } catch (err) {
             setError(err as Error);
             throw err;
@@ -87,7 +87,7 @@ export const useRequestDetails = (requestId: string | string[] | undefined) => {
                     note,
                     preferredDatetime
                 );
-                
+
             } else if (action === 'deny') {
                 // Deny flow: Call denyRequest API (uses approve endpoint but sets status to CANCELLED)
                 await requestListService.denyRequest(
@@ -95,8 +95,8 @@ export const useRequestDetails = (requestId: string | string[] | undefined) => {
                     note
                 );
             }
-            
-            await fetchData(); 
+
+            await fetchData();
         } catch (err) {
             setError(err as Error);
             throw err;
@@ -116,7 +116,7 @@ export const useRequestDetails = (requestId: string | string[] | undefined) => {
                 note,
                 cost
             );
-            await fetchData(); 
+            await fetchData();
         } catch (err) {
             setError(err as Error);
             throw err;
@@ -135,7 +135,7 @@ export const useRequestDetails = (requestId: string | string[] | undefined) => {
                 requestId as string,
                 note
             );
-            await fetchData(); 
+            await fetchData();
         } catch (err) {
             setError(err as Error);
             throw err;
@@ -144,15 +144,15 @@ export const useRequestDetails = (requestId: string | string[] | undefined) => {
         }
     };
 
-    return { 
-        requestData, 
-        loading, 
+    return {
+        requestData,
+        loading,
         error,
         isSubmitting,
         addLog,
         updateFee,
         acceptOrDenyRequest,
         addProgressNote,
-        completeRequest         
+        completeRequest
     };
 };

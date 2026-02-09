@@ -30,7 +30,7 @@ export default function ElevatorCardAdminPage() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
-  
+
   // Pagination
   const initialPageSize = 10;
   const [pageNo, setPageNo] = useState<number>(0);
@@ -326,9 +326,8 @@ export default function ElevatorCardAdminPage() {
                   {registrationsToDisplay.map(item => (
                     <tr
                       key={item.id}
-                      className={`hover:bg-gray-50 ${
-                        selectedId === item.id ? 'bg-gray-100' : ''
-                      }`}
+                      className={`hover:bg-gray-50 ${selectedId === item.id ? 'bg-gray-100' : ''
+                        }`}
                     >
                       <td className="px-4 py-3 font-medium text-gray-900">
                         {item.fullName ?? '—'}
@@ -442,12 +441,12 @@ export default function ElevatorCardAdminPage() {
                 <DetailRow label={t('detail.phoneNumber')} value={selected.phoneNumber} />
                 <DetailRow
                   label={t('detail.requestType')}
-                  value={requestTypeConfig[selected.requestType] ?? selected.requestType}
+                  value={selected.requestType ? (requestTypeConfig[selected.requestType] ?? selected.requestType) : null}
                 />
                 <DetailRow label={t('detail.note')} value={selected.note} />
-                <DetailRow 
-                  label={t('detail.status')} 
-                  value={statusConfig[selected.status]?.label ?? selected.status} 
+                <DetailRow
+                  label={t('detail.status')}
+                  value={statusConfig[selected.status]?.label ?? selected.status}
                 />
                 <DetailRow
                   label={t('detail.paymentStatus')}
@@ -506,11 +505,10 @@ export default function ElevatorCardAdminPage() {
                   type="button"
                   onClick={() => handleDecision('APPROVE')}
                   disabled={!canDecide || submitting}
-                  className={`flex-1 px-4 py-2 rounded-md text-white transition-colors ${
-                    canDecide && !submitting
+                  className={`flex-1 px-4 py-2 rounded-md text-white transition-colors ${canDecide && !submitting
                       ? 'bg-[#02542D] hover:bg-[#024428]'
                       : 'bg-gray-300 cursor-not-allowed'
-                  }`}
+                    }`}
                 >
                   {t('actions.approve')}
                 </button>
@@ -518,11 +516,10 @@ export default function ElevatorCardAdminPage() {
                   type="button"
                   onClick={() => handleDecision('REJECT')}
                   disabled={!canDecide || submitting}
-                  className={`flex-1 px-4 py-2 rounded-md transition-colors ${
-                    canDecide && !submitting
+                  className={`flex-1 px-4 py-2 rounded-md transition-colors ${canDecide && !submitting
                       ? 'bg-red-600 text-white hover:bg-red-700'
                       : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
+                    }`}
                 >
                   {t('actions.reject')}
                 </button>

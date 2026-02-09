@@ -21,6 +21,7 @@ import {
   ReadingCycleDto,
 } from '@/src/services/base/waterService';
 import { useNotifications } from '@/src/hooks/useNotifications';
+import PopupComfirm from '@/src/components/common/PopupComfirm';
 
 export default function ReadingSessionsPage() {
   const t = useTranslations('ReadingSessions');
@@ -55,7 +56,7 @@ export default function ReadingSessionsPage() {
       const data = await getAllReadingCycles();
       setCycles(data);
       // Load assignments for active cycles
-      const activeCycles = data.filter(c => c.status === 'ACTIVE');
+      const activeCycles = data.filter(c => c.status === 'IN_PROGRESS');
       if (activeCycles.length > 0) {
         const assignmentsData = await getAssignmentsByCycle(activeCycles[0].id);
         setAssignments(assignmentsData);
@@ -161,7 +162,7 @@ export default function ReadingSessionsPage() {
         <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded mb-6">
           <div className="flex justify-between items-center">
             <div>
-              <strong>{t('activeSession.label')}</strong> {t('activeSession.startedAt')} {new Date(myActiveSession.startedAt).toLocaleString()} 
+              <strong>{t('activeSession.label')}</strong> {t('activeSession.startedAt')} {new Date(myActiveSession.startedAt).toLocaleString()}
               ({myActiveSession.unitsRead} {t('activeSession.unitsRead')})
             </div>
             <button
@@ -255,7 +256,7 @@ export default function ReadingSessionsPage() {
                       {new Date(session.startedAt).toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-center text-[#024023] font-semibold">
-                      {session.completedAt 
+                      {session.completedAt
                         ? new Date(session.completedAt).toLocaleString()
                         : '-'}
                     </td>
@@ -264,11 +265,10 @@ export default function ReadingSessionsPage() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          session.isCompleted
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-blue-100 text-blue-700'
-                        }`}
+                        className={`px-2 py-1 rounded text-xs font-medium ${session.isCompleted
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-blue-100 text-blue-700'
+                          }`}
                       >
                         {session.isCompleted ? 'Completed' : 'In Progress'}
                       </span>
@@ -313,6 +313,18 @@ export default function ReadingSessionsPage() {
           assignments={assignments}
         />
       )}
+      {/* Complete Session Confirm Popup */}
+      <PopupComfirm
+        isOpen={showCompleteConfirm}
+        onClose={() => {
+          setShowCompleteConfirm(false);
+          setPendingSessionId(null);
+        }}
+        onConfirm={handleCompleteSession}
+        popupTitle={t('confirm.completeMessage')}
+        popupContext=""
+        isDanger={false}
+      />
     </div>
   );
 }
@@ -375,7 +387,7 @@ function StartSessionModal({ isOpen, onClose, onSubmit, assignments }: StartSess
               options={assignments.filter(a => a.status !== 'COMPLETED')}
               value={assignmentId}
               onSelect={(a) => setAssignmentId(a.id)}
-              renderItem={(a) => `Assignment - Floors: ${a.floors.join(', ')}`}
+              renderItem={(a) => `Assignment - Floor: ${a.floor ?? (a.floorFrom && a.floorTo ? `${a.floorFrom}-${a.floorTo}` : 'N/A')}`}
               getValue={(a) => a.id}
               placeholder="Select assignment"
             />
@@ -411,18 +423,6 @@ function StartSessionModal({ isOpen, onClose, onSubmit, assignments }: StartSess
         </form>
       </div>
 
-      {/* Complete Session Confirm Popup */}
-      <PopupComfirm
-        isOpen={showCompleteConfirm}
-        onClose={() => {
-          setShowCompleteConfirm(false);
-          setPendingSessionId(null);
-        }}
-        onConfirm={handleCompleteSession}
-        popupTitle={t('confirm.completeMessage')}
-        popupContext=""
-        isDanger={false}
-      />
     </div>
   );
 }

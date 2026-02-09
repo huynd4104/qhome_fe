@@ -53,7 +53,7 @@ export default function ReadingCyclesPage() {
     try {
       const data = await getAllServices();
       // Only show water and electric services that require meters
-      setServices(data.filter((service) => 
+      setServices(data.filter((service) =>
         service.requiresMeter && ALLOWED_SERVICE_CODES.includes(service.code)
       ));
     } catch (error) {
@@ -107,7 +107,7 @@ export default function ReadingCyclesPage() {
   const monthOptions = useMemo(() => {
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    
+
     const months = new Set<string>();
     cycles.forEach((cycle) => {
       const month = getCycleMonth(cycle);
@@ -192,10 +192,10 @@ export default function ReadingCyclesPage() {
       return;
     }
 
-    if(cycle.status === 'COMPLETED' || cycle.status === 'CLOSED') {
+    if (cycle.status === 'COMPLETED' || cycle.status === 'CLOSED') {
       show(t('errors.cannotChangeFromCompletedOrClosed') || 'Cannot change status from Completed or Closed', 'error');
       return;
-    } 
+    }
     setCycleForStatusChange(cycle);
     setIsStatusChangeOpen(true);
   };
@@ -332,17 +332,16 @@ export default function ReadingCyclesPage() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          (cycle.status as string) === 'OPEN'
+                        className={`px-2 py-1 rounded text-xs font-medium ${(cycle.status as string) === 'OPEN'
                             ? 'bg-blue-100 text-blue-700'
                             : (cycle.status as string) === 'IN_PROGRESS'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : (cycle.status as string) === 'COMPLETED'
-                            ? 'bg-green-100 text-green-700'
-                            : (cycle.status as string) === 'CLOSED'
-                            ? 'bg-gray-100 text-gray-700'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : (cycle.status as string) === 'COMPLETED'
+                                ? 'bg-green-100 text-green-700'
+                                : (cycle.status as string) === 'CLOSED'
+                                  ? 'bg-gray-100 text-gray-700'
+                                  : 'bg-gray-100 text-gray-700'
+                          }`}
                       >
                         {(cycle.status as string) === 'IN_PROGRESS' ? t('status.inProgress') : cycle.status}
                       </span>
@@ -352,7 +351,7 @@ export default function ReadingCyclesPage() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex gap-2 justify-center">
-                        {isCurrentMonth(cycle) && cycle.status !== 'IN_PROGRESS' || cycle.status !== 'COMPLETED' || cycle.status !== 'CLOSED' ? (
+                        {isCurrentMonth(cycle) && cycle.status !== 'IN_PROGRESS' && cycle.status !== 'COMPLETED' && cycle.status !== 'CLOSED' ? (
                           <button
                             onClick={() => handleOpenStatusChange(cycle)}
                             className="px-3 py-1 bg-gray-100 text-gray-400 rounded-md hover:bg-gray-300 text-sm border border-gray-300"
@@ -383,10 +382,10 @@ export default function ReadingCyclesPage() {
                           onClick={() => handleEdit(cycle)}
                           className="p-2 rounded-lg bg-[#739559] hover:bg-[#5a7347] transition duration-150"
                         >
-                          <Image 
-                            src={Edit} 
-                            alt="Edit" 
-                            width={24} 
+                          <Image
+                            src={Edit}
+                            alt="Edit"
+                            width={24}
                             height={24}
                             className="w-6 h-6"
                           />

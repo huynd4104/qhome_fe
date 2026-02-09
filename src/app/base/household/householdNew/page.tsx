@@ -32,7 +32,7 @@ const DEFAULT_UNIT_STATE: AsyncState<Unit[]> = {
 export default function HouseholdNewPage() {
   const t = useTranslations('Household');
   const router = useRouter();
-  
+
   const KIND_OPTIONS: { value: CreateHouseholdPayload['kind']; label: string }[] = [
     { value: 'OWNER', label: t('kinds.ownerWithCode') },
     { value: 'TENANT', label: t('kinds.tenantWithCode') },
@@ -72,7 +72,7 @@ export default function HouseholdNewPage() {
     void loadBuildings();
   }, []);
 
-  const handleSelectBuilding = async (buildingId: string) {
+  const handleSelectBuilding = async (buildingId: string) => {
     setSelectedBuildingId(buildingId);
     setSelectedUnitId('');
 

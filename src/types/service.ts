@@ -87,9 +87,11 @@ export interface ServiceCombo {
   id: string;
   code?: string;
   name?: string;
+  description?: string;
   price?: number | null;
   isActive?: boolean;
   sortOrder?: number | null;
+  items?: ServiceComboItemPayload[];
 }
 
 export interface Service {
@@ -224,6 +226,8 @@ export interface CreateServiceTicketPayload {
   isActive?: boolean;
   sortOrder?: number | null;
 }
+
+export type UpdateServiceTicketPayload = Partial<CreateServiceTicketPayload>;
 
 export interface ServiceAvailabilityInput {
   dayOfWeek: number;

@@ -10,7 +10,7 @@ import DropdownArrow from '@/src/assets/DropdownArrow.svg';
 import EditTable from '@/src/assets/EditTable.svg';
 import { useVehiclePage } from '@/src/hooks/useVehiclePage';
 import { Vehicle, VehicleKind } from '@/src/types/vehicle';
-import { fetchResidentById, fetchResidentByUserId, ResidentSummary } from '@/src/services/base/residentService';
+import { fetchResidentById, fetchResidentByUserId, Resident } from '@/src/services/base/residentService';
 import Pagination from '@/src/components/customer-interaction/Pagination';
 
 type VehicleWithContext = Vehicle & {
@@ -33,8 +33,8 @@ export default function VehicleAllPage() {
   const [buildingSearch, setBuildingSearch] = useState('');
   const [vehicleSearch, setVehicleSearch] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [residentLookup, setResidentLookup] = useState<Record<string, ResidentSummary>>({});
-  
+  const [residentLookup, setResidentLookup] = useState<Record<string, Resident>>({});
+
   // Pagination
   const initialPageSize = 10;
   const [pageNo, setPageNo] = useState<number>(0);
@@ -312,9 +312,8 @@ export default function VehicleAllPage() {
       </div>
 
       <div
-        className={`relative grid gap-6 ${
-          isSidebarCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-[320px_1fr]'
-        }`}
+        className={`relative grid gap-6 ${isSidebarCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-[320px_1fr]'
+          }`}
       >
         {!isSidebarCollapsed && (
           <aside className="space-y-4">
@@ -346,11 +345,10 @@ export default function VehicleAllPage() {
                   <button
                     type="button"
                     onClick={handleSelectAll}
-                    className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition ${
-                      selectedBuildingId === 'all'
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-transparent hover:bg-slate-50'
-                    }`}
+                    className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition ${selectedBuildingId === 'all'
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : 'border-transparent hover:bg-slate-50'
+                      }`}
                   >
                     <span>{t('all')}</span>
                     <span className="text-xs text-slate-500">{vehiclesWithContext.length}</span>
@@ -375,19 +373,17 @@ export default function VehicleAllPage() {
                                 alt="toggle"
                                 width={16}
                                 height={16}
-                                className={`transition-transform duration-200 ${
-                                  building.isExpanded ? 'rotate-180' : ''
-                                }`}
+                                className={`transition-transform duration-200 ${building.isExpanded ? 'rotate-180' : ''
+                                  }`}
                               />
                             </button>
                             <button
                               type="button"
                               onClick={() => handleSelectBuilding(building.id)}
-                              className={`flex flex-1 flex-col rounded-lg px-3 py-2 text-left transition ${
-                                selectedBuildingId === building.id && selectedUnitId === 'all'
-                                  ? 'bg-emerald-50 text-emerald-700'
-                                  : 'hover:bg-white'
-                              }`}
+                              className={`flex flex-1 flex-col rounded-lg px-3 py-2 text-left transition ${selectedBuildingId === building.id && selectedUnitId === 'all'
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'hover:bg-white'
+                                }`}
                             >
                               <span className="font-semibold text-[#02542D]">{building.name}</span>
                               <span className="text-xs text-slate-500">{building.code}</span>
@@ -404,11 +400,10 @@ export default function VehicleAllPage() {
                                   key={unit.id}
                                   type="button"
                                   onClick={() => handleSelectUnit(building.id, unit.id)}
-                                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition ${
-                                    selectedUnitId === unit.id
-                                      ? 'bg-emerald-50 text-emerald-700'
-                                      : 'hover:bg-slate-100'
-                                  }`}
+                                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition ${selectedUnitId === unit.id
+                                    ? 'bg-emerald-50 text-emerald-700'
+                                    : 'hover:bg-slate-100'
+                                    }`}
                                 >
                                   <div>
                                     <span className="font-medium text-[#02542D]">{unit.name}</span>
@@ -448,21 +443,21 @@ export default function VehicleAllPage() {
                 {selectedUnitId === 'all' && selectedBuildingId === 'all'
                   ? t('vehiclePanelDescriptionAll', { total: filteredVehicles.length })
                   : selectedUnitId === 'all'
-                  ? t('vehiclePanelDescriptionBuilding', { total: filteredVehicles.length })
-                  : t('vehiclePanelDescriptionUnit', { total: filteredVehicles.length })}
+                    ? t('vehiclePanelDescriptionBuilding', { total: filteredVehicles.length })
+                    : t('vehiclePanelDescriptionUnit', { total: filteredVehicles.length })}
               </p>
             </div>
             <div className="w-full max-w-xs">
-            <input
-              type="text"
-              value={vehicleSearch}
-              onChange={(event) => {
-                setVehicleSearch(event.target.value);
-                setPageNo(0);
-              }}
-              placeholder={t('searchVehicle')}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-            />
+              <input
+                type="text"
+                value={vehicleSearch}
+                onChange={(event) => {
+                  setVehicleSearch(event.target.value);
+                  setPageNo(0);
+                }}
+                placeholder={t('searchVehicle')}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              />
             </div>
           </div>
 
@@ -539,11 +534,10 @@ export default function VehicleAllPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span
-                          className={`px-2 py-1 text-xs font-medium ${
-                            vehicle.active
-                              ? 'rounded bg-emerald-100 text-emerald-700'
-                              : 'rounded bg-slate-100 text-slate-600'
-                          }`}
+                          className={`px-2 py-1 text-xs font-medium ${vehicle.active
+                            ? 'rounded bg-emerald-100 text-emerald-700'
+                            : 'rounded bg-slate-100 text-slate-600'
+                            }`}
                         >
                           {vehicle.active ? t('active') : t('inactive')}
                         </span>

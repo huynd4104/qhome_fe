@@ -74,12 +74,12 @@ export default function IndexReadingPage() {
       // First load assignment to get staffId and cycleId
       const assignmentData = await getAssignmentById(assignmentId);
       setAssignment(assignmentData);
-      
+
       // Check if assignment is completed or viewOnly from URL
       const urlViewOnly = searchParams.get('viewOnly') === 'true';
       const isCompleted = assignmentData.completedAt !== null && assignmentData.completedAt !== undefined;
       setIsViewOnly(urlViewOnly || isCompleted);
-      
+
       // Then load meters using staffId and cycleId
       const [metersData, progressData] = await Promise.all([
         getMetersByStaffAndCycle(assignmentData.assignedTo, assignmentData.cycleId),
@@ -96,13 +96,13 @@ export default function IndexReadingPage() {
       const initialReadingsData: Record<string, ReadingData> = {};
       const initialUnitReadingsData: Record<string, UnitReadingData> = {};
       const existingReadingsMap: Record<string, MeterReadingDto[]> = {};
-      
+
       // Load readings for each unit
       for (const unitId of unitIds) {
         try {
           const unit = await getUnit(unitId);
           unitsMap[unitId] = unit;
-          
+
           // Get existing readings for this unit in this cycle/assignment
           const existingReadings = await getMeterReadingsByCycleAndAssignmentAndUnit(
             assignmentData.cycleId,
@@ -110,13 +110,13 @@ export default function IndexReadingPage() {
             assignmentId
           );
           console.log('existingReadings', existingReadings);
-          
+
           // Store existing readings for this unit
           existingReadingsMap[unitId] = existingReadings;
-          
+
           // Find meter for this unit
           const meterForUnit = metersData.find(m => m.unitId === unitId);
-          
+
           if (meterForUnit) {
             // Unit has a meter - check if there's a reading for this meter
             const readingForMeter = existingReadings.find(r => r.meterId === meterForUnit.id);
@@ -173,7 +173,7 @@ export default function IndexReadingPage() {
           existingReadingsMap[unitId] = [];
         }
       }
-      
+
       // Also initialize readings for meters that don't have units in unitIds (shouldn't happen, but just in case)
       metersData.forEach((meter) => {
         if (!initialReadingsData[meter.id] && meter.unitId) {
@@ -187,7 +187,7 @@ export default function IndexReadingPage() {
           }
         }
       });
-      
+
       setInitialReadings(initialReadingsData);
       setReadings(initialReadingsData);
       setInitialUnitReadings(initialUnitReadingsData);
@@ -207,7 +207,7 @@ export default function IndexReadingPage() {
     const meter = meters.find(m => m.id === meterId);
     const reading = readings[meterId];
     const prevIndex = reading?.prevIndex ?? meter?.lastReading ?? 0;
-    
+
     // Update the value first
     setReadings((prev) => ({
       ...prev,
@@ -216,11 +216,11 @@ export default function IndexReadingPage() {
         [field]: value,
       },
     }));
-    
+
     // Validate if it's currIndex
     if (field === 'currIndex') {
       const numValue = typeof value === 'number' ? value : (value === '' ? null : parseFloat(value as string));
-      
+
       if (numValue !== null && !isNaN(numValue)) {
         // Check for negative number
         if (numValue < 0) {
@@ -230,7 +230,7 @@ export default function IndexReadingPage() {
           }));
           return;
         }
-        
+
         // Check if current index is greater than prev index
         if (prevIndex !== undefined && prevIndex !== null && numValue <= prevIndex) {
           setReadingErrors(prev => ({
@@ -240,7 +240,7 @@ export default function IndexReadingPage() {
           return;
         }
       }
-      
+
       // Clear error if validation passes
       if (readingErrors[meterId]) {
         setReadingErrors(prev => {
@@ -251,22 +251,22 @@ export default function IndexReadingPage() {
       }
     }
   };
-  
+
   const updateUnitReading = (unitId: string, value: number | string) => {
     const numValue = typeof value === 'number' ? value : (value === '' ? '' : parseFloat(value as string));
-    
+
     // Update the value first
     setUnitReadings(prev => ({
       ...prev,
       [unitId]: { ...prev[unitId], currIndex: value === '' ? '' : numValue }
     }));
-    
+
     // Validate
     if (numValue !== '' && numValue !== null && !isNaN(numValue as number)) {
       const existingReadings = existingReadingsByUnit[unitId] || [];
       const existingReading = existingReadings.length > 0 ? existingReadings[0] : null;
       const prevIndex = existingReading?.prevIndex ?? null;
-      
+
       // Check for negative number
       if (numValue < 0) {
         setUnitReadingErrors(prev => ({
@@ -275,7 +275,7 @@ export default function IndexReadingPage() {
         }));
         return;
       }
-      
+
       // Check if current index is greater than prev index (if prevIndex exists)
       if (prevIndex !== null && prevIndex !== undefined && numValue <= prevIndex) {
         setUnitReadingErrors(prev => ({
@@ -285,7 +285,7 @@ export default function IndexReadingPage() {
         return;
       }
     }
-    
+
     // Clear error if validation passes
     if (unitReadingErrors[unitId]) {
       setUnitReadingErrors(prev => {
@@ -308,7 +308,7 @@ export default function IndexReadingPage() {
     const invalidPrevMetersByBuilding: Record<string, string[]> = {};
     const negativeUnitsByBuilding: Record<string, string[]> = {};
     const invalidPrevUnitsByBuilding: Record<string, string[]> = {};
-    
+
     // Helper function to get building code from meter
     const getBuildingCode = (meter: MeterDto | undefined, meterCode?: string): string => {
       if (meter?.buildingCode) return meter.buildingCode;
@@ -319,7 +319,7 @@ export default function IndexReadingPage() {
       }
       return 'Unknown';
     };
-    
+
     // Helper function to get building code from unit
     const getBuildingCodeFromUnit = (unitId: string): string => {
       const unit = unitsData[unitId];
@@ -330,25 +330,25 @@ export default function IndexReadingPage() {
       }
       return 'Unknown';
     };
-    
+
     // Validate meter readings - only check readings that have changed or have values
     for (const meterId in readings) {
       const reading = readings[meterId];
       const initialReading = initialReadings[meterId];
       const meter = meters.find(m => m.id === meterId);
-      
+
       // Only validate if value has changed from initial value or is a new reading
-      const hasChanged = initialReading 
+      const hasChanged = initialReading
         ? Number(reading.currIndex) !== Number(initialReading.currIndex)
         : reading.currIndex !== null && reading.currIndex !== undefined;
-      
+
       // Only validate readings that will be submitted
       if (hasChanged && reading.currIndex !== null && reading.currIndex !== undefined) {
         const currIndex = Number(reading.currIndex);
         const prevIndex = reading?.prevIndex ?? meter?.lastReading ?? 0;
         const buildingCode = getBuildingCode(meter, meter?.meterCode);
         const meterCode = meter?.meterCode || meterId;
-        
+
         if (currIndex < 0) {
           if (!negativeMetersByBuilding[buildingCode]) {
             negativeMetersByBuilding[buildingCode] = [];
@@ -370,31 +370,31 @@ export default function IndexReadingPage() {
         }
       }
     }
-    
+
     // Validate unit readings - only check readings that have changed or have values
     for (const unitId in unitReadings) {
       const unitReading = unitReadings[unitId];
       const initialUnitReading = initialUnitReadings[unitId];
       const existingReadings = existingReadingsByUnit[unitId] || [];
       const existingReading = existingReadings.length > 0 ? existingReadings[0] : null;
-      
+
       // Only validate if value has changed from initial value (initial is empty string)
       const hasChanged = initialUnitReading
-        ? unitReading.currIndex !== initialUnitReading.currIndex && 
-          unitReading.currIndex !== '' && 
-          unitReading.currIndex !== null && 
-          unitReading.currIndex !== undefined
-        : unitReading.currIndex !== '' && 
-          unitReading.currIndex !== null && 
-          unitReading.currIndex !== undefined;
-      
+        ? unitReading.currIndex !== initialUnitReading.currIndex &&
+        unitReading.currIndex !== '' &&
+        unitReading.currIndex !== null &&
+        unitReading.currIndex !== undefined
+        : unitReading.currIndex !== '' &&
+        unitReading.currIndex !== null &&
+        unitReading.currIndex !== undefined;
+
       // Only validate readings that will be submitted
       if (hasChanged) {
         const currIndex = Number(unitReading.currIndex);
         const prevIndex = existingReading?.prevIndex ?? null;
         const unitCode = unitsData[unitId]?.code || unitId;
         const buildingCode = getBuildingCodeFromUnit(unitId);
-        
+
         if (currIndex < 0) {
           if (!negativeUnitsByBuilding[buildingCode]) {
             negativeUnitsByBuilding[buildingCode] = [];
@@ -416,38 +416,38 @@ export default function IndexReadingPage() {
         }
       }
     }
-    
+
     // Build grouped error messages by building
     const errorMessages: string[] = [];
-    
+
     // Group negative meters by building
     for (const buildingCode in negativeMetersByBuilding) {
       const meters = negativeMetersByBuilding[buildingCode];
       const list = meters.join(', ');
       errorMessages.push(`Tòa ${buildingCode}: ${meters.length} công tơ có chỉ số âm (${list})`);
     }
-    
+
     // Group negative units by building
     for (const buildingCode in negativeUnitsByBuilding) {
       const units = negativeUnitsByBuilding[buildingCode];
       const list = units.join(', ');
       errorMessages.push(`Tòa ${buildingCode}: ${units.length} căn hộ có chỉ số âm (${list})`);
     }
-    
+
     // Group invalid prev meters by building
     for (const buildingCode in invalidPrevMetersByBuilding) {
       const meters = invalidPrevMetersByBuilding[buildingCode];
       const list = meters.join(', ');
       errorMessages.push(`Tòa ${buildingCode}: ${meters.length} công tơ có chỉ số không lớn hơn chỉ số trước (${list})`);
     }
-    
+
     // Group invalid prev units by building
     for (const buildingCode in invalidPrevUnitsByBuilding) {
       const units = invalidPrevUnitsByBuilding[buildingCode];
       const list = units.join(', ');
       errorMessages.push(`Tòa ${buildingCode}: ${units.length} căn hộ có chỉ số không lớn hơn chỉ số trước (${list})`);
     }
-    
+
     if (errorMessages.length > 0) {
       show(`Vui lòng sửa các lỗi sau:\n${errorMessages.join('\n')}`, 'error');
       return;
@@ -463,17 +463,17 @@ export default function IndexReadingPage() {
       // Process all readings (both existing meters and units without meters)
       // Track created meters to avoid duplicates
       const createdMeters: Record<string, MeterDto> = {};
-      
+
       // Helper function to find or create meter for a unit
       const findOrCreateMeter = async (unitId: string): Promise<MeterDto | null> => {
         // Check if we already created a meter for this unit in this submit
         if (createdMeters[unitId]) {
           return createdMeters[unitId];
         }
-        
+
         // First check if meter exists in the already loaded meters list
         let meter = meters.find(m => m.unitId === unitId && m.serviceId === assignment.serviceId && m.active);
-        
+
         // If not found, try to get meters for this unit from API
         if (!meter) {
           try {
@@ -484,7 +484,7 @@ export default function IndexReadingPage() {
             console.error(`Failed to load meters for unit ${unitId}:`, error);
           }
         }
-        
+
         // If meter still not found, create a new meter for this unit and service
         if (!meter) {
           try {
@@ -492,15 +492,13 @@ export default function IndexReadingPage() {
             const unitCode = unitsData[unitId]?.code || unitId.substring(0, 8);
             const serviceCode = assignment.serviceCode || 'SRV';
             const meterCode = `${unitCode}-${serviceCode}`;
-            
+
             const meterReq: MeterCreateReq = {
               unitId: unitId,
               serviceId: assignment.serviceId,
               meterCode: meterCode,
-              meterType: assignment.serviceName || 'Standard',
-              location: undefined,
             };
-            
+
             // Create meter - await here to get meterId
             meter = await createMeter(meterReq);
             createdMeters[unitId] = meter; // Cache created meter to avoid duplicates
@@ -511,34 +509,34 @@ export default function IndexReadingPage() {
             return null;
           }
         }
-        
+
         return meter || null;
       };
-      
+
       // Process readings for existing meters
       // Only submit if value has changed from initial value
       for (const meterId in readings) {
         const reading = readings[meterId];
         const initialReading = initialReadings[meterId];
-        
+
         // Check if value has changed from initial value
-        const hasChanged = initialReading 
+        const hasChanged = initialReading
           ? Number(reading.currIndex) !== Number(initialReading.currIndex)
           : reading.currIndex !== null && reading.currIndex !== undefined;
-        
+
         // Only submit if value has changed and is a valid number
         if (hasChanged && reading.currIndex !== null && reading.currIndex !== undefined) {
           const meter = meters.find(m => m.id === meterId);
           const existingReadings = existingReadingsByUnit[meter?.unitId || ''];
           const existingReading = existingReadings?.find(r => r.meterId === meterId);
-          
+
           // Get prevIndex from existing reading, reading state, or meter's lastReading
           const prevIndex = existingReading?.prevIndex !== undefined && existingReading.prevIndex !== null
             ? existingReading.prevIndex
             : (reading.prevIndex !== undefined && reading.prevIndex !== null
-                ? reading.prevIndex
-                : (meter?.lastReading !== undefined && meter.lastReading !== null ? meter.lastReading : 0));
-          
+              ? reading.prevIndex
+              : (meter?.lastReading !== undefined && meter.lastReading !== null ? meter.lastReading : 0));
+
           const req: MeterReadingCreateReq = {
             assignmentId: assignmentId,
             meterId: meterId,
@@ -559,30 +557,30 @@ export default function IndexReadingPage() {
       for (const unitId in unitReadings) {
         const unitReading = unitReadings[unitId];
         const initialUnitReading = initialUnitReadings[unitId];
-        
+
         // Check if value has changed from initial value (initial is empty string)
         const hasChanged = initialUnitReading
-          ? unitReading.currIndex !== initialUnitReading.currIndex && 
-            unitReading.currIndex !== '' && 
-            unitReading.currIndex !== null && 
-            unitReading.currIndex !== undefined
-          : unitReading.currIndex !== '' && 
-            unitReading.currIndex !== null && 
-            unitReading.currIndex !== undefined;
-        
+          ? unitReading.currIndex !== initialUnitReading.currIndex &&
+          unitReading.currIndex !== '' &&
+          unitReading.currIndex !== null &&
+          unitReading.currIndex !== undefined
+          : unitReading.currIndex !== '' &&
+          unitReading.currIndex !== null &&
+          unitReading.currIndex !== undefined;
+
         if (hasChanged) {
           // Find or create meter for this unit
           const meter = await findOrCreateMeter(unitId);
-          
+
           if (meter && meter.id) {
             // Get prevIndex from existing reading or meter's lastReading
             const existingReadings = existingReadingsByUnit[unitId] || [];
             const existingReading = existingReadings.length > 0 ? existingReadings[0] : null;
-            
+
             const prevIndex = existingReading?.prevIndex !== undefined && existingReading.prevIndex !== null
               ? existingReading.prevIndex
               : (meter.lastReading !== undefined && meter.lastReading !== null ? meter.lastReading : 0);
-            
+
             const req: MeterReadingCreateReq = {
               assignmentId: assignmentId,
               meterId: meter.id,
@@ -605,11 +603,11 @@ export default function IndexReadingPage() {
 
       // Wait for all promises to complete (both success and failure)
       const results = await Promise.allSettled(readingPromises);
-      
+
       const successCount = results.filter(r => r.status === 'fulfilled').length;
       const failedCount = results.filter(r => r.status === 'rejected').length;
       const totalCount = meters.length;
-      
+
       // Log any errors for debugging
       results.forEach((result, index) => {
         if (result.status === 'rejected') {
@@ -631,11 +629,11 @@ export default function IndexReadingPage() {
           // Reload meters first to include newly created ones
           const updatedMeters = await getMetersByStaffAndCycle(assignment.assignedTo, assignment.cycleId);
           setMeters(updatedMeters);
-          
+
           // Create maps for updating state
           const updatedReadingsMap: Record<string, ReadingData> = {};
           const updatedUnitReadingsMap: Record<string, UnitReadingData> = {};
-          
+
           // Initialize readings for all meters (existing and newly created)
           // Use lastReading from meter as the current value
           updatedMeters.forEach((meter) => {
@@ -645,7 +643,7 @@ export default function IndexReadingPage() {
               prevIndex: meter.lastReading,
             };
           });
-          
+
           // Initialize unitReadings for all units
           const allUnitIds = assignment?.unitIds || [];
           allUnitIds.forEach((unitId) => {
@@ -659,13 +657,13 @@ export default function IndexReadingPage() {
               };
             }
           });
-          
+
           // Update both current and initial values after reload
           setInitialReadings(updatedReadingsMap);
           setReadings(updatedReadingsMap);
           setInitialUnitReadings(updatedUnitReadingsMap);
           setUnitReadings(updatedUnitReadingsMap);
-          
+
           // Reload progress
           const updatedProgress = await getAssignmentProgress(assignmentId);
           setProgress(updatedProgress);
@@ -716,10 +714,10 @@ export default function IndexReadingPage() {
 
   // Get all unit IDs from assignment (including units without meters)
   const allUnitIds = assignment?.unitIds || [];
-  
+
   // Total count: all units in assignment
   const totalCount = allUnitIds.length;
-  
+
   // Filled count: number of meters that have been saved (from database)
   const filledCount = progress?.readingsDone || 0;
 
@@ -788,13 +786,13 @@ export default function IndexReadingPage() {
                 const displayValue = existingReading?.currentIndex !== undefined && existingReading.currentIndex !== null
                   ? existingReading.currentIndex
                   : (unitReading.currIndex !== '' ? unitReading.currIndex : '');
-                
+
                 // If unit has no meters, show input for reading
                 if (unitMeters.length === 0) {
                   const prevIndexDisplay = existingReading?.prevIndex !== undefined && existingReading.prevIndex !== null
                     ? existingReading.prevIndex
                     : 0;
-                  
+
                   return (
                     <tr key={unitId} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm text-gray-800">
@@ -822,11 +820,9 @@ export default function IndexReadingPage() {
                             }}
                             disabled={isViewOnly}
                             placeholder="Enter reading"
-                            className={`w-full max-w-[200px] border ${
-                              unitReadingErrors[unitId] ? 'border-red-500' : 'border-gray-300'
-                            } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#739559] text-sm ${
-                              isViewOnly ? 'bg-gray-100 cursor-not-allowed' : ''
-                            }`}
+                            className={`w-full max-w-[200px] border ${unitReadingErrors[unitId] ? 'border-red-500' : 'border-gray-300'
+                              } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#739559] text-sm ${isViewOnly ? 'bg-gray-100 cursor-not-allowed' : ''
+                              }`}
                           />
                           {unitReadingErrors[unitId] && (
                             <span className="text-red-500 text-xs mt-1 block">{unitReadingErrors[unitId]}</span>
@@ -840,20 +836,20 @@ export default function IndexReadingPage() {
                 return unitMeters.map((meter, index) => {
                   const reading = readings[meter.id] || { meterId: meter.id, currIndex: meter.lastReading, prevIndex: meter.lastReading };
                   const isFirstMeter = index === 0;
-                  
+
                   // Find existing reading for this meter
                   const meterReading = existingReadings.find(r => r.meterId === meter.id);
                   const prevIndexDisplay = meterReading?.prevIndex !== undefined && meterReading.prevIndex !== null
                     ? meterReading.prevIndex
                     : (reading.prevIndex !== undefined && reading.prevIndex !== null
-                        ? reading.prevIndex
-                        : (meter.lastReading !== undefined && meter.lastReading !== null ? meter.lastReading : 0));
-                  
+                      ? reading.prevIndex
+                      : (meter.lastReading !== undefined && meter.lastReading !== null ? meter.lastReading : 0));
+
                   return (
                     <tr key={meter.id} className="hover:bg-gray-50">
                       {isFirstMeter && (
-                        <td 
-                          rowSpan={unitMeters.length} 
+                        <td
+                          rowSpan={unitMeters.length}
                           className="px-4 py-3 text-sm text-gray-800 align-top"
                         >
                           <div className="font-medium">{unit?.code || unitId}</div>
@@ -878,11 +874,9 @@ export default function IndexReadingPage() {
                             onChange={(e) => updateReading(meter.id, 'currIndex', e.target.value === '' ? '' : parseFloat(e.target.value))}
                             disabled={isViewOnly}
                             placeholder="Enter reading"
-                            className={`w-full max-w-[200px] border ${
-                              readingErrors[meter.id] ? 'border-red-500' : 'border-gray-300'
-                            } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#739559] text-sm ${
-                              isViewOnly ? 'bg-gray-100 cursor-not-allowed' : ''
-                            }`}
+                            className={`w-full max-w-[200px] border ${readingErrors[meter.id] ? 'border-red-500' : 'border-gray-300'
+                              } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#739559] text-sm ${isViewOnly ? 'bg-gray-100 cursor-not-allowed' : ''
+                              }`}
                           />
                           {readingErrors[meter.id] && (
                             <span className="text-red-500 text-xs mt-1 block">{readingErrors[meter.id]}</span>

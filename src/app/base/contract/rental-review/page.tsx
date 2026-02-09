@@ -31,9 +31,9 @@ import {
 } from '@/src/services/base/assetInspectionService';
 import { fetchStaffAccounts, type UserAccountInfo } from '@/src/services/iam/userService';
 import Pagination from '@/src/components/customer-interaction/Pagination';
-import { 
-  getMetersByUnit, 
-  createMeterReading, 
+import {
+  getMetersByUnit,
+  createMeterReading,
   getReadingCyclesByStatus,
   getAssignmentsByStaff,
   type MeterDto,
@@ -57,7 +57,7 @@ export default function RentalContractReviewPage() {
   const router = useRouter();
   const t = useTranslations('RentalReview');
   const searchParams = useSearchParams();
-  
+
   // Check user roles - ADMIN and SUPPORTER can view
   const isAdmin = hasRole('ADMIN') || hasRole('admin') || hasRole('ROLE_ADMIN') || hasRole('ROLE_admin');
   const isSupporter = hasRole('SUPPORTER') || hasRole('supporter') || hasRole('ROLE_SUPPORTER') || hasRole('ROLE_supporter');
@@ -69,13 +69,13 @@ export default function RentalContractReviewPage() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [unitsMap, setUnitsMap] = useState<Map<string, Unit>>(new Map());
   const [buildingsMap, setBuildingsMap] = useState<Map<string, Building>>(new Map());
-  
+
   // Filters
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'expiring' | 'cancelled' | 'notInspected'>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
-  
+
   // Map to track which contracts have inspections
   const [contractsWithInspection, setContractsWithInspection] = useState<Set<string>>(new Set());
   // Map to store inspection data by contractId (for displaying inspectionDate)
@@ -94,13 +94,13 @@ export default function RentalContractReviewPage() {
   const [creatingInspection, setCreatingInspection] = useState(false);
   const [inspectorName, setInspectorName] = useState('');
   const [inspectorNotes, setInspectorNotes] = useState('');
-  
+
   // Technician assignment
   const [technicians, setTechnicians] = useState<UserAccountInfo[]>([]);
   const [loadingTechnicians, setLoadingTechnicians] = useState(false);
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string>('');
   const [showTechnicianModal, setShowTechnicianModal] = useState(false);
-  
+
   // Pagination
   const initialPageSize = 10;
   const [pageNo, setPageNo] = useState<number>(0);
@@ -112,7 +112,7 @@ export default function RentalContractReviewPage() {
   const [readingDate, setReadingDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [activeCycle, setActiveCycle] = useState<ReadingCycleDto | null>(null);
   const [activeAssignment, setActiveAssignment] = useState<MeterReadingAssignmentDto | null>(null);
-  
+
 
 
   // Load buildings first, then contracts on mount
@@ -121,14 +121,14 @@ export default function RentalContractReviewPage() {
     if (isLoading) {
       return;
     }
-    
+
     // Check if user has permission to view
     if (!canView) {
       show('Bạn không có quyền truy cập trang này', 'error');
       router.push('/');
       return;
     }
-    
+
     const initializeData = async () => {
       setLoading(true);
       try {
@@ -136,14 +136,14 @@ export default function RentalContractReviewPage() {
         const buildingsData: any = await getBuildings();
         const buildingsList = Array.isArray(buildingsData) ? buildingsData : (buildingsData?.content || buildingsData?.data || []);
         setBuildings(buildingsList);
-        
+
         // Create buildings map
         const buildingsMapData = new Map<string, Building>();
         buildingsList.forEach((building: Building) => {
           buildingsMapData.set(building.id, building);
         });
         setBuildingsMap(buildingsMapData);
-        
+
         // Step 2: Load units for all buildings
         const unitsMapData = new Map<string, Unit>();
         for (const building of buildingsList) {
@@ -157,13 +157,13 @@ export default function RentalContractReviewPage() {
           }
         }
         setUnitsMap(unitsMapData);
-        
+
         // Step 3: Load contracts and enrich with unit/building info
         const contractsData = await getAllRentalContracts();
         const enrichedContracts: RentalContractWithUnit[] = contractsData.map(contract => {
           const unit = unitsMapData.get(contract.unitId);
           const building = unit ? buildingsMapData.get(unit.buildingId) : null;
-          
+
           return {
             ...contract,
             unitCode: unit?.code,
@@ -172,10 +172,10 @@ export default function RentalContractReviewPage() {
             buildingName: building?.name,
           };
         });
-        
+
         setContracts(enrichedContracts);
         setPageNo(0);
-        
+
         // Step 4: Load all inspections to track which contracts have been inspected
         try {
           const allInspections = await getAllInspections();
@@ -224,7 +224,7 @@ export default function RentalContractReviewPage() {
       const data: any = await getBuildings();
       const buildingsList = Array.isArray(data) ? data : (data?.content || data?.data || []);
       setBuildings(buildingsList);
-      
+
       // Create map for quick lookup
       const map = new Map<string, Building>();
       buildingsList.forEach((building: Building) => {
@@ -241,7 +241,7 @@ export default function RentalContractReviewPage() {
     try {
       const unitsData = await getUnitsByBuilding(buildingId);
       setUnits(unitsData);
-      
+
       // Create map for quick lookup
       const map = new Map<string, Unit>();
       unitsData.forEach(unit => {
@@ -264,12 +264,12 @@ export default function RentalContractReviewPage() {
     setLoading(true);
     try {
       const allContracts = await getAllRentalContracts();
-      
+
       // Enrich contracts with unit and building info from existing maps
       const enrichedContracts: RentalContractWithUnit[] = allContracts.map(contract => {
         const unit = unitsMap.get(contract.unitId);
         const building = unit ? buildingsMap.get(unit.buildingId) : null;
-        
+
         return {
           ...contract,
           unitCode: unit?.code,
@@ -278,10 +278,10 @@ export default function RentalContractReviewPage() {
           buildingName: building?.name,
         };
       });
-      
+
       setContracts(enrichedContracts);
       setPageNo(0);
-      
+
       // Reload inspections to update the map
       try {
         const allInspections = await getAllInspections();
@@ -321,11 +321,11 @@ export default function RentalContractReviewPage() {
       console.error('Failed to load contract detail:', error);
       const status = error?.response?.status;
       const errorMessage = error?.response?.data?.message || error?.message || '';
-      const isNotFoundError = status === 404 || 
-                              status === 400 ||
-                              errorMessage.toLowerCase().includes('not found') ||
-                              errorMessage.toLowerCase().includes('không tìm thấy');
-      
+      const isNotFoundError = status === 404 ||
+        status === 400 ||
+        errorMessage.toLowerCase().includes('not found') ||
+        errorMessage.toLowerCase().includes('không tìm thấy');
+
       if (isNotFoundError) {
         setDetailContract(null);
       } else {
@@ -341,7 +341,7 @@ export default function RentalContractReviewPage() {
   // Backend trả về role name dưới dạng lowercase ("technician")
   const hasTechnicianRole = (roles: string[] | undefined): boolean => {
     if (!roles || roles.length === 0) return false;
-    return roles.some(role => 
+    return roles.some(role =>
       role?.toUpperCase() === 'TECHNICIAN' || role?.toLowerCase() === 'technician'
     );
   };
@@ -351,20 +351,20 @@ export default function RentalContractReviewPage() {
     try {
       const staffList = await fetchStaffAccounts();
       console.log('All staff accounts:', staffList);
-      
+
       // Chỉ lấy những staff có role TECHNICIAN và đang active
       const techniciansList = staffList.filter(staff => {
         const isActive = staff.active !== false;
         const hasTechRole = hasTechnicianRole(staff.roles);
-        
+
         console.log(`Staff ${staff.username}: active=${isActive}, roles=${JSON.stringify(staff.roles)}, hasTechnician=${hasTechRole}`);
-        
+
         return isActive && hasTechRole;
       });
-      
+
       console.log('Filtered technicians:', techniciansList);
       setTechnicians(techniciansList);
-      
+
       if (techniciansList.length === 0) {
         console.warn('No technicians found. Total staff:', staffList.length);
         show(t('errors.noTechnicians'), 'info');
@@ -384,7 +384,7 @@ export default function RentalContractReviewPage() {
     try {
       const meters = await getMetersByUnit(unitId);
       setUnitMeters(meters.filter(m => m.active)); // Only active meters
-      
+
       // Initialize meter readings with empty values
       const readings: Record<string, { index: string; note?: string }> = {};
       meters.forEach(meter => {
@@ -408,12 +408,12 @@ export default function RentalContractReviewPage() {
       const openCycles = await getReadingCyclesByStatus('OPEN');
       const inProgressCycles = await getReadingCyclesByStatus('IN_PROGRESS');
       const activeCycles = [...openCycles, ...inProgressCycles];
-      
+
       if (activeCycles.length > 0) {
         // Use the first active cycle
         const cycle = activeCycles[0];
         setActiveCycle(cycle);
-        
+
         // Get assignments for this technician
         const assignments = await getAssignmentsByStaff(technicianId);
         // Find assignment for this cycle
@@ -436,11 +436,11 @@ export default function RentalContractReviewPage() {
     setReadingDate(new Date().toISOString().split('T')[0]);
     setActiveCycle(null);
     setActiveAssignment(null);
-    
+
     try {
       // Admin chỉ gán technician, không cần load meters
       // Technician sẽ load meters khi thực hiện kiểm tra
-      
+
       // Try to get existing inspection
       const existingInspection = await getInspectionByContractId(contract.id);
       if (existingInspection) {
@@ -454,11 +454,11 @@ export default function RentalContractReviewPage() {
           }
         } else {
           setCurrentInspection(existingInspection);
-          
+
           // If inspection is IN_PROGRESS, load meters and cycle/assignment for technician
           if (existingInspection.status === InspectionStatus.IN_PROGRESS && existingInspection.unitId) {
             await loadUnitMeters(existingInspection.unitId);
-            
+
             // Load active cycle and assignment if inspectorId exists
             if (existingInspection.completedBy) {
               await loadActiveCycleAndAssignment(existingInspection.completedBy);
@@ -504,9 +504,9 @@ export default function RentalContractReviewPage() {
     try {
       // Kiểm tra xem đã có inspection cho contract này chưa (có thể được tạo từ Flutter app khi cancel)
       const existingInspection = await getInspectionByContractId(contract.id);
-      
+
       let inspection: AssetInspection;
-      
+
       if (existingInspection && existingInspection.status === InspectionStatus.PENDING) {
         // Đã có inspection với status PENDING, gán lại technician thay vì tạo mới
         inspection = await assignInspector(existingInspection.id, {
@@ -526,7 +526,7 @@ export default function RentalContractReviewPage() {
         inspection = await createInspection(request);
         show(t('success.assignInspection', { name: selectedTechnician.username }), 'success');
       }
-      
+
       setCurrentInspection(inspection);
       setSelectedTechnicianId('');
       // Update contractsWithInspection map
@@ -550,17 +550,17 @@ export default function RentalContractReviewPage() {
     try {
       const updated = await startInspection(currentInspection.id);
       setCurrentInspection(updated);
-      
+
       // Load meters and cycle/assignment when technician starts inspection
       if (updated.unitId) {
         await loadUnitMeters(updated.unitId);
-        
+
         // Load active cycle and assignment if inspectorId exists
         if (updated.completedBy) {
           await loadActiveCycleAndAssignment(updated.completedBy);
         }
       }
-      
+
       show(t('success.startInspection'), 'success');
     } catch (error: any) {
       console.error('Failed to start inspection:', error);
@@ -596,7 +596,7 @@ export default function RentalContractReviewPage() {
         const readingPromises: Promise<any>[] = [];
         let successCount = 0;
         let errorCount = 0;
-        
+
         for (const meter of unitMeters) {
           const reading = meterReadings[meter.id];
           if (reading && reading.index && reading.index.trim() !== '') {
@@ -606,6 +606,7 @@ export default function RentalContractReviewPage() {
                 meterId: meter.id,
                 readingDate: readingDate,
                 currIndex: parseFloat(reading.index),
+                prevIndex: meter.lastReading || 0,
                 note: reading.note || `Đo cùng với kiểm tra thiết bị - Hợp đồng ${currentContract?.contractNumber || 'N/A'}`,
               };
               readingPromises.push(createMeterReading(readingReq));
@@ -616,33 +617,33 @@ export default function RentalContractReviewPage() {
             }
           }
         }
-        
+
         if (readingPromises.length > 0) {
           try {
             await Promise.all(readingPromises);
             if (errorCount > 0) {
-              show(t('errors.someReadingsFailed', { 
+              show(t('errors.someReadingsFailed', {
                 count: errorCount,
                 defaultValue: `Đã hoàn thành kiểm tra nhưng ${errorCount} chỉ số đồng hồ đo thất bại`
               }), 'error');
             }
           } catch (err) {
             console.error('Some meter readings failed:', err);
-            show(t('errors.someReadingsFailed', { 
+            show(t('errors.someReadingsFailed', {
               count: errorCount,
               defaultValue: `Đã hoàn thành kiểm tra nhưng một số chỉ số đồng hồ đo thất bại`
             }), 'error');
           }
         }
       }
-      
+
       const updated = await completeInspection(currentInspection.id, inspectorNotes);
       setCurrentInspection(updated);
-      
+
       if (unitMeters.length > 0 && activeAssignment) {
         const readingsCount = Object.values(meterReadings).filter(r => r.index && r.index.trim() !== '').length;
         if (readingsCount > 0) {
-          show(t('success.completeInspectionWithReadings', { 
+          show(t('success.completeInspectionWithReadings', {
             readingCount: readingsCount,
             defaultValue: `Đã hoàn thành kiểm tra thiết bị và ${readingsCount} chỉ số đồng hồ đo`
           }), 'success');
@@ -714,7 +715,7 @@ export default function RentalContractReviewPage() {
     if (statusFilter !== 'all') {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       filtered = filtered.filter(c => {
         if (statusFilter === 'active') {
           if (c.status !== 'ACTIVE') return false;
@@ -727,13 +728,13 @@ export default function RentalContractReviewPage() {
           if (c.status === 'EXPIRED') return true;
           if (c.status !== 'ACTIVE') return false;
           if (!c.endDate) return false;
-          
+
           const parseDateOnly = (dateStr: string): Date => {
             const [year, month, day] = dateStr.split('-').map(Number);
             const utcDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
             return new Date(utcDate.getFullYear(), utcDate.getMonth(), utcDate.getDate());
           };
-          
+
           let endDate: Date;
           try {
             if (c.endDate.includes('T')) {
@@ -748,21 +749,21 @@ export default function RentalContractReviewPage() {
             endDate = new Date(fallbackEnd.getFullYear(), fallbackEnd.getMonth(), fallbackEnd.getDate());
             endDate.setHours(0, 0, 0, 0);
           }
-          
+
           return endDate < today;
         } else if (statusFilter === 'expiring') {
           // Hợp đồng còn <= 30 ngày nữa sẽ hết hạn (tính từ today đến endDate)
           if (c.status !== 'ACTIVE') return false;
           if (!c.endDate) return false;
-          
+
           const parseDateOnly = (dateStr: string): Date => {
             const [year, month, day] = dateStr.split('-').map(Number);
             const utcDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
             return new Date(utcDate.getFullYear(), utcDate.getMonth(), utcDate.getDate());
           };
-          
+
           let endDate: Date;
-          
+
           try {
             if (c.endDate.includes('T')) {
               const isoDate = new Date(c.endDate);
@@ -776,9 +777,9 @@ export default function RentalContractReviewPage() {
             endDate = new Date(fallbackEnd.getFullYear(), fallbackEnd.getMonth(), fallbackEnd.getDate());
             endDate.setHours(0, 0, 0, 0);
           }
-          
+
           if (endDate < today) return false; // Đã hết hạn
-          
+
           // Calculate remaining days: from today to end date
           const remainingDays = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
           return remainingDays <= 30 && remainingDays >= 0; // Còn <= 30 ngày nữa
@@ -791,7 +792,7 @@ export default function RentalContractReviewPage() {
           // Chỉ coi là đã có inspection khi có inspection với status là COMPLETED hoặc IN_PROGRESS
           // PENDING vẫn được coi là "chưa kiểm tra" vì chưa thực sự kiểm tra
           const inspection = inspectionsByContractId.get(c.id);
-          const hasRealInspection = inspection && 
+          const hasRealInspection = inspection &&
             (inspection.status === InspectionStatus.COMPLETED || inspection.status === InspectionStatus.IN_PROGRESS);
           return isExpiredOrCancelled && !hasRealInspection;
         }
@@ -857,24 +858,24 @@ export default function RentalContractReviewPage() {
     if (contract.status !== 'ACTIVE') {
       return { label: t('status.invalid'), className: 'bg-gray-100 text-gray-700' };
     }
-    
+
     if (!contract.endDate || !contract.startDate) {
       return { label: t('status.active'), className: 'bg-green-100 text-green-700' };
     }
-    
+
     // Parse date string properly (YYYY-MM-DD format from API) - avoid timezone issues
     const parseDateOnly = (dateStr: string): Date => {
       const [year, month, day] = dateStr.split('-').map(Number);
       const utcDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
       return new Date(utcDate.getFullYear(), utcDate.getMonth(), utcDate.getDate());
     };
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     let startDate: Date;
     let endDate: Date;
-    
+
     try {
       // Parse start date
       if (contract.startDate.includes('T')) {
@@ -884,7 +885,7 @@ export default function RentalContractReviewPage() {
         startDate = parseDateOnly(contract.startDate);
       }
       startDate.setHours(0, 0, 0, 0);
-      
+
       // Parse end date
       if (contract.endDate.includes('T')) {
         const isoDate = new Date(contract.endDate);
@@ -897,23 +898,23 @@ export default function RentalContractReviewPage() {
       const fallbackStart = new Date(contract.startDate);
       startDate = new Date(fallbackStart.getFullYear(), fallbackStart.getMonth(), fallbackStart.getDate());
       startDate.setHours(0, 0, 0, 0);
-      
+
       const fallbackEnd = new Date(contract.endDate);
       endDate = new Date(fallbackEnd.getFullYear(), fallbackEnd.getMonth(), fallbackEnd.getDate());
       endDate.setHours(0, 0, 0, 0);
     }
-    
+
     if (endDate < today) {
       return { label: t('status.expired'), className: 'bg-red-100 text-red-700' };
     }
-    
+
     // Calculate remaining days: from today to end date (days until expiration)
     const daysUntilExpiry = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (daysUntilExpiry <= 30 && daysUntilExpiry >= 0) {
       return { label: t('status.expiring', { days: daysUntilExpiry }), className: 'bg-yellow-100 text-yellow-700' };
     }
-    
+
     return { label: t('status.active'), className: 'bg-green-100 text-green-700' };
   };
 
@@ -924,15 +925,15 @@ export default function RentalContractReviewPage() {
       const utcDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
       return new Date(utcDate.getFullYear(), utcDate.getMonth(), utcDate.getDate());
     };
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return contracts.filter(c => {
       if (c.status !== 'ACTIVE') return false;
       if (!c.endDate) return false;
-      
+
       let endDate: Date;
-      
+
       try {
         if (c.endDate.includes('T')) {
           const isoDate = new Date(c.endDate);
@@ -946,9 +947,9 @@ export default function RentalContractReviewPage() {
         endDate = new Date(fallbackEnd.getFullYear(), fallbackEnd.getMonth(), fallbackEnd.getDate());
         endDate.setHours(0, 0, 0, 0);
       }
-      
+
       if (endDate < today) return false;
-      
+
       // Calculate remaining days: from today to end date
       const remainingDays = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       return remainingDays <= 30 && remainingDays >= 0;
@@ -962,7 +963,7 @@ export default function RentalContractReviewPage() {
       const hasInspection = contractsWithInspection.has(c.id);
       return isExpiredOrCancelled && !hasInspection;
     });
-    
+
     // Debug logging
     console.log('📊 Contracts needing inspection:', {
       totalContracts: contracts.length,
@@ -976,7 +977,7 @@ export default function RentalContractReviewPage() {
         hasInspection: contractsWithInspection.has(c.id)
       }))
     });
-    
+
     return needingInspection.length;
   }, [contracts, contractsWithInspection]);
 
@@ -994,14 +995,14 @@ export default function RentalContractReviewPage() {
       // 2. There are contracts needing inspection
       // 3. The count has changed (to avoid duplicate notifications)
       if (
-        !loading && 
-        contracts.length > 0 && 
-        contractsNeedingInspection > 0 && 
+        !loading &&
+        contracts.length > 0 &&
+        contractsNeedingInspection > 0 &&
         contractsNeedingInspection !== lastNotifiedCountRef.current
       ) {
         // DISABLED: Backend notification API needs to be implemented/verified
         // Uncomment the code below when backend is ready:
-        
+
         /*
         try {
           // Create notification request
@@ -1032,7 +1033,7 @@ export default function RentalContractReviewPage() {
           lastNotifiedCountRef.current = contractsNeedingInspection;
         }
         */
-        
+
         // For now, just update the ref without creating notification
         // The warning card in the UI provides sufficient visibility
         lastNotifiedCountRef.current = contractsNeedingInspection;
@@ -1064,27 +1065,23 @@ export default function RentalContractReviewPage() {
             </div>
           )}
           {/* Always show inspection card - red if > 0, gray if 0 (for debugging) */}
-          <div className={`rounded-lg shadow-sm border p-4 ${
-            contractsNeedingInspection > 0 
-              ? 'bg-red-50 border-red-200' 
+          <div className={`rounded-lg shadow-sm border p-4 ${contractsNeedingInspection > 0
+              ? 'bg-red-50 border-red-200'
               : 'bg-gray-50 border-gray-200 opacity-60'
-          }`}>
+            }`}>
             <div className="flex items-center justify-between">
               <div>
-                <div className={`text-sm font-medium ${
-                  contractsNeedingInspection > 0 ? 'text-red-700' : 'text-gray-500'
-                }`}>
+                <div className={`text-sm font-medium ${contractsNeedingInspection > 0 ? 'text-red-700' : 'text-gray-500'
+                  }`}>
                   {t('statistics.needingInspection', { defaultValue: 'Cần kiểm tra thiết bị' })}
                 </div>
-                <div className={`text-2xl font-bold mt-1 ${
-                  contractsNeedingInspection > 0 ? 'text-red-900' : 'text-gray-600'
-                }`}>
+                <div className={`text-2xl font-bold mt-1 ${contractsNeedingInspection > 0 ? 'text-red-900' : 'text-gray-600'
+                  }`}>
                   {contractsNeedingInspection}
                 </div>
-                <div className={`text-xs mt-1 ${
-                  contractsNeedingInspection > 0 ? 'text-red-600' : 'text-gray-400'
-                }`}>
-                  {contractsNeedingInspection > 0 
+                <div className={`text-xs mt-1 ${contractsNeedingInspection > 0 ? 'text-red-600' : 'text-gray-400'
+                  }`}>
+                  {contractsNeedingInspection > 0
                     ? t('statistics.needingInspectionDesc', { defaultValue: 'Hợp đồng đã hết hạn/hủy chưa kiểm tra' })
                     : 'Tất cả hợp đồng đã được kiểm tra'
                   }
@@ -1188,7 +1185,7 @@ export default function RentalContractReviewPage() {
           <div className="p-8 text-center text-gray-500">{t('table.loading')}</div>
         ) : filteredContracts.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            {contracts.length === 0 
+            {contracts.length === 0
               ? t('table.noContracts')
               : t('table.noResults')}
           </div>
@@ -1282,7 +1279,7 @@ export default function RentalContractReviewPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {(() => {
                             const inspection = inspectionsByContractId.get(contract.id);
-                            return inspection?.inspectionDate 
+                            return inspection?.inspectionDate
                               ? formatDate(inspection.inspectionDate)
                               : '-';
                           })()}
@@ -1353,7 +1350,7 @@ export default function RentalContractReviewPage() {
                 ✕
               </button>
             </div>
-            
+
             <div className="px-6 py-6 flex-1 min-h-0 overflow-y-auto">
               {detailLoading ? (
                 <div className="text-center text-gray-500">{t('detailModal.loading')}</div>
@@ -1446,7 +1443,7 @@ export default function RentalContractReviewPage() {
                 </div>
               )}
             </div>
-            
+
             <div className="px-6 pb-6 flex-shrink-0 border-t border-gray-200 pt-4">
               <button
                 onClick={() => {
@@ -1466,7 +1463,7 @@ export default function RentalContractReviewPage() {
       {inspectionModalOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-              onClick={(e) => {
+          onClick={(e) => {
             if (e.target === e.currentTarget) {
               setInspectionModalOpen(false);
               setCurrentInspection(null);
@@ -1492,7 +1489,7 @@ export default function RentalContractReviewPage() {
                 ✕
               </button>
             </div>
-            
+
             <div className="px-6 py-6 flex-1 min-h-0 overflow-y-auto">
               {inspectionLoading ? (
                 <div className="text-center text-gray-500">{t('inspectionModal.loading')}</div>
@@ -1506,7 +1503,7 @@ export default function RentalContractReviewPage() {
                       {t('inspectionModal.selectTechnician')}
                     </p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t('inspectionModal.selectTechnicianLabel')} <span className="text-red-500">{t('inspectionModal.required')}</span>
@@ -1543,13 +1540,13 @@ export default function RentalContractReviewPage() {
                   <div className="border-t border-gray-200 pt-4 mt-4">
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                       <p className="text-sm text-blue-800">
-                        <strong>{t('inspectionModal.adminNote', { defaultValue: 'Lưu ý' })}:</strong> {t('inspectionModal.adminNoteDesc', { 
-                          defaultValue: 'Bạn chỉ cần gán kỹ thuật viên. Kỹ thuật viên sẽ thực hiện kiểm tra thiết bị và đo chỉ số đồng hồ điện nước sau khi được gán.' 
+                        <strong>{t('inspectionModal.adminNote', { defaultValue: 'Lưu ý' })}:</strong> {t('inspectionModal.adminNoteDesc', {
+                          defaultValue: 'Bạn chỉ cần gán kỹ thuật viên. Kỹ thuật viên sẽ thực hiện kiểm tra thiết bị và đo chỉ số đồng hồ điện nước sau khi được gán.'
                         })}
                       </p>
                     </div>
                   </div>
-                  
+
                   <button
                     onClick={() => {
                       if (currentContract) {
@@ -1571,14 +1568,13 @@ export default function RentalContractReviewPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t('inspectionModal.status')}</label>
-                      <span className={`mt-1 inline-block px-2 py-1 text-xs font-medium rounded ${
-                        currentInspection.status === InspectionStatus.COMPLETED ? 'bg-green-100 text-green-700' :
-                        currentInspection.status === InspectionStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-700' :
-                        'bg-yellow-100 text-yellow-700'
-                      }`}>
+                      <span className={`mt-1 inline-block px-2 py-1 text-xs font-medium rounded ${currentInspection.status === InspectionStatus.COMPLETED ? 'bg-green-100 text-green-700' :
+                          currentInspection.status === InspectionStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-700' :
+                            'bg-yellow-100 text-yellow-700'
+                        }`}>
                         {currentInspection.status === InspectionStatus.PENDING ? t('inspectionModal.pending') :
-                         currentInspection.status === InspectionStatus.IN_PROGRESS ? t('inspectionModal.inProgress') :
-                         currentInspection.status === InspectionStatus.COMPLETED ? t('inspectionModal.completed') : t('inspectionModal.cancelled')}
+                          currentInspection.status === InspectionStatus.IN_PROGRESS ? t('inspectionModal.inProgress') :
+                            currentInspection.status === InspectionStatus.COMPLETED ? t('inspectionModal.completed') : t('inspectionModal.cancelled')}
                       </span>
                     </div>
                     {currentInspection.inspectorName && (
@@ -1766,16 +1762,15 @@ export default function RentalContractReviewPage() {
                                   <h4 className="font-medium text-gray-900">{item.assetName || item.assetCode}</h4>
                                   <p className="text-sm text-gray-500">{item.assetType}</p>
                                 </div>
-                                <span className={`px-2 py-1 text-xs font-medium rounded ${
-                                  item.conditionStatus === 'GOOD' ? 'bg-green-100 text-green-700' :
-                                  item.conditionStatus === 'DAMAGED' ? 'bg-red-100 text-red-700' :
-                                  item.conditionStatus === 'MISSING' ? 'bg-gray-100 text-gray-700' :
-                                  'bg-yellow-100 text-yellow-700'
-                                }`}>
+                                <span className={`px-2 py-1 text-xs font-medium rounded ${item.conditionStatus === 'GOOD' ? 'bg-green-100 text-green-700' :
+                                    item.conditionStatus === 'DAMAGED' ? 'bg-red-100 text-red-700' :
+                                      item.conditionStatus === 'MISSING' ? 'bg-gray-100 text-gray-700' :
+                                        'bg-yellow-100 text-yellow-700'
+                                  }`}>
                                   {item.conditionStatus === 'GOOD' ? t('inspectionModal.condition.good') :
-                                   item.conditionStatus === 'DAMAGED' ? t('inspectionModal.condition.damaged') :
-                                   item.conditionStatus === 'MISSING' ? t('inspectionModal.condition.missing') :
-                                   item.conditionStatus || t('inspectionModal.condition.notInspected')}
+                                    item.conditionStatus === 'DAMAGED' ? t('inspectionModal.condition.damaged') :
+                                      item.conditionStatus === 'MISSING' ? t('inspectionModal.condition.missing') :
+                                        item.conditionStatus || t('inspectionModal.condition.notInspected')}
                                 </span>
                               </div>
                               {item.notes && (
@@ -1796,7 +1791,7 @@ export default function RentalContractReviewPage() {
                 </div>
               )}
             </div>
-            
+
             <div className="px-6 pb-6 flex-shrink-0 border-t border-gray-200 pt-4">
               <button
                 onClick={() => {
@@ -1818,12 +1813,12 @@ export default function RentalContractReviewPage() {
 }
 
 // Helper component for inspection item row
-function InspectionItemRow({ 
-  item, 
-  onUpdate, 
-  disabled 
-}: { 
-  item: AssetInspectionItem; 
+function InspectionItemRow({
+  item,
+  onUpdate,
+  disabled
+}: {
+  item: AssetInspectionItem;
   onUpdate: (conditionStatus: string, notes: string) => void;
   disabled: boolean;
 }) {
@@ -1850,7 +1845,7 @@ function InspectionItemRow({
           </span>
         )}
       </div>
-      
+
       {!disabled && (
         <div className="space-y-3 mt-3">
           <div>
@@ -1868,7 +1863,7 @@ function InspectionItemRow({
               <option value="REPLACED">{t('condition.replaced')}</option>
             </select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{t('item.notes')}</label>
             <textarea
@@ -1879,7 +1874,7 @@ function InspectionItemRow({
               placeholder={t('item.notesPlaceholder')}
             />
           </div>
-          
+
           <button
             onClick={handleSave}
             disabled={!conditionStatus}
@@ -1889,19 +1884,18 @@ function InspectionItemRow({
           </button>
         </div>
       )}
-      
+
       {disabled && item.conditionStatus && (
         <div className="mt-2">
-          <span className={`px-2 py-1 text-xs font-medium rounded ${
-            item.conditionStatus === 'GOOD' ? 'bg-green-100 text-green-700' :
-            item.conditionStatus === 'DAMAGED' ? 'bg-red-100 text-red-700' :
-            item.conditionStatus === 'MISSING' ? 'bg-gray-100 text-gray-700' :
-            'bg-yellow-100 text-yellow-700'
-          }`}>
+          <span className={`px-2 py-1 text-xs font-medium rounded ${item.conditionStatus === 'GOOD' ? 'bg-green-100 text-green-700' :
+              item.conditionStatus === 'DAMAGED' ? 'bg-red-100 text-red-700' :
+                item.conditionStatus === 'MISSING' ? 'bg-gray-100 text-gray-700' :
+                  'bg-yellow-100 text-yellow-700'
+            }`}>
             {item.conditionStatus === 'GOOD' ? t('condition.good') :
-             item.conditionStatus === 'DAMAGED' ? t('condition.damaged') :
-             item.conditionStatus === 'MISSING' ? t('condition.missing') :
-             item.conditionStatus}
+              item.conditionStatus === 'DAMAGED' ? t('condition.damaged') :
+                item.conditionStatus === 'MISSING' ? t('condition.missing') :
+                  item.conditionStatus}
           </span>
           {item.notes && (
             <p className="text-sm text-gray-700 mt-2">{item.notes}</p>

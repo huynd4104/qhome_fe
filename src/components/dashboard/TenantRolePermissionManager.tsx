@@ -18,12 +18,12 @@ type Props = {
 
 export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
   const { show } = useNotifications();
-  
+
   const [roles, setRoles] = useState<string[]>([]);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [summary, setSummary] = useState<RolePermissionSummaryDto | null>(null);
   const [allPermissions, setAllPermissions] = useState<string[]>([]);
-  
+
   const [loadingRoles, setLoadingRoles] = useState(true);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -46,16 +46,16 @@ export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
     try {
       setLoadingRoles(true);
       console.log('🔍 Loading roles for tenant:', tenant.id);
-      
+
       const data = await getSelectedRolesInTenant(tenant.id);
-      
+
       // Remove duplicates (case-insensitive) but keep lowercase for API calls
       const lowerCaseRoles = data.map(role => role.toLowerCase());
       const uniqueRoles = Array.from(new Set(lowerCaseRoles));
-      
+
       console.log('✅ Raw roles from backend:', data);
       console.log('✅ Unique roles (lowercase):', uniqueRoles);
-      
+
       setRoles(uniqueRoles);
       if (uniqueRoles.length > 0 && !selectedRole) {
         setSelectedRole(uniqueRoles[0]);
@@ -65,14 +65,14 @@ export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
       console.error('❌ Tenant ID:', tenant.id);
       console.error('❌ Error status:', err?.response?.status);
       console.error('❌ Error message:', err?.response?.data);
-      
+
       // Check if 403 - permission denied
       if (err?.response?.status === 403) {
         show('Bạn không có quyền xem roles của tenant này', 'error');
       } else {
         show(`Lỗi tải roles: ${err.message}`, 'error');
       }
-      
+
       // Set empty array so UI shows gracefully
       setRoles([]);
     } finally {
@@ -85,7 +85,7 @@ export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
       setLoadingSummary(true);
       console.log('📡 Loading summary for role:', role, '(lowercase)');
       const data = await getRolePermissionSummary(tenant.id, role);
-      
+
       // Defensive: Ensure all arrays exist
       const safeSummary: RolePermissionSummaryDto = {
         tenantId: data.tenantId,
@@ -96,7 +96,7 @@ export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
         effectivePermissions: data.effectivePermissions || [],
         inheritedFromGlobal: data.inheritedFromGlobal || [],
       };
-      
+
       console.log('📦 Summary data from backend:', data);
       console.log('✅ Safe summary:', safeSummary);
       console.log('📊 Counts:', {
@@ -105,7 +105,7 @@ export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
         effective: safeSummary.effectivePermissions?.length,
         inherited: safeSummary.inheritedFromGlobal?.length,
       });
-      
+
       setSummary(safeSummary);
     } catch (err: any) {
       show(`Lỗi tải permissions: ${err.message}`, 'error');
@@ -126,7 +126,7 @@ export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
 
   const handleAddPermission = async (permissionCode: string) => {
     if (!selectedRole) return;
-    
+
     try {
       await grantPermissionsToRole(tenant.id, {
         role: selectedRole,
@@ -142,7 +142,7 @@ export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
 
   const handleRemovePermission = async (permissionCode: string) => {
     if (!selectedRole) return;
-    
+
     if (!confirm(`Xóa permission "${permissionCode}" khỏi role "${selectedRole}"?`)) {
       return;
     }
@@ -162,7 +162,7 @@ export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
   // Group permissions by service
   const groupPermissionsByService = (permissions: string[]) => {
     const groups: Record<string, string[]> = {};
-    
+
     permissions.forEach(code => {
       const service = code.split('.')[0] || 'other';
       if (!groups[service]) {
@@ -170,7 +170,7 @@ export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
       }
       groups[service].push(code);
     });
-    
+
     return groups;
   };
 
@@ -257,11 +257,10 @@ export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
               <button
                 key={`${role}-${index}`}
                 onClick={() => setSelectedRole(role)}
-                className={`w-full text-left px-3 py-2 rounded-md transition ${
-                  selectedRole === role
-                    ? 'bg-[#6B9B6E] text-white shadow'
-                    : 'hover:bg-white text-slate-700'
-                }`}
+                className={`w-full text-left px-3 py-2 rounded-md transition ${selectedRole === role
+                  ? 'bg-[#6B9B6E] text-white shadow'
+                  : 'hover:bg-white text-slate-700'
+                  }`}
               >
                 <div className="font-medium uppercase">{role}</div>
               </button>
@@ -289,9 +288,9 @@ export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
                   </h3>
                   <p className="text-sm text-slate-500 mt-1">
                     {summary.grantedPermissions?.length || 0} granted
-                    {(summary.deniedPermissions?.length || 0) > 0 && `, ${summary.deniedPermissions.length} denied`}
-                    {(summary.effectivePermissions?.length || 0) > 0 && `, ${summary.effectivePermissions.length} effective`}
-                    {(summary.inheritedFromGlobal?.length || 0) > 0 && `, ${summary.inheritedFromGlobal.length} inherited`}
+                    {(summary.deniedPermissions?.length || 0) > 0 && `, ${summary.deniedPermissions?.length} denied`}
+                    {(summary.effectivePermissions?.length || 0) > 0 && `, ${summary.effectivePermissions?.length} effective`}
+                    {(summary.inheritedFromGlobal?.length || 0) > 0 && `, ${summary.inheritedFromGlobal?.length} inherited`}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -305,11 +304,10 @@ export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
                   )}
                   <button
                     onClick={() => setIsEditMode(!isEditMode)}
-                    className={`px-3 py-1.5 rounded-md transition text-sm font-medium ${
-                      isEditMode
-                        ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                        : 'bg-[#6B9B6E] text-white hover:bg-[#5a8259]'
-                    }`}
+                    className={`px-3 py-1.5 rounded-md transition text-sm font-medium ${isEditMode
+                      ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                      : 'bg-[#6B9B6E] text-white hover:bg-[#5a8259]'
+                      }`}
                   >
                     {isEditMode ? '✓ Done' : '✏️ Edit'}
                   </button>
@@ -449,14 +447,14 @@ export default function TenantRolePermissionManager({ tenant, onBack }: Props) {
                 </div>
               )}
 
-              {(!summary.grantedPermissions || summary.grantedPermissions.length === 0) && 
-               (!summary.deniedPermissions || summary.deniedPermissions.length === 0) &&
-               (!summary.effectivePermissions || summary.effectivePermissions.length === 0) &&
-               (!summary.inheritedFromGlobal || summary.inheritedFromGlobal.length === 0) && (
-                <div className="text-center py-12 text-slate-500">
-                  Role này chưa có permission nào
-                </div>
-              )}
+              {(!summary.grantedPermissions || summary.grantedPermissions.length === 0) &&
+                (!summary.deniedPermissions || summary.deniedPermissions.length === 0) &&
+                (!summary.effectivePermissions || summary.effectivePermissions.length === 0) &&
+                (!summary.inheritedFromGlobal || summary.inheritedFromGlobal.length === 0) && (
+                  <div className="text-center py-12 text-slate-500">
+                    Role này chưa có permission nào
+                  </div>
+                )}
             </>
           )}
         </div>
@@ -528,11 +526,10 @@ function AddPermissionModal({ availablePermissions, onAdd, onClose }: AddPermiss
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setSelectedService('all')}
-              className={`px-3 py-1 rounded-md text-sm ${
-                selectedService === 'all'
-                  ? 'bg-[#6B9B6E] text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
+              className={`px-3 py-1 rounded-md text-sm ${selectedService === 'all'
+                ? 'bg-[#6B9B6E] text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
             >
               All
             </button>
@@ -540,11 +537,10 @@ function AddPermissionModal({ availablePermissions, onAdd, onClose }: AddPermiss
               <button
                 key={service}
                 onClick={() => setSelectedService(service)}
-                className={`px-3 py-1 rounded-md text-sm ${
-                  selectedService === service
-                    ? 'bg-[#6B9B6E] text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+                className={`px-3 py-1 rounded-md text-sm ${selectedService === service
+                  ? 'bg-[#6B9B6E] text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
               >
                 {service}
               </button>

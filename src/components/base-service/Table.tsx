@@ -51,6 +51,11 @@ interface TableItemProps {
     active?: boolean;
     accountId?: string;
     accountType?: 'staff' | 'resident';
+    // Supplier fields
+    id?: string;
+    name?: string;
+    contactPerson?: string;
+    phone?: string;
 }
 
 interface TableProps {
@@ -64,9 +69,10 @@ interface TableProps {
     onServiceCategoryStatusChange?: (categoryId: string) => void;
     onNewsChangeStatusAndTarget?: (newsId: string) => void;
     onNotificationChangeScope?: (notificationId: string) => void;
+    onRowClick?: (id: string) => void;
 }
 
-const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildingStatusChange, onServiceCategoryStatusChange, onNewsChangeStatusAndTarget, onNotificationChangeScope }: TableProps) => {
+const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildingStatusChange, onServiceCategoryStatusChange, onNewsChangeStatusAndTarget, onNotificationChangeScope, onRowClick }: TableProps) => {
     const t = useTranslations('Table');
     const tProject = useTranslations('Project');
     const tBuilding = useTranslations('Building');
@@ -159,22 +165,24 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
     return (
         <div className="overflow-x-auto bg-white mt-6 border-t-4 bolder-solid border-[#14AE5C] h-[600px] overflow-y-auto">
             <table className="w-full rounded-xl">
-                
+
                 <thead>
                     <tr className="border-b-2 border-solid border-[#14AE5C] ">
                         {headers?.map((header, index) => (
                             <th
                                 key={index}
                                 className={`px-4 py-3 text-[14px] font-bold text-[#024023] uppercase tracking-wider text-center whitespace-nowrap`}
-                                style={{ width: header === tProject('projectCode') || header === tProject('createAt') || header === tProject('createBy') || header === tProject('status') || header === tProject('action') 
-                                    || header === tBuilding('buildingCode') || header === tBuilding('createAt') || header === tBuilding('createBy') || header === tBuilding('status') || header === tBuilding('action') || header === tBuilding('floors') ? '5%' : 'auto' }}
+                                style={{
+                                    width: header === tProject('projectCode') || header === tProject('createAt') || header === tProject('createBy') || header === tProject('status') || header === tProject('action')
+                                        || header === tBuilding('buildingCode') || header === tBuilding('createAt') || header === tBuilding('createBy') || header === tBuilding('status') || header === tBuilding('action') || header === tBuilding('floors') ? '5%' : 'auto'
+                                }}
                             >
                                 {header}
                             </th>
                         ))}
                     </tr>
                 </thead>
-                
+
                 <tbody>
                     {data.length === 0 ? (
                         <tr>
@@ -191,16 +199,16 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                             const borderClass = index < data.length - 1
                                 ? 'border-b border-solid border-[#CDCDCD]'
                                 : 'border-b-0';
-                            
-                            if(type === "building"){
+
+                            if (type === "building") {
                                 return (
-                                    <tr 
-                                        key={item.buildingId} 
+                                    <tr
+                                        key={item.buildingId}
                                         className={`${rowClass} ${borderClass} cursor-pointer`}
                                     >
-        
+
                                         <td className="px-4 py-3 whitespace-nowrap text-[14px] text-[#024023] font-semibold text-center">
-                                                {item.buildingCode}
+                                            {item.buildingCode}
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-[14px] text-center text-[#024023] font-semibold truncate">{item.buildingName}</td>
                                         {/* <td className="px-4 py-3 whitespace-nowrap text-[14px] text-center font-semibold">
@@ -213,29 +221,29 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                             </span>
                                         </td> */}
                                         <td className="px-4 py-3 whitespace-nowrap text-[14px] text-center font-semibold text-[#024023]">{item.createdAt}</td>
-        
+
                                         <td className={`px-4 py-3 whitespace-nowrap text-center font-semibold text-[#024023]`}>{item.createBy}</td>
                                         <td className="px-4 py-3 whitespace-nowrap text-[14px] font-semibold text-[#024023] text-center">
                                             <div className="flex space-x-2 justify-center">
-                                                <Link 
+                                                <Link
                                                     href={`/base/building/buildingDetail/${item.buildingId}`}
                                                     className="w-[47px] h-[34px] flex items-center justify-center rounded-md bg-blue-500 hover:bg-blue-600 transition"
                                                     title={t('actions.viewDetail')}
                                                 >
-                                                    <Image 
-                                                        src={Edit} 
-                                                        alt={t('actions.viewDetail')} 
-                                                        width={24} 
+                                                    <Image
+                                                        src={Edit}
+                                                        alt={t('actions.viewDetail')}
+                                                        width={24}
                                                         height={24}
                                                     />
                                                 </Link>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => onBuildingStatusChange && onBuildingStatusChange(item.buildingId as string)}
-                                                        className="w-[47px] h-[34px] flex items-center justify-center rounded-md bg-red-500 border border-gray-300 hover:bg-red-600 transition"
-                                                        title={t('actions.changeStatus')}
-                                                    >
-                                                        {/* <svg 
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onBuildingStatusChange && onBuildingStatusChange(item.buildingId as string)}
+                                                    className="w-[47px] h-[34px] flex items-center justify-center rounded-md bg-red-500 border border-gray-300 hover:bg-red-600 transition"
+                                                    title={t('actions.changeStatus')}
+                                                >
+                                                    {/* <svg 
                                                             xmlns="http://www.w3.org/2000/svg" 
                                                             viewBox="0 0 16 16" 
                                                             height="16" 
@@ -247,20 +255,20 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                                                 <path fill="currentColor" d="M13.333333333333332 9.333333333333332a1 1 0 0 1 0.09599999999999999 1.9953333333333332L13.333333333333332 11.333333333333332H5.080666666666667l0.96 0.96a1 1 0 0 1 -1.3386666666666667 1.4826666666666668l-0.076 -0.06866666666666665 -2.5526666666666666 -2.5533333333333332c-0.6493333333333333 -0.6493333333333333 -0.22666666666666668 -1.7446666666666666 0.6606666666666666 -1.8166666666666667l0.09333333333333334 -0.004H13.333333333333332ZM9.959999999999999 2.293333333333333a1 1 0 0 1 1.338 -0.06933333333333333l0.076 0.06866666666666665 2.5526666666666666 2.5533333333333332c0.6493333333333333 0.6493333333333333 0.22666666666666668 1.7446666666666666 -0.6606666666666666 1.8166666666666667l-0.09333333333333334 0.004H2.6666666666666665a1 1 0 0 1 -0.09599999999999999 -1.9953333333333332L2.6666666666666665 4.666666666666666h8.252666666666666l-0.96 -0.96a1 1 0 0 1 0 -1.4133333333333333Z" strokeWidth="0.6667"></path>
                                                             </g>
                                                         </svg> */}
-                                                        <Image 
-                                                            src={Delete} 
-                                                            alt={t('actions.viewDetail')} 
-                                                            width={24} 
-                                                            height={24}
-                                                        />
-                                                    </button>
+                                                    <Image
+                                                        src={Delete}
+                                                        alt={t('actions.viewDetail')}
+                                                        width={24}
+                                                        height={24}
+                                                    />
+                                                </button>
                                                 {/* )} */}
                                             </div>
                                         </td>
                                     </tr>
                                 );
                             }
-                            if(type === "service"){
+                            if (type === "service") {
                                 return (
                                     <tr
                                         key={item.serviceId}
@@ -320,7 +328,7 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                     </tr>
                                 );
                             }
-                            if(type === "service-category"){
+                            if (type === "service-category") {
                                 const isDeleteDisabled = item.disableDelete ?? false;
                                 return (
                                     <tr
@@ -335,11 +343,10 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-center">
                                             <span
-                                                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                                                    item.isActive
-                                                        ? 'bg-emerald-100 text-emerald-700'
-                                                        : 'bg-gray-200 text-gray-600'
-                                                }`}
+                                                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${item.isActive
+                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                    : 'bg-gray-200 text-gray-600'
+                                                    }`}
                                             >
                                                 {item.isActive ? tServiceCategory('active') : tServiceCategory('inactive')}
                                             </span>
@@ -356,10 +363,10 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                                         className="w-[47px] h-[34px] flex items-center justify-center rounded-md bg-white border border-gray-300 hover:bg-gray-100 transition"
                                                         title={t('actions.changeStatus')}
                                                     >
-                                                        <svg 
-                                                            xmlns="http://www.w3.org/2000/svg" 
-                                                            viewBox="0 0 16 16" 
-                                                            height="16" 
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            viewBox="0 0 16 16"
+                                                            height="16"
                                                             width="16"
                                                             fill="currentColor"
                                                         >
@@ -393,11 +400,10 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                                         }
                                                     }}
                                                     disabled={isDeleteDisabled}
-                                                    className={`w-[47px] h-[34px] flex items-center justify-center rounded-md transition ${
-                                                        isDeleteDisabled
-                                                            ? 'bg-gray-300 cursor-not-allowed opacity-70'
-                                                            : 'bg-red-500 hover:bg-red-600'
-                                                    }`}
+                                                    className={`w-[47px] h-[34px] flex items-center justify-center rounded-md transition ${isDeleteDisabled
+                                                        ? 'bg-gray-300 cursor-not-allowed opacity-70'
+                                                        : 'bg-red-500 hover:bg-red-600'
+                                                        }`}
                                                 >
                                                     <Image
                                                         src={Delete}
@@ -411,7 +417,7 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                     </tr>
                                 );
                             }
-                            if(type === "account"){
+                            if (type === "account") {
                                 const isActive = item.active ?? false;
                                 const roleTokens = (item.roles ?? '')
                                     .split(',')
@@ -455,11 +461,10 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-[14px] font-semibold text-center">
                                             <span
-                                                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                                                    isActive
-                                                        ? 'bg-emerald-100 text-emerald-700'
-                                                        : 'bg-gray-200 text-gray-600'
-                                                }`}
+                                                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${isActive
+                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                    : 'bg-gray-200 text-gray-600'
+                                                    }`}
                                             >
                                                 {isActive ? t('status.active') : t('status.inactive')}
                                             </span>
@@ -493,17 +498,16 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                                             onStatusChange(targetId, accountType);
                                                         }}
                                                         disabled={isAdmin}
-                                                        className={`w-[47px] h-[34px] flex items-center justify-center rounded-md border transition ${
-                                                            isAdmin
-                                                                ? 'bg-gray-100 border-gray-200 cursor-not-allowed opacity-50'
-                                                                : 'bg-white border-gray-300 hover:bg-gray-100'
-                                                        }`}
+                                                        className={`w-[47px] h-[34px] flex items-center justify-center rounded-md border transition ${isAdmin
+                                                            ? 'bg-gray-100 border-gray-200 cursor-not-allowed opacity-50'
+                                                            : 'bg-white border-gray-300 hover:bg-gray-100'
+                                                            }`}
                                                         title={isAdmin ? t('errors.cannotChangeAdminStatus') : t('actions.changeStatus')}
                                                     >
-                                                        <svg 
-                                                            xmlns="http://www.w3.org/2000/svg" 
-                                                            viewBox="0 0 16 16" 
-                                                            height="16" 
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            viewBox="0 0 16 16"
+                                                            height="16"
                                                             width="16"
                                                             fill="currentColor"
                                                         >
@@ -534,11 +538,10 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                                             }
                                                         }}
                                                         disabled={isActive}
-                                                        className={`w-[47px] h-[34px] flex items-center justify-center rounded-md transition ${
-                                                            !isActive
-                                                                ? 'bg-red-500 hover:bg-red-600 cursor-pointer'
-                                                                : 'bg-gray-300 cursor-not-allowed opacity-50'
-                                                        }`}
+                                                        className={`w-[47px] h-[34px] flex items-center justify-center rounded-md transition ${!isActive
+                                                            ? 'bg-red-500 hover:bg-red-600 cursor-pointer'
+                                                            : 'bg-gray-300 cursor-not-allowed opacity-50'
+                                                            }`}
                                                         title={!isActive ? t('actions.deleteAccount') : t('errors.cannotDeleteActiveAdmin')}
                                                     >
                                                         <Image
@@ -568,11 +571,10 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                                             }
                                                         }}
                                                         disabled={isActive}
-                                                        className={`w-[47px] h-[34px] flex items-center justify-center rounded-md transition ${
-                                                            !isActive
-                                                                ? 'bg-red-500 hover:bg-red-600 cursor-pointer'
-                                                                : 'bg-gray-300 cursor-not-allowed opacity-50'
-                                                        }`}
+                                                        className={`w-[47px] h-[34px] flex items-center justify-center rounded-md transition ${!isActive
+                                                            ? 'bg-red-500 hover:bg-red-600 cursor-pointer'
+                                                            : 'bg-gray-300 cursor-not-allowed opacity-50'
+                                                            }`}
                                                         title={!isActive ? t('actions.deleteAccount') : t('errors.cannotDeleteActiveResident')}
                                                     >
                                                         <Image
@@ -613,13 +615,13 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                     </tr>
                                 );
                             }
-                            if(type === "news"){
+                            if (type === "news") {
                                 return (
-                                    <tr 
-                                        key={item.newsId} 
+                                    <tr
+                                        key={item.newsId}
                                         className={`${rowClass} ${borderClass} cursor-pointer`}
                                     >
-        
+
                                         <td className="px-4 py-3 text-[14px] text-[#024023] font-semibold text-left max-w-xs truncate">
                                             {item.title}
                                         </td>
@@ -634,15 +636,15 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                         <td className="px-4 py-3">
                                             <div className="flex space-x-2 justify-center">
                                                 {onNewsChangeStatusAndTarget && (
-                                                    <button 
+                                                    <button
                                                         className="w-[47px] h-[34px] flex items-center justify-center rounded-md bg-white border border-gray-300 hover:bg-gray-100 transition disabled:opacity-40"
                                                         onClick={() => item.newsId && onNewsChangeStatusAndTarget(item.newsId)}
                                                         title={t('actions.changeStatus')}
                                                     >
-                                                        <svg 
-                                                            xmlns="http://www.w3.org/2000/svg" 
-                                                            viewBox="0 0 16 16" 
-                                                            height="16" 
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            viewBox="0 0 16 16"
+                                                            height="16"
                                                             width="16"
                                                             fill="currentColor"
                                                         >
@@ -654,29 +656,29 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                                     </button>
                                                 )}
                                                 {onEdit && (
-                                                    <button 
+                                                    <button
                                                         className="w-[47px] h-[34px] flex items-center justify-center rounded-md bg-blue-500 hover:bg-blue-600 transition disabled:opacity-40"
                                                         onClick={() => item.newsId && onEdit(item.newsId)}
                                                         title={t('actions.edit')}
                                                     >
-                                                        <Image 
-                                                            src={Edit} 
-                                                            alt={t('actions.edit')} 
-                                                            width={24} 
+                                                        <Image
+                                                            src={Edit}
+                                                            alt={t('actions.edit')}
+                                                            width={24}
                                                             height={24}
                                                         />
                                                     </button>
                                                 )}
                                                 {onDelete && (
-                                                    <button 
+                                                    <button
                                                         className="w-[47px] h-[34px] flex items-center justify-center rounded-md bg-red-500 hover:bg-red-600 transition disabled:opacity-40"
                                                         onClick={() => item.newsId && onDelete(item.newsId)}
                                                         title={t('actions.delete')}
                                                     >
-                                                        <Image 
-                                                            src={Delete} 
-                                                            alt={t('actions.delete')} 
-                                                            width={24} 
+                                                        <Image
+                                                            src={Delete}
+                                                            alt={t('actions.delete')}
+                                                            width={24}
                                                             height={24}
                                                         />
                                                     </button>
@@ -686,13 +688,13 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                     </tr>
                                 );
                             }
-                            if(type === "notification"){
+                            if (type === "notification") {
                                 return (
-                                    <tr 
-                                        key={item.notificationId} 
+                                    <tr
+                                        key={item.notificationId}
                                         className={`${rowClass} ${borderClass} cursor-pointer`}
                                     >
-        
+
                                         <td className="px-4 py-3 text-[14px] text-[#024023] font-semibold text-left max-w-xs truncate">
                                             {item.title}
                                         </td>
@@ -723,29 +725,29 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                                     </button>
                                                 )} */}
                                                 {onEdit && (
-                                                    <button 
+                                                    <button
                                                         className="w-[47px] h-[34px] flex items-center justify-center rounded-md bg-blue-500 hover:bg-blue-600 transition disabled:opacity-40"
                                                         onClick={() => item.notificationId && onEdit(item.notificationId)}
                                                         title={t('actions.edit')}
                                                     >
-                                                        <Image 
-                                                            src={Edit} 
-                                                            alt={t('actions.edit')} 
-                                                            width={24} 
+                                                        <Image
+                                                            src={Edit}
+                                                            alt={t('actions.edit')}
+                                                            width={24}
                                                             height={24}
                                                         />
                                                     </button>
                                                 )}
                                                 {onDelete && (
-                                                    <button 
+                                                    <button
                                                         className="w-[47px] h-[34px] flex items-center justify-center rounded-md bg-red-500 hover:bg-red-600 transition disabled:opacity-40"
                                                         onClick={() => item.notificationId && onDelete(item.notificationId)}
                                                         title={t('actions.delete')}
                                                     >
-                                                        <Image 
-                                                            src={Delete} 
-                                                            alt={t('actions.delete')} 
-                                                            width={24} 
+                                                        <Image
+                                                            src={Delete}
+                                                            alt={t('actions.delete')}
+                                                            width={24}
                                                             height={24}
                                                         />
                                                     </button>
@@ -755,12 +757,43 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                     </tr>
                                 );
                             }
+                            if (type === "supplier") {
+                                return (
+                                    <tr
+                                        key={item.id}
+                                        className={`${rowClass} ${borderClass} cursor-pointer`}
+                                        onClick={() => item.id && onRowClick && onRowClick(item.id)}
+                                    >
+                                        <td className="px-4 py-3 whitespace-nowrap text-[14px] text-center text-[#024023] font-semibold">
+                                            {item.name}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-[14px] text-[#024023] font-semibold text-center">
+                                            {item.type}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-[14px] text-[#024023] font-semibold text-center">
+                                            {item.contactPerson}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-[14px] text-[#024023] font-semibold text-center">
+                                            {item.phone}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-[14px] text-[#024023] font-semibold text-center">
+                                            {item.email}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-[14px] text-[#024023] font-semibold text-center">
+                                            {item.status}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-[14px] text-[#024023] font-semibold text-center">
+                                            {item.createdAt}
+                                        </td>
+                                    </tr>
+                                );
+                            }
                             return null;
                         })
                     )}
                 </tbody>
             </table>
-        </div>
+        </div >
     );
 };
 

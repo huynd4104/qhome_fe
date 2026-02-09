@@ -159,7 +159,7 @@ export async function checkComboCodeExists(
 ): Promise<boolean> {
   try {
     const combos = await getServiceCombos(serviceId);
-    return combos.some((combo) => combo.code.toLowerCase() === code.toLowerCase());
+    return combos.some((combo) => combo.code?.toLowerCase() === code.toLowerCase());
   } catch (error) {
     console.error('Error checking combo code:', error);
     return false;
@@ -185,7 +185,7 @@ export async function checkComboCodeExistsGlobally(code: string): Promise<boolea
       const data = servicesResponse as any;
       allServices = Array.isArray(data?.data) ? data.data : Array.isArray(data?.services) ? data.services : [];
     }
-    
+
     // Check combos in all services
     for (const service of allServices) {
       if (!service?.id) continue;
@@ -225,7 +225,7 @@ export async function checkComboItemCodeExistsGlobally(code: string): Promise<bo
       const data = servicesResponse as any;
       allServices = Array.isArray(data?.data) ? data.data : Array.isArray(data?.services) ? data.services : [];
     }
-    
+
     // Check combo items in all services and combos
     for (const service of allServices) {
       if (!service?.id) continue;
@@ -270,7 +270,7 @@ export async function checkTicketCodeExistsGlobally(code: string): Promise<boole
       const data = servicesResponse as any;
       allServices = Array.isArray(data?.data) ? data.data : Array.isArray(data?.services) ? data.services : [];
     }
-    
+
     // Check tickets in all services
     for (const service of allServices) {
       if (!service?.id) continue;
@@ -310,7 +310,7 @@ export async function checkOptionCodeExistsGlobally(code: string): Promise<boole
       const data = servicesResponse as any;
       allServices = Array.isArray(data?.data) ? data.data : Array.isArray(data?.services) ? data.services : [];
     }
-    
+
     // Check options in all services
     for (const service of allServices) {
       if (!service?.id) continue;

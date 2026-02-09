@@ -6,8 +6,8 @@ import { getBuildings, Building } from '@/src/services/base/buildingService';
 import { getUnitsByBuilding, Unit } from '@/src/services/base/unitService';
 import Select from '@/src/components/customer-interaction/Select';
 import { useWaterPage } from '@/src/hooks/useWaterPage';
-import { 
-  getMetersByBuilding, 
+import {
+  getMetersByBuilding,
   MeterDto,
   getAllMeters,
   getMeterById,
@@ -92,12 +92,12 @@ export default function WaterShowPage() {
   useEffect(() => {
     const findWaterServiceId = async () => {
       if (!selectedBuildingId) return;
-      
+
       try {
         const allMeters = await getMetersByBuilding(selectedBuildingId);
-        const waterMeter = allMeters.find(m => 
-          m.serviceId?.toLowerCase().includes('water') || 
-          m.meterType?.toLowerCase().includes('water')
+        const waterMeter = allMeters.find(m =>
+          m.serviceId?.toLowerCase().includes('water') ||
+          m.serviceCode?.toLowerCase().includes('water')
         );
         if (waterMeter?.serviceId) {
           setWaterServiceId(waterMeter.serviceId);
@@ -123,13 +123,13 @@ export default function WaterShowPage() {
       try {
         setLoading(true);
         let metersData: MeterDto[] = [];
-        
+
         if (filterActive !== null) {
           metersData = await getAllMeters({ buildingId: selectedBuildingId, active: filterActive });
         } else {
           metersData = await getMetersByBuilding(selectedBuildingId);
         }
-        
+
         if (waterServiceId) {
           const waterMeters = metersData.filter(m => m.serviceId === waterServiceId);
           setMeters(waterMeters);
@@ -173,15 +173,15 @@ export default function WaterShowPage() {
         try {
           const cycles = await getAllReadingCycles();
           const activeCycle = cycles.find(
-            c => c.serviceId === waterServiceId && c.status === 'ACTIVE'
+            c => c.serviceId === waterServiceId && c.status === 'IN_PROGRESS'
           );
-          
+
           if (activeCycle) {
             setWaterCycle(activeCycle);
           } else {
             setWaterCycle(null);
           }
-          
+
           setWaterFormula([
             { id: '1', fromAmount: 0, toAmount: 10, price: 15000 },
             { id: '2', fromAmount: 11, toAmount: 20, price: 18000 },
@@ -259,15 +259,13 @@ export default function WaterShowPage() {
         unitId: meterData.unitId!,
         serviceId: waterServiceId,
         meterCode: meterData.meterCode!,
-        meterType: meterData.meterType || 'WATER',
-        location: meterData.location,
       };
-      
+
       await createMeter(req);
       show(t('messages.meterCreated'), 'success');
       setIsMeterModalOpen(false);
       refresh();
-      
+
       // Reload meters
       const metersData = await getMetersByBuilding(selectedBuildingId);
       if (waterServiceId) {
@@ -290,7 +288,7 @@ export default function WaterShowPage() {
       setIsEditMeterModalOpen(false);
       setSelectedMeter(null);
       refresh();
-      
+
       // Reload meters
       const metersData = await getMetersByBuilding(selectedBuildingId);
       if (waterServiceId) {
@@ -319,7 +317,7 @@ export default function WaterShowPage() {
       await deactivateMeter(meterId);
       show(t('messages.meterDeactivated'), 'success');
       refresh();
-      
+
       // Reload meters
       const metersData = await getMetersByBuilding(selectedBuildingId);
       if (waterServiceId) {
@@ -348,7 +346,7 @@ export default function WaterShowPage() {
       await deleteMeter(meterId);
       show(t('messages.meterDeleted'), 'success');
       refresh();
-      
+
       // Reload meters
       const metersData = await getMetersByBuilding(selectedBuildingId);
       if (waterServiceId) {
@@ -418,31 +416,28 @@ export default function WaterShowPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setFilterActive(null)}
-                  className={`px-3 py-1 rounded-md text-sm ${
-                    filterActive === null 
-                      ? 'bg-[#739559] text-white' 
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                  className={`px-3 py-1 rounded-md text-sm ${filterActive === null
+                    ? 'bg-[#739559] text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
                 >
                   {t('all')}
                 </button>
                 <button
                   onClick={() => setFilterActive(true)}
-                  className={`px-3 py-1 rounded-md text-sm ${
-                    filterActive === true 
-                      ? 'bg-[#739559] text-white' 
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                  className={`px-3 py-1 rounded-md text-sm ${filterActive === true
+                    ? 'bg-[#739559] text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
                 >
                   {t('active')}
                 </button>
                 <button
                   onClick={() => setFilterActive(false)}
-                  className={`px-3 py-1 rounded-md text-sm ${
-                    filterActive === false 
-                      ? 'bg-[#739559] text-white' 
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                  className={`px-3 py-1 rounded-md text-sm ${filterActive === false
+                    ? 'bg-[#739559] text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
                 >
                   {t('inactive')}
                 </button>
@@ -493,23 +488,22 @@ export default function WaterShowPage() {
                 {meters.map((meter) => (
                   <tr key={meter.id} className="border-b border-gray-200 hover:bg-gray-50">
                     <td className="px-4 py-3 text-[#024023] font-semibold">{meter.meterCode}</td>
-                    <td className="px-4 py-3 text-center text-[#024023] font-semibold">{meter.meterType}</td>
-                    <td className="px-4 py-3 text-center text-[#024023] font-semibold">{meter.location || '-'}</td>
+                    <td className="px-4 py-3 text-center text-[#024023] font-semibold">{meter.serviceCode || 'WATER'}</td>
+                    <td className="px-4 py-3 text-center text-[#024023] font-semibold">{meter.unitCode || '-'}</td>
                     <td className="px-4 py-3 text-center text-[#024023] font-semibold">
                       {meter.lastReading != null ? meter.lastReading : '-'}
                     </td>
                     <td className="px-4 py-3 text-center text-[#024023] font-semibold">
-                      {meter.lastReadingDate 
+                      {meter.lastReadingDate
                         ? new Date(meter.lastReadingDate).toISOString().split('T')[0]
                         : '-'}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          meter.active
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}
+                        className={`px-2 py-1 rounded text-xs font-medium ${meter.active
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-700'
+                          }`}
                       >
                         {meter.active ? t('active') : t('inactive')}
                       </span>
@@ -568,7 +562,7 @@ export default function WaterShowPage() {
                   waterReadings.map((readingData) => {
                     const meter = readingData.meter;
                     const hasReading = meter?.lastReading != null;
-                    const readingDate = meter?.lastReadingDate 
+                    const readingDate = meter?.lastReadingDate
                       ? new Date(meter.lastReadingDate).toISOString().split('T')[0]
                       : null;
 
@@ -584,19 +578,18 @@ export default function WaterShowPage() {
                         </td>
                         <td className="px-4 py-3 text-center">
                           <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${
-                              readingData.status === 'measured'
-                                ? 'bg-green-100 text-green-700'
-                                : readingData.status === 'pending'
+                            className={`px-2 py-1 rounded text-xs font-medium ${readingData.status === 'measured'
+                              ? 'bg-green-100 text-green-700'
+                              : readingData.status === 'pending'
                                 ? 'bg-yellow-100 text-yellow-700'
                                 : 'bg-gray-100 text-gray-700'
-                            }`}
+                              }`}
                           >
-                            {readingData.status === 'measured' 
-                              ? t('measured') 
+                            {readingData.status === 'measured'
+                              ? t('measured')
                               : readingData.status === 'pending'
-                              ? t('pending')
-                              : t('noMeter')}
+                                ? t('pending')
+                                : t('noMeter')}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-center">
@@ -718,21 +711,15 @@ interface MeterModalProps {
 function MeterModal({ isOpen, onClose, units, onSubmit, mode, initialData }: MeterModalProps) {
   const t = useTranslations('Water');
   const [meterCode, setMeterCode] = useState('');
-  const [meterType, setMeterType] = useState('WATER');
-  const [location, setLocation] = useState('');
   const [unitId, setUnitId] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (mode === 'edit' && initialData) {
       setMeterCode(initialData.meterCode);
-      setMeterType(initialData.meterType);
-      setLocation(initialData.location || '');
       setUnitId(initialData.unitId);
     } else {
       setMeterCode('');
-      setMeterType('WATER');
-      setLocation('');
       setUnitId('');
     }
   }, [mode, initialData, isOpen]);
@@ -745,8 +732,6 @@ function MeterModal({ isOpen, onClose, units, onSubmit, mode, initialData }: Met
       setLoading(true);
       await onSubmit({
         meterCode,
-        meterType,
-        location,
         unitId,
       });
     } finally {
@@ -797,26 +782,6 @@ function MeterModal({ isOpen, onClose, units, onSubmit, mode, initialData }: Met
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('meterType')}</label>
-            <input
-              type="text"
-              value={meterType}
-              onChange={(e) => setMeterType(e.target.value)}
-              required
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#739559]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('location')}</label>
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#739559]"
-            />
-          </div>
 
           <div className="flex justify-end gap-3 pt-4">
             <button

@@ -29,6 +29,7 @@ export interface EmployeeRoleDto {
   position?: string;
   assignedRoles: AssignedRoleInfo[];
   totalPermissions: number;
+  allPermissions?: string[];
 }
 
 export interface AssignedRoleInfo {
@@ -77,13 +78,13 @@ export async function getAvailableStaff(): Promise<UserInfoDto[]> {
     `${IAM_URL}/api/users/available-staff`,
     { withCredentials: true }
   );
-  
+
   // Map userId to id for frontend consistency
   const staff = response.data.map((user: any) => ({
     ...user,
     id: user.userId || user.id,  // Use userId if available, fallback to id
   }));
-  
+
   return staff;
 }
 
