@@ -4,8 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import Arrow from '@/src/assets/Arrow.svg';
-import DetailField from '@/src/components/base-service/DetailField';
+import { ArrowLeft, Save, Loader2, User, Mail, Shield, CheckCircle2, XCircle } from 'lucide-react';
 import Select from '@/src/components/customer-interaction/Select';
 import PasswordChangeSection from '@/src/components/account/PasswordChangeSection';
 import {
@@ -50,14 +49,6 @@ export default function AccountEditStaffPage() {
       { id: 'ACCOUNTANT', label: t('roles.accountant') },
       { id: 'TECHNICIAN', label: t('roles.technician') },
       { id: 'SUPPORTER', label: t('roles.supporter') },
-    ],
-    [t],
-  );
-
-  const STATUS_OPTIONS = useMemo(
-    () => [
-      { id: 'ACTIVE', label: t('status.active') },
-      { id: 'INACTIVE', label: t('status.inactive') },
     ],
     [t],
   );
@@ -143,10 +134,10 @@ export default function AccountEditStaffPage() {
     }));
   };
 
-  const handleStatusSelect = (optionId: string) => {
+  const handleStatusToggle = () => {
     setForm((prev) => ({
       ...prev,
-      active: optionId === 'ACTIVE',
+      active: !prev.active,
     }));
   };
 
@@ -163,7 +154,8 @@ export default function AccountEditStaffPage() {
     (field: keyof FormState) =>
     (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const target = event.target as HTMLInputElement;
-      const value = field === 'active' ? target.checked : target.value;
+      /* const value = field === 'active' ? target.checked : target.value; // active handled by toggle */
+      const value = target.value;
       setForm((prev) => ({
         ...prev,
         [field]: value,
@@ -251,32 +243,27 @@ export default function AccountEditStaffPage() {
     }
   };
 
-  const formatDateTime = (value?: string | null) => {
-    if (!value) return t('common.notRecorded');
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return value;
-    }
-    return date.toLocaleString('vi-VN');
-  };
-
   const renderContent = () => {
     if (state === 'loading' || state === 'idle') {
       return (
-        <div className="flex min-h-[240px] items-center justify-center text-sm text-slate-500">
-          {t('loading')}
+        <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+          <p className="text-sm font-medium text-slate-500">{t('loading')}</p>
         </div>
       );
     }
 
     if (state === 'error') {
       return (
-        <div className="flex min-h-[240px] flex-col items-center justify-center gap-4">
-          <p className="text-sm text-red-600">{error}</p>
+        <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 text-center">
+          <div className="rounded-full bg-red-50 p-4">
+              <Shield className="h-8 w-8 text-red-500" />
+          </div>
+          <p className="text-slate-600">{error}</p>
           <button
             type="button"
-            onClick={() => router.refresh()}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+            onClick={() => window.location.reload()}
+            className="rounded-xl bg-slate-900 px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-slate-200 transition-all hover:bg-slate-800"
           >
             {t('buttons.retry')}
           </button>
@@ -286,7 +273,7 @@ export default function AccountEditStaffPage() {
 
     if (!account) {
       return (
-        <div className="flex min-h-[240px] items-center justify-center text-sm text-slate-500">
+        <div className="flex min-h-[400px] items-center justify-center text-sm text-slate-500">
           {t('errors.accountNotFound')}
         </div>
       );
@@ -295,107 +282,169 @@ export default function AccountEditStaffPage() {
     return (
       <form
         onSubmit={handleSubmit}
-        className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-md border border-gray-200 space-y-8"
+        className="mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6"
       >
-        {(formError || successMessage) && (
-          <div className="space-y-3">
-            {formError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {formError}
-              </div>
-            )}
-            {successMessage && (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                {successMessage}
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold text-[#02542D]">{account.username}</h1>
-              <span
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                  form.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                {form.active ? t('status.active') : t('status.inactive')}
-              </span>
+        {/* Card Container */}
+        <div className="overflow-hidden rounded-3xl border border-white/50 bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
+             {/* Header Section */}
+            <div className="border-b border-slate-100 p-6 md:p-8">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-600 shadow-inner">
+                            <span className="text-xl font-bold">
+                                {account.username?.charAt(0).toUpperCase()}
+                            </span>
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                                {account.username}
+                            </h1>
+                            <p className="text-sm text-slate-500">{account.email}</p>
+                        </div>
+                    </div>
+                
+                    <button
+                        type="button"
+                        onClick={handleStatusToggle}
+                        className={`group relative inline-flex h-9 items-center rounded-full px-1 py-1 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+                            form.active ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 pr-4' : 'bg-slate-100 text-slate-500 border border-slate-200 pr-4'
+                        }`}
+                    >
+                         <span
+                            className={`mr-2 inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform ${
+                                form.active ? 'translate-x-full' : 'translate-x-0'
+                            }`} 
+                         />
+                         
+                         <span className={`ml-2 text-xs font-semibold uppercase tracking-wide ${form.active ? "order-first" : "" }`}>
+                             {form.active ? t('status.active') : t('status.inactive')}
+                         </span>
+                    </button>
+                </div>
             </div>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
-          <DetailField
-            label={t('fields.username')}
-            value={form.username}
-            readonly={true}
-            onChange={handleChange('username')}
-          />
-          <DetailField
-            label={t('fields.email')}
-            value={form.email}
-            readonly={true}
-            onChange={handleChange('email')}
-          />
+            {/* Form Content */}
+            <div className="p-6 md:p-8 space-y-8">
+                 {/* Feedback Messages */}
+                {(formError || successMessage) && (
+                    <div className={`rounded-2xl p-4 border ${formError ? 'bg-red-50 border-red-100 text-red-700' : 'bg-emerald-50 border-emerald-100 text-emerald-700'}`}>
+                        <div className="flex items-center gap-3">
+                            {formError ? <XCircle className="w-5 h-5 flex-shrink-0" /> : <CheckCircle2 className="w-5 h-5 flex-shrink-0" />}
+                            <p className="text-sm font-medium">{formError || successMessage}</p>
+                        </div>
+                    </div>
+                )}
 
-          <div className="flex flex-col gap-3">
-            <h2 className="text-md font-semibold text-[#02542D]">{t('fields.role')}</h2>
-            <div className="w-full sm:w-64">
-              <Select
-                options={STAFF_ROLE_SELECT_OPTIONS}
-                value={form.role.toUpperCase()}
-                onSelect={(option) => handleRoleSelect(option.id)}
-                renderItem={(option) => option.label}
-                getValue={(option) => option.id}
-                placeholder={t('placeholders.selectRole')}
-                disable={true}
-              />
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
+                    {/* Username */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                            <User className="w-4 h-4 text-emerald-500" />
+                            {t('fields.username')}
+                        </label>
+                        <input
+                            title={t('fields.username')}
+                            type="text"
+                            value={form.username}
+                            readOnly
+                            onChange={handleChange('username')}
+                            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-500 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-not-allowed"
+                        />
+                    </div>
+
+                    {/* Email */}
+                    <div className="space-y-2">
+                         <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-emerald-500" />
+                            {t('fields.email')}
+                        </label>
+                        <input
+                            title={t('fields.email')}
+                            type="email"
+                            value={form.email}
+                            readOnly
+                            onChange={handleChange('email')}
+                             className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-500 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-not-allowed"
+                        />
+                    </div>
+
+                    {/* Role */}
+                     <div className="space-y-2">
+                        <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                            <Shield className="w-4 h-4 text-emerald-500" />
+                            {t('fields.role')}
+                        </label>
+                        <div className="relative">
+                            <Select
+                                options={STAFF_ROLE_SELECT_OPTIONS}
+                                value={form.role.toUpperCase()}
+                                onSelect={(option) => handleRoleSelect(option.id)}
+                                renderItem={(option) => option.label}
+                                getValue={(option) => option.id}
+                                placeholder={t('placeholders.selectRole')}
+                                disable={true}
+                            />
+                        </div>
+                        {formError === t('validation.role.required') && (
+                          <p className="text-xs font-medium text-red-600 animate-pulse">
+                            {t('validation.role.selectMessage')}
+                          </p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Password Section */}
+                <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-6">
+                     <PasswordChangeSection
+                        newPassword={form.newPassword}
+                        confirmPassword={form.confirmPassword}
+                        onChangeNewPassword={handlePasswordFieldChange('newPassword')}
+                        onChangeConfirmPassword={handlePasswordFieldChange('confirmPassword')}
+                    />
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end pt-4 border-t border-slate-100">
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:from-emerald-600 hover:to-teal-700 hover:shadow-emerald-500/40 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                        {submitting ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {t('buttons.saving')}
+                            </>
+                        ) : (
+                            <>
+                                <Save className="mr-2 h-4 w-4" />
+                                {t('buttons.save')}
+                            </>
+                        )}
+                    </button>
+                </div>
             </div>
-            {formError === t('validation.role.required') && (
-              <p className="text-xs font-medium text-red-600">
-                {t('validation.role.selectMessage')}
-              </p>
-            )}
-          </div>
         </div>
-
-
-        <PasswordChangeSection
-          newPassword={form.newPassword}
-          confirmPassword={form.confirmPassword}
-          onChangeNewPassword={handlePasswordFieldChange('newPassword')}
-          onChangeConfirmPassword={handlePasswordFieldChange('confirmPassword')}
-        />
-
-        <div className="flex items-center justify-end">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {submitting ? t('buttons.saving') : t('buttons.save')}
-            </button>
-          </div>
       </form>
     );
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
-      <div
-        className="mx-auto mb-6 flex max-w-4xl cursor-pointer items-center"
-        onClick={handleBack}
-      >
-        <Image src={Arrow} alt={t('back')} width={20} height={20} className="mr-2 h-5 w-5" />
-        <span className="text-2xl font-bold text-[#02542D] transition hover:text-opacity-80">
-          {t('back')}
-        </span>
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-5xl">
+          {/* Back Button */}
+        <button
+          onClick={handleBack}
+          className="group mb-6 flex items-center gap-2 rounded-lg py-2 pl-2 pr-4 text-slate-500 transition-all hover:bg-white hover:text-emerald-700 hover:shadow-sm"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition-colors group-hover:ring-emerald-200">
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+          </div>
+          <span className="font-semibold">{t('back')}</span>
+        </button>
+
+        {renderContent()}
       </div>
-      {renderContent()}
     </div>
   );
 }
-
