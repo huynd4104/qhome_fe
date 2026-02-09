@@ -42,7 +42,7 @@ export interface News {
     createdAt?: string;
     updatedBy?: string;
     updatedAt?: string;
-    stats?: any;
+    stats?: Record<string, unknown>;
 }
 
 // CreateNewsRequest DTO matching backend

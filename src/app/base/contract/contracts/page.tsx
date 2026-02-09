@@ -2849,23 +2849,23 @@ export default function ContractManagementPage() {
                       <p className="font-medium mb-1">Các thiết bị sẽ được tạo:</p>
                       <ul className="list-disc list-inside space-y-1 ml-2">
                         {missingAssetTypes.map((type: AssetType) => {
-                          const ASSET_TYPE_LABELS: Record<AssetType, string> = {
+                          const ASSET_TYPE_LABELS: Partial<Record<AssetType, string>> = {
                             [AssetType.AIR_CONDITIONER]: 'Điều hòa',
-                            [AssetType.KITCHEN]: 'Bếp',
+                            // [AssetType.KITCHEN]: 'Bếp',
                             [AssetType.WATER_HEATER]: 'Bình nước nóng',
-                            [AssetType.FURNITURE]: 'Nội thất',
+                            // [AssetType.FURNITURE]: 'Nội thất',
                             [AssetType.OTHER]: 'Khác',
                           };
-                          const ASSET_TYPE_DEFAULT_PRICE: Record<AssetType, number> = {
+                          const ASSET_TYPE_DEFAULT_PRICE: Partial<Record<AssetType, number>> = {
                             [AssetType.AIR_CONDITIONER]: 8000000,
-                            [AssetType.KITCHEN]: 5000000,
+                            // [AssetType.KITCHEN]: 5000000,
                             [AssetType.WATER_HEATER]: 3000000,
-                            [AssetType.FURNITURE]: 2000000,
+                            // [AssetType.FURNITURE]: 2000000,
                             [AssetType.OTHER]: 1000000,
                           };
                           return (
                             <li key={type}>
-                              {ASSET_TYPE_LABELS[type]}: {formatNumberWithDots(ASSET_TYPE_DEFAULT_PRICE[type])} VND
+                              {ASSET_TYPE_LABELS[type] ?? type}: {formatNumberWithDots(ASSET_TYPE_DEFAULT_PRICE[type] ?? 0)} VND
                             </li>
                           );
                         })}
@@ -2875,14 +2875,14 @@ export default function ContractManagementPage() {
                     <p className="mt-2 pt-2 border-t border-yellow-300">
                       <strong>Tổng số tiền:</strong> <span className="text-red-600 font-bold text-base">
                         {formatNumberWithDots(missingAssetTypes.reduce((total, type) => {
-                          const ASSET_TYPE_DEFAULT_PRICE: Record<AssetType, number> = {
+                          const ASSET_TYPE_DEFAULT_PRICE: Partial<Record<AssetType, number>> = {
                             [AssetType.AIR_CONDITIONER]: 8000000,
-                            [AssetType.KITCHEN]: 5000000,
+                            // [AssetType.KITCHEN]: 5000000,
                             [AssetType.WATER_HEATER]: 3000000,
-                            [AssetType.FURNITURE]: 2000000,
+                            // [AssetType.FURNITURE]: 2000000,
                             [AssetType.OTHER]: 1000000,
                           };
-                          return total + ASSET_TYPE_DEFAULT_PRICE[type];
+                          return total + (ASSET_TYPE_DEFAULT_PRICE[type] ?? 0);
                         }, 0))} VND
                       </span>
                     </p>

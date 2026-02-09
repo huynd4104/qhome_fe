@@ -80,7 +80,7 @@ export async function getAvailableStaff(): Promise<UserInfoDto[]> {
   );
 
   // Map userId to id for frontend consistency
-  const staff = response.data.map((user: any) => ({
+  const staff = response.data.map((user: UserInfoDto) => ({
     ...user,
     id: user.userId || user.id,  // Use userId if available, fallback to id
   }));

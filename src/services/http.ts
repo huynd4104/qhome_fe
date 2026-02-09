@@ -6,8 +6,8 @@ export async function http<T>(url: string, init?: RequestInit): Promise<T> {
     headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
     credentials: "include"
   });
-  if (!res.ok) throw new Error(await res.text().catch(()=>"HTTP "+res.status));
+  if (!res.ok) throw new Error(await res.text().catch(() => "HTTP " + res.status));
   // nếu 204 thì không parse json
-  // @ts-ignore
+  // @ts-expect-error - Response body is empty for 204
   return res.status === 204 ? undefined : (await res.json()) as T;
 }

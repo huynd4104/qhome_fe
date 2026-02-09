@@ -16,7 +16,7 @@ export interface RolePermissionDto {
   permissionCode: string;
   grantedBy: string;
   grantedAt: string;
-  customConfig?: any;
+  customConfig?: Record<string, unknown>;
 }
 
 export interface RolePermissionSummaryDto {
