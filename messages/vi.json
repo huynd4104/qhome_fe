@@ -225,6 +225,11 @@
     "back": "Quay lại danh sách tài khoản",
     "title": "Tạo mới tài khoản nhân viên",
     "subtitle": "Nhập thông tin bên dưới để tạo tài khoản cho nhân viên nội bộ.",
+    "sections": {
+      "accountInfo": "Thông tin tài khoản",
+      "personalInfo": "Thông tin cá nhân",
+      "roleInfo": "Vai trò"
+    },
     "fields": {
       "username": "Tên đăng nhập",
       "email": "Email",
@@ -401,12 +406,20 @@
     "fields": {
       "username": "Tên đăng nhập",
       "email": "Email",
+      "fullName": "Họ và tên",
+      "phone": "Số điện thoại",
+      "nationalId": "CMND/CCCD",
+      "address": "Địa chỉ",
       "status": "Trạng thái",
       "role": "Vai trò"
     },
     "placeholders": {
       "selectStatus": "Chọn trạng thái",
-      "selectRole": "Chọn vai trò"
+      "selectRole": "Chọn vai trò",
+      "fullName": "Nhập họ và tên",
+      "phone": "Nhập số điện thoại",
+      "nationalId": "Nhập số CMND/CCCD",
+      "address": "Nhập địa chỉ"
     },
     "status": {
       "active": "Đang hoạt động",
@@ -433,6 +446,19 @@
       "role": {
         "required": "Phải chọn vai trò cho nhân viên.",
         "selectMessage": "Vui lòng chọn một vai trò cho nhân viên."
+      },
+      "fullName": {
+        "required": "Họ và tên không được để trống."
+      },
+      "phone": {
+        "required": "Số điện thoại không được để trống.",
+        "invalid": "Số điện thoại không hợp lệ."
+      },
+      "nationalId": {
+        "required": "CMND/CCCD không được để trống."
+      },
+      "address": {
+        "required": "Địa chỉ không được để trống."
       },
       "password": {
         "minLength": "Mật khẩu mới phải có ít nhất 8 ký tự.",
@@ -1939,13 +1965,16 @@
     "fields": {
       "username": "Tên đăng nhập",
       "email": "Email",
-      "status": "Trạng thái"
+      "status": "Trạng thái",
+      "roles": "Vai trò",
+      "permissions": "Quyền hạn"
     },
     "status": {
       "active": "Đang hoạt động",
       "inactive": "Ngưng hoạt động"
     },
     "sections": {
+      "accountInfo": "Thông tin tài khoản",
       "building": "Tòa nhà",
       "linkedUnits": "Căn hộ đang liên kết"
     },
@@ -1958,7 +1987,8 @@
       "unknownBuilding": "Không rõ tòa nhà",
       "unknownUnitCode": "Không rõ mã căn hộ",
       "houseOwner": "Chủ hộ",
-      "from": "Từ"
+      "from": "Từ",
+      "joinedAt": "Ngày tham gia"
     },
     "roles": {
       "noRoles": "Không có vai trò"
