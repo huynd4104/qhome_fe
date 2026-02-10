@@ -73,10 +73,10 @@ export default function AccountNewStaffPage() {
   // IMPORTANT: All hooks must be called before any conditional returns
   const importSummary = useMemo(() => {
     if (!importResult) return null;
-    return t('messages.importResult', { 
-      totalRows: importResult.totalRows, 
-      successCount: importResult.successCount, 
-      failureCount: importResult.failureCount 
+    return t('messages.importResult', {
+      totalRows: importResult.totalRows,
+      successCount: importResult.successCount,
+      failureCount: importResult.failureCount
     });
   }, [importResult, t]);
 
@@ -155,19 +155,19 @@ export default function AccountNewStaffPage() {
 
   const handleChange =
     (field: keyof FormState) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const value =
-        field === 'active' ? event.target.checked : event.target.value;
-      setForm((prev) => ({ ...prev, [field]: value }));
-      // Validate field on change
-      if (field === 'username' || field === 'email') {
-        setTimeout(() => {
+      (event: ChangeEvent<HTMLInputElement>) => {
+        const value =
+          field === 'active' ? event.target.checked : event.target.value;
+        setForm((prev) => ({ ...prev, [field]: value }));
+        // Validate field on change
+        if (field === 'username' || field === 'email') {
+          setTimeout(() => {
+            validateField(field, String(value));
+          }, 500); // Debounce 500ms for async checks
+        } else if (field === 'role') {
           validateField(field, String(value));
-        }, 500); // Debounce 500ms for async checks
-      } else if (field === 'role') {
-        validateField(field, String(value));
-      }
-    };
+        }
+      };
 
   const handleRoleSelect = (roleId: string) => {
     setForm((prev) => ({ ...prev, role: roleId }));
@@ -192,34 +192,34 @@ export default function AccountNewStaffPage() {
     if (atCount > 1) {
       return t('validation.email.multipleAt');
     }
-    
+
     // Split email into local part and domain
     const parts = email.split('@');
     if (parts.length !== 2) {
       return t('validation.email.invalidFormat');
     }
-    
+
     const localPart = parts[0];
     const domain = parts[1];
-    
+
     // Check if email ends with .com
     if (!domain.toLowerCase().endsWith('.com')) {
       return t('validation.email.mustEndWithCom');
     }
-    
+
     // Validate local part: only allow a-zA-Z0-9._%+-
     const localPartPattern = /^[a-zA-Z0-9._%+-]+$/;
     if (!localPartPattern.test(localPart)) {
       return t('validation.email.invalidLocalPart');
     }
-    
+
     // Validate domain part (before .com): only allow a-zA-Z0-9.-
     const domainWithoutCom = domain.substring(0, domain.length - 4);
     const domainPattern = /^[a-zA-Z0-9.-]+$/;
     if (!domainPattern.test(domainWithoutCom)) {
       return t('validation.email.invalidDomain');
     }
-    
+
     // Final pattern check
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/i;
     if (!emailPattern.test(email)) {
@@ -444,14 +444,14 @@ export default function AccountNewStaffPage() {
 
       <div className="mx-auto max-w-5xl space-y-8">
         <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
-        <div className="mb-6 flex flex-col gap-2">
-          <h1 className="text-2xl font-bold text-slate-800">{t('title')}</h1>
-          <p className="text-sm text-slate-500">
-            {t('subtitle')}
-          </p>
-        </div>
+          <div className="mb-6 flex flex-col gap-2">
+            <h1 className="text-2xl font-bold text-slate-800">{t('title')}</h1>
+            <p className="text-sm text-slate-500">
+              {t('subtitle')}
+            </p>
+          </div>
 
-        {/* {(error || success) && (
+          {/* {(error || success) && (
           <div className="mb-6 space-y-3">
             {error && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -466,97 +466,95 @@ export default function AccountNewStaffPage() {
           </div>
         )} */}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-slate-700">{t('fields.username')}</label>
-              <input
-                type="text"
-                value={form.username}
-                onChange={(e) => {
-                  handleChange('username')(e);
-                  if (usernameError) {
-                    setUsernameError(null);
-                  }
-                }}
-                placeholder={t('placeholders.username')}
-                maxLength={16}
-                className={`rounded-lg border px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 ${
-                  usernameError
-                    ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                    : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
-                }`}
-              />
-              {usernameError && (
-                <p className="text-xs text-red-600">{usernameError}</p>
-              )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-slate-700">{t('fields.username')}</label>
+                <input
+                  type="text"
+                  value={form.username}
+                  onChange={(e) => {
+                    handleChange('username')(e);
+                    if (usernameError) {
+                      setUsernameError(null);
+                    }
+                  }}
+                  placeholder={t('placeholders.username')}
+                  maxLength={16}
+                  className={`rounded-lg border px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 ${usernameError
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                      : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
+                    }`}
+                />
+                {usernameError && (
+                  <p className="text-xs text-red-600">{usernameError}</p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-slate-700">{t('fields.email')}</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => {
+                    handleChange('email')(e);
+                    if (emailError) {
+                      setEmailError(null);
+                    }
+                  }}
+                  placeholder={t('placeholders.email')}
+                  maxLength={40}
+                  className={`rounded-lg border px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 ${emailError
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                      : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
+                    }`}
+                />
+                {emailError && (
+                  <p className="text-xs text-red-600">{emailError}</p>
+                )}
+              </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-slate-700">{t('fields.email')}</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => {
-                  handleChange('email')(e);
-                  if (emailError) {
-                    setEmailError(null);
-                  }
-                }}
-                placeholder={t('placeholders.email')}
-                maxLength={40}
-                className={`rounded-lg border px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 ${
-                  emailError
-                    ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                    : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
-                }`}
-              />
-              {emailError && (
-                <p className="text-xs text-red-600">{emailError}</p>
-              )}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-slate-700">{t('fields.role')}</label>
+                <Select
+                  options={STAFF_ROLE_OPTIONS}
+                  value={form.role}
+                  onSelect={(option) => {
+                    handleRoleSelect(option.id);
+                    if (roleError) {
+                      setRoleError(null);
+                    }
+                  }}
+                  renderItem={(option) => option.label}
+                  getValue={(option) => option.id}
+                  placeholder={t('placeholders.role')}
+                  error={!!roleError}
+                />
+                {roleError && (
+                  <p className="text-xs text-red-600">{roleError}</p>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-slate-700">{t('fields.role')}</label>
-              <Select
-                options={STAFF_ROLE_OPTIONS}
-                value={form.role}
-                onSelect={(option) => {
-                  handleRoleSelect(option.id);
-                  if (roleError) {
-                    setRoleError(null);
-                  }
-                }}
-                renderItem={(option) => option.label}
-                getValue={(option) => option.id}
-                placeholder={t('placeholders.role')}
-                error={!!roleError}
-              />
-              {roleError && (
-                <p className="text-xs text-red-600">{roleError}</p>
-              )}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <button
+                type="button"
+                onClick={handleBack}
+                className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+              >
+                {t('buttons.cancel')}
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submitting ? t('buttons.creating') : t('buttons.create')}
+              </button>
             </div>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-            <button
-              type="button"
-              onClick={handleBack}
-              className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-            >
-              {t('buttons.cancel')}
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {submitting ? t('buttons.creating') : t('buttons.create')}
-            </button>
-          </div>
-        </form>
+          </form>
         </div>
 
         <div className="rounded-2xl border border-dashed border-emerald-200 bg-white/70 p-6 shadow-sm sm:p-8">

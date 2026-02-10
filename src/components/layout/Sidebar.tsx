@@ -308,13 +308,15 @@ export default function Sidebar({ variant = "admin" }: SidebarProps) {
   return (
     <Fragment>
       {/* Mobile Menu Toggle Button */}
-      <button
-        onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-[72px] left-4 z-[60] p-2 bg-white rounded-lg shadow-md border border-slate-200 text-slate-600 md:hidden hover:bg-slate-50 hover:text-emerald-600 transition-colors"
-        aria-label="Toggle Menu"
-      >
-        {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
+      {!mobileOpen && (
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="fixed top-[72px] left-4 z-[60] p-2 bg-white rounded-lg shadow-md border border-slate-200 text-slate-600 md:hidden hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+          aria-label="Open Menu"
+        >
+          <Menu size={24} />
+        </button>
+      )}
 
       {/* Overlay Background for Mobile */}
       {mobileOpen && (

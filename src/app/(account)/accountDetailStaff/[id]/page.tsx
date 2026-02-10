@@ -185,16 +185,15 @@ export default function AccountDetailStaffPage() {
         <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-md border border-gray-200">
           <div className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-                <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-semibold text-[#02542D]">{account.username}</h1>
-                    <span
-                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                        isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-semibold text-[#02542D]">{account.username}</h1>
+                <span
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'
                     }`}
-                    >
-                    {isActive ? t('status.active') : t('status.inactive')}
-                    </span>
-                </div>
+                >
+                  {isActive ? t('status.active') : t('status.inactive')}
+                </span>
+              </div>
             </div>
           </div>
 
