@@ -224,12 +224,20 @@
     "fields": {
       "username": "Username",
       "email": "Email",
-      "role": "Role"
+      "role": "Role",
+      "fullName": "Full Name",
+      "phone": "Phone Number",
+      "nationalId": "National ID",
+      "address": "Address"
     },
     "placeholders": {
       "username": "Enter username",
       "email": "example@domain.com",
-      "role": "Select role"
+      "role": "Select role",
+      "fullName": "Enter full name",
+      "phone": "Enter phone number",
+      "nationalId": "Enter national ID",
+      "address": "Enter address"
     },
     "roles": {
       "admin": "Admin",
@@ -264,6 +272,19 @@
       },
       "role": {
         "required": "Please select a role for the staff."
+      },
+      "fullName": {
+        "required": "Full name cannot be empty."
+      },
+      "phone": {
+        "required": "Phone number cannot be empty.",
+        "invalid": "Phone number is invalid."
+      },
+      "nationalId": {
+        "required": "National ID cannot be empty."
+      },
+      "address": {
+        "required": "Address cannot be empty."
       },
       "excelFileRequired": "Please select an Excel file (.xlsx).",
       "excelFileFormat": "File must be in .xlsx format."

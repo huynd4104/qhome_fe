@@ -228,12 +228,20 @@
     "fields": {
       "username": "Tên đăng nhập",
       "email": "Email",
-      "role": "Vai trò"
+      "role": "Vai trò",
+      "fullName": "Họ và tên",
+      "phone": "Số điện thoại",
+      "nationalId": "CMND/CCCD",
+      "address": "Địa chỉ"
     },
     "placeholders": {
       "username": "Nhập tên đăng nhập",
       "email": "example@domain.com",
-      "role": "Chọn vai trò"
+      "role": "Chọn vai trò",
+      "fullName": "Nhập họ và tên",
+      "phone": "Nhập số điện thoại",
+      "nationalId": "Nhập số CMND/CCCD",
+      "address": "Nhập địa chỉ"
     },
     "roles": {
       "admin": "Admin",
@@ -275,6 +283,19 @@
       "role": {
         "required": "Vui lòng chọn vai trò cho nhân viên.",
         "adminNotAllowed": "Không thể tạo tài khoản với vai trò Admin."
+      },
+      "fullName": {
+        "required": "Họ và tên không được để trống."
+      },
+      "phone": {
+        "required": "Số điện thoại không được để trống.",
+        "invalid": "Số điện thoại không hợp lệ."
+      },
+      "nationalId": {
+        "required": "CMND/CCCD không được để trống."
+      },
+      "address": {
+        "required": "Địa chỉ không được để trống."
       },
       "excelFileRequired": "Vui lòng chọn file Excel (.xlsx).",
       "excelFileFormat": "File phải có định dạng .xlsx."

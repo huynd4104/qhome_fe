@@ -24,6 +24,10 @@ type FormState = {
   confirmPassword: string;
   role: string;
   active: boolean;
+  fullName: string;
+  phone: string;
+  nationalId: string;
+  address: string;
 };
 
 export default function AccountNewStaffPage() {
@@ -38,6 +42,10 @@ export default function AccountNewStaffPage() {
     confirmPassword: '',
     role: '',
     active: true,
+    fullName: '',
+    phone: '',
+    nationalId: '',
+    address: '',
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -46,6 +54,7 @@ export default function AccountNewStaffPage() {
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [roleError, setRoleError] = useState<string | null>(null);
+  const [fullNameError, setFullNameError] = useState<string | null>(null);
 
   // Check if user has ADMIN role
   useEffect(() => {
@@ -150,6 +159,12 @@ export default function AccountNewStaffPage() {
           setRoleError(t('validation.role.required'));
         }
         break;
+      case 'fullName':
+        setFullNameError(null);
+        if (!value.trim()) {
+          setFullNameError(t('validation.fullName.required'));
+        }
+        break;
     }
   };
 
@@ -166,6 +181,8 @@ export default function AccountNewStaffPage() {
           }, 500); // Debounce 500ms for async checks
         } else if (field === 'role') {
           validateField(field, String(value));
+        } else if (field === 'fullName') {
+          validateField(field, String(value));
         }
       };
 
@@ -180,6 +197,7 @@ export default function AccountNewStaffPage() {
     setUsernameError(null);
     setEmailError(null);
     setRoleError(null);
+    setFullNameError(null);
   };
 
   // Validate email format - must end with .com and have exactly one @
@@ -303,6 +321,13 @@ export default function AccountNewStaffPage() {
       isValid = false;
     }
 
+    // Validate fullName
+    setFullNameError(null);
+    if (!form.fullName.trim()) {
+      setFullNameError(t('validation.fullName.required'));
+      isValid = false;
+    }
+
     return isValid;
   };
 
@@ -321,6 +346,10 @@ export default function AccountNewStaffPage() {
       password: form.password,
       roles: [form.role],
       active: form.active,
+      fullName: form.fullName.trim(),
+      phone: form.phone.trim(),
+      nationalId: form.nationalId.trim(),
+      address: form.address.trim(),
     };
 
     try {
@@ -335,6 +364,10 @@ export default function AccountNewStaffPage() {
         confirmPassword: '',
         role: '',
         active: true,
+        fullName: '',
+        phone: '',
+        nationalId: '',
+        address: '',
       });
     } catch (err: any) {
       const message =
@@ -482,8 +515,8 @@ export default function AccountNewStaffPage() {
                   placeholder={t('placeholders.username')}
                   maxLength={16}
                   className={`rounded-lg border px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 ${usernameError
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                      : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                    : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
                     }`}
                 />
                 {usernameError && (
@@ -505,13 +538,72 @@ export default function AccountNewStaffPage() {
                   placeholder={t('placeholders.email')}
                   maxLength={40}
                   className={`rounded-lg border px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 ${emailError
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                      : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                    : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
                     }`}
                 />
                 {emailError && (
                   <p className="text-xs text-red-600">{emailError}</p>
                 )}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-slate-700">{t('fields.fullName')}</label>
+                <input
+                  type="text"
+                  value={form.fullName}
+                  onChange={(e) => {
+                    handleChange('fullName')(e);
+                    if (fullNameError) {
+                      setFullNameError(null);
+                    }
+                  }}
+                  placeholder={t('placeholders.fullName')}
+                  className={`rounded-lg border px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 ${fullNameError
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                    : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
+                    }`}
+                />
+                {fullNameError && (
+                  <p className="text-xs text-red-600">{fullNameError}</p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-slate-700">{t('fields.phone')}</label>
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={handleChange('phone')}
+                  placeholder={t('placeholders.phone')}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-slate-700">{t('fields.nationalId')}</label>
+                <input
+                  type="text"
+                  value={form.nationalId}
+                  onChange={handleChange('nationalId')}
+                  placeholder={t('placeholders.nationalId')}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-slate-700">{t('fields.address')}</label>
+                <input
+                  type="text"
+                  value={form.address}
+                  onChange={handleChange('address')}
+                  placeholder={t('placeholders.address')}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                />
               </div>
             </div>
 
