@@ -1299,7 +1299,7 @@ export default function AccountNewResidentPage() {
           </div>
 
           {activeTab === 'manual' && (
-            <div className="mt-6 rounded-xl border border-slate-100 p-6">
+            <div className="mt-2 rounded-3xl border border-white/50 bg-white/80 p-6 shadow-xl shadow-slate-200/50 backdrop-blur-xl md:p-8">
               <h2 className="text-lg font-semibold text-slate-800">{t('manualForm.title')}</h2>
 
               {(manualSuccess || manualError) && (

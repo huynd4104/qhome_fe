@@ -491,9 +491,9 @@ export default function AccountNewStaffPage() {
         </span>
       </div>
 
-      <div className="mx-auto max-w-5xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="mx-auto max-w-5xl space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Main Form Card */}
-        <div className="overflow-hidden rounded-3xl border border-white/50 bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
+        <div className="overflow-visible rounded-3xl border border-white/50 bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
           <div className="border-b border-slate-100 p-6 md:p-8">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">{t('title')}</h1>
             <p className="mt-2 text-slate-500">
@@ -524,8 +524,8 @@ export default function AccountNewStaffPage() {
                       placeholder={t('placeholders.username')}
                       maxLength={16}
                       className={`w-full rounded-xl border bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-4 ${usernameError
-                          ? 'border-red-200 focus:border-red-500 focus:ring-red-100'
-                          : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
+                        ? 'border-red-200 focus:border-red-500 focus:ring-red-100'
+                        : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
                         }`}
                     />
                   </div>
@@ -551,8 +551,8 @@ export default function AccountNewStaffPage() {
                       placeholder={t('placeholders.email')}
                       maxLength={40}
                       className={`w-full rounded-xl border bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-4 ${emailError
-                          ? 'border-red-200 focus:border-red-500 focus:ring-red-100'
-                          : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
+                        ? 'border-red-200 focus:border-red-500 focus:ring-red-100'
+                        : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
                         }`}
                     />
                   </div>
@@ -589,8 +589,8 @@ export default function AccountNewStaffPage() {
                       }}
                       placeholder={t('placeholders.fullName')}
                       className={`w-full rounded-xl border bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-4 ${fullNameError
-                          ? 'border-red-200 focus:border-red-500 focus:ring-red-100'
-                          : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
+                        ? 'border-red-200 focus:border-red-500 focus:ring-red-100'
+                        : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
                         }`}
                     />
                   </div>
