@@ -1,13 +1,20 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
-import Arrow from '@/src/assets/Arrow.svg';
-import Edit from '@/src/assets/Edit.svg';
-import DetailField from '@/src/components/base-service/DetailField';
+import {
+  ArrowLeft,
+  User,
+  Mail,
+  Shield,
+  Building2,
+  Home,
+  Calendar,
+  Loader2,
+  AlertCircle,
+  Key
+} from 'lucide-react';
 import {
   UserAccountInfo,
   UserProfileInfo,
@@ -79,7 +86,6 @@ export default function AccountDetailResidentPage() {
             console.warn('Could not fetch residentId from userId:', err);
           }
         }
-        console.log('Final residentId:', finalResidentId);
         setResidentId(finalResidentId);
 
         setState('success');
@@ -101,7 +107,7 @@ export default function AccountDetailResidentPage() {
     return () => {
       active = false;
     };
-  }, [userId]);
+  }, [userId, t]);
 
   const roles = useMemo<string[]>(() => {
     if (account?.roles?.length) {
@@ -119,21 +125,6 @@ export default function AccountDetailResidentPage() {
     router.push('/accountList');
   };
 
-  const handleEdit = () => {
-    if (userId) {
-      router.push(`/accountEditRe/${userId}`);
-    }
-  };
-
-  const formatDateTime = (value?: string | null) => {
-    if (!value) return t('common.notRecorded');
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return value;
-    }
-    return date.toLocaleString('vi-VN');
-  };
-
   const formatDateLabel = (value?: string | null) => {
     if (!value) return null;
     const date = new Date(value);
@@ -146,56 +137,78 @@ export default function AccountDetailResidentPage() {
   const renderResidentUnits = () => {
     if (residentUnitsLoading) {
       return (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
-          {t('units.loading')}
+        <div className="flex items-center justify-center p-8 rounded-xl border border-slate-200 bg-slate-50/50">
+          <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
+          <span className="ml-2 text-sm text-slate-500">{t('units.loading')}</span>
         </div>
       );
     }
 
     if (residentUnitsError) {
       return (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-600">
+        <div className="flex items-center p-4 rounded-xl border border-red-200 bg-red-50 text-sm text-red-600">
+          <AlertCircle className="mr-2 h-5 w-5" />
           {residentUnitsError}
         </div>
       );
     }
 
     if (!residentUnits.length) {
-      return <p className="text-sm text-slate-500">{t('units.noUnits')}</p>;
+      return (
+        <div className="flex flex-col items-center justify-center p-8 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 text-center">
+          <Home className="h-8 w-8 text-slate-300 mb-2" />
+          <p className="text-sm text-slate-500">{t('units.noUnits')}</p>
+        </div>
+      );
     }
 
     return (
-      <div className="space-y-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         {residentUnits.map((assignment) => {
           const buildingLabel = assignment.buildingName ?? assignment.buildingCode ?? t('units.unknownBuilding');
           const joinedAt = formatDateLabel(assignment.joinedAt);
           return (
             <div
               key={assignment.householdId}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-emerald-200 hover:shadow-md hover:shadow-emerald-100/50"
             >
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {assignment.unitCode ?? assignment.unitId ?? t('units.unknownUnitCode')}
-                  </p>
-                  <p className="text-xs text-slate-500">{buildingLabel}</p>
-                </div>
-                <div className="flex flex-col items-start gap-1 sm:items-end">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {assignment.isPrimary && (
-                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                        {t('units.houseOwner')}
-                      </span>
-                    )}
-                    {assignment.relation && (
-                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
-                        {assignment.relation}
-                      </span>
-                    )}
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+                      <Home className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-slate-800">
+                        {assignment.unitCode ?? assignment.unitId ?? t('units.unknownUnitCode')}
+                      </h4>
+                      <p className="text-xs text-slate-500 flex items-center">
+                        <Building2 className="mr-1 h-3 w-3" />
+                        {buildingLabel}
+                      </p>
+                    </div>
                   </div>
-                  {joinedAt && <span className="text-xs text-slate-500">{t('units.from')} {joinedAt}</span>}
                 </div>
+
+                {assignment.isPrimary && (
+                  <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                    {t('units.houseOwner')}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                    {assignment.relation || t('units.resident')}
+                  </span>
+                </div>
+                {joinedAt && (
+                  <div className="flex items-center text-xs text-slate-400" title={t('units.joinedAt')}>
+                    <Calendar className="mr-1 h-3 w-3" />
+                    {joinedAt}
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -204,130 +217,177 @@ export default function AccountDetailResidentPage() {
     );
   };
 
-  const renderRoles = () => {
-    if (!roles.length) {
-      return t('roles.noRoles');
-    }
+  if (state === 'loading' || state === 'idle') {
     return (
-      <div className="flex flex-wrap gap-2">
-        {roles.map((role) => (
-          <span
-            key={role}
-            className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700"
-          >
-            {role}
-          </span>
-        ))}
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
       </div>
     );
-  };
+  }
 
-  const renderPermissions = () => {
-    if (!permissions.length) {
-      return <p className="text-sm text-gray-500">{t('permissions.noPermissions')}</p>;
-    }
+  if (state === 'error') {
     return (
-      <div className="grid gap-2 sm:grid-cols-2">
-        {permissions.map((perm) => (
-          <div
-            key={perm}
-            className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700"
-          >
-            {perm}
-          </div>
-        ))}
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 p-4">
+        <div className="rounded-full bg-red-50 p-4">
+          <AlertCircle className="h-8 w-8 text-red-500" />
+        </div>
+        <p className="text-slate-600">{error}</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()} // Simple reload for retry
+          className="rounded-xl bg-slate-900 px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-slate-200 transition-all hover:bg-slate-800"
+        >
+          {t('buttons.retry')}
+        </button>
       </div>
     );
-  };
+  }
 
-  const renderContent = () => {
-    if (state === 'loading' || state === 'idle') {
-      return (
-        <div className="flex min-h-[240px] items-center justify-center text-sm text-slate-500">
-          {t('loading')}
-        </div>
-      );
-    }
-
-    if (state === 'error') {
-      return (
-        <div className="flex min-h-[240px] flex-col items-center justify-center gap-4">
-          <p className="text-sm text-red-600">{error}</p>
-          <button
-            type="button"
-            onClick={() => router.refresh()}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
-          >
-            {t('buttons.retry')}
-          </button>
-        </div>
-      );
-    }
-
-    if (!account) {
-      return (
-        <div className="flex min-h-[240px] items-center justify-center text-sm text-slate-500">
-          {t('errors.accountNotFound')}
-        </div>
-      );
-    }
-
-    const isActive = account.active;
-
+  if (!account) {
     return (
-      <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-md border border-gray-200">
-        <div className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>            
-            <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-semibold text-[#02542D]">{account.username}</h1>
-                <span
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                    isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'
-                }`}
-                >
-                {isActive ? t('status.active') : t('status.inactive')}
-                </span>
-            </div>
-          </div>
-          {/* <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleEdit}
-              className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
-            >
-              <Image src={Edit} alt={t('buttons.edit')} width={20} height={20} />
-              {t('buttons.edit')}
-            </button>
-          </div> */}
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
-          <DetailField label={t('fields.username')} value={account.username} readonly />
-          <DetailField label={t('fields.email')} value={account.email} readonly />
-          <DetailField label={t('fields.status')} value={isActive ? t('status.active') : t('status.inactive')} readonly />
-        </div>
-
-        <div className="mt-6">
-          <h2 className="text-md font-semibold text-[#02542D]">{t('sections.linkedUnits')}</h2>
-          <div className="mt-2">{renderResidentUnits()}</div>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-500">
+        {t('errors.accountNotFound')}
       </div>
     );
-  };
+  }
+
+  const isActive = account.active;
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
+      {/* Back Button */}
       <div
-        className="mx-auto mb-6 flex max-w-4xl cursor-pointer items-center"
+        className="mx-auto mb-8 flex max-w-5xl cursor-pointer items-center group"
         onClick={handleBack}
       >
-        <Image src={Arrow} alt={t('back')} width={20} height={20} className="mr-2 h-5 w-5" />
-        <span className="text-2xl font-bold text-[#02542D] transition hover:text-opacity-80">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm transition-all group-hover:bg-emerald-50 group-hover:shadow-md">
+          <ArrowLeft className="h-5 w-5 text-slate-600 transition-colors group-hover:text-emerald-600" />
+        </div>
+        <span className="ml-3 text-lg font-semibold text-slate-600 transition-colors group-hover:text-emerald-700">
           {t('back')}
         </span>
       </div>
-      {renderContent()}
+
+      <div className="mx-auto max-w-5xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* Main Card */}
+        <div className="overflow-hidden rounded-3xl border border-white/50 bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
+          {/* Header */}
+          <div className="border-b border-slate-100 p-6 md:p-8">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-600 shadow-inner">
+                  <span className="text-3xl font-bold">
+                    {account.username?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                    {account.username}
+                  </h1>
+                  <p className="text-sm font-medium text-slate-500">{account.email}</p>
+                </div>
+              </div>
+
+              <div className={`px-4 py-1.5 rounded-full text-sm font-semibold border ${isActive
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                  : 'bg-slate-100 text-slate-600 border-slate-200'
+                }`}>
+                <span className="flex items-center gap-2">
+                  <span className={`h-2 w-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                  {isActive ? t('status.active') : t('status.inactive')}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="p-6 md:p-8 space-y-8">
+            {/* Account Info */}
+            <div className="space-y-6">
+              <h3 className="flex items-center text-sm font-semibold uppercase tracking-wider text-slate-500">
+                <User className="mr-2 h-4 w-4" />
+                {t('sections.accountInfo') || 'Thông tin tài khoản'}
+              </h3>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                    <User className="h-4 w-4 text-emerald-500" />
+                    {t('fields.username')}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={account.username}
+                      readOnly
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 px-4 text-sm font-medium text-slate-700 shadow-sm focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-emerald-500" />
+                    {t('fields.email')}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={account.email}
+                      readOnly
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 px-4 text-sm font-medium text-slate-700 shadow-sm focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {roles.length > 0 && (
+                  <div className="col-span-1 md:col-span-2 space-y-2">
+                    <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-emerald-500" />
+                      {t('fields.roles') || 'Vai trò'}
+                    </label>
+                    <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50/50 p-3">
+                      {roles.map((role) => (
+                        <span key={role} className="inline-flex items-center rounded-lg bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-800 text-shadow-sm border border-emerald-200/50 shadow-sm">
+                          {role}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {permissions.length > 0 && (
+                  <div className="col-span-1 md:col-span-2 space-y-2">
+                    <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                      <Key className="h-4 w-4 text-emerald-500" />
+                      {t('fields.permissions') || 'Quyền hạn'}
+                    </label>
+                    <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50/50 p-3">
+                      {permissions.map((perm) => (
+                        <span key={perm} className="inline-flex items-center rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 border border-indigo-100 shadow-sm">
+                          {perm}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="h-px bg-slate-100" />
+
+            {/* Linked Units Section */}
+            <div className="space-y-6">
+              <h3 className="flex items-center text-sm font-semibold uppercase tracking-wider text-slate-500">
+                <Building2 className="mr-2 h-4 w-4" />
+                {t('sections.linkedUnits') || 'Căn hộ liên kết'}
+              </h3>
+
+              {renderResidentUnits()}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
-

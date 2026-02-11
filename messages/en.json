@@ -221,15 +221,28 @@
     "back": "Back to account list",
     "title": "Create new staff account",
     "subtitle": "Enter information below to create account for internal staff.",
+    "sections": {
+      "accountInfo": "Account Information",
+      "personalInfo": "Personal Information",
+      "roleInfo": "Role Information"
+    },
     "fields": {
       "username": "Username",
       "email": "Email",
-      "role": "Role"
+      "role": "Role",
+      "fullName": "Full Name",
+      "phone": "Phone Number",
+      "nationalId": "National ID",
+      "address": "Address"
     },
     "placeholders": {
       "username": "Enter username",
       "email": "example@domain.com",
-      "role": "Select role"
+      "role": "Select role",
+      "fullName": "Enter full name",
+      "phone": "Enter phone number",
+      "nationalId": "Enter national ID",
+      "address": "Enter address"
     },
     "roles": {
       "admin": "Admin",
@@ -264,6 +277,19 @@
       },
       "role": {
         "required": "Please select a role for the staff."
+      },
+      "fullName": {
+        "required": "Full name cannot be empty."
+      },
+      "phone": {
+        "required": "Phone number cannot be empty.",
+        "invalid": "Phone number is invalid."
+      },
+      "nationalId": {
+        "required": "National ID cannot be empty."
+      },
+      "address": {
+        "required": "Address cannot be empty."
       },
       "excelFileRequired": "Please select an Excel file (.xlsx).",
       "excelFileFormat": "File must be in .xlsx format."
@@ -366,12 +392,20 @@
     "fields": {
       "username": "Username",
       "email": "Email",
+      "fullName": "Full Name",
+      "phone": "Phone Number",
+      "nationalId": "National ID",
+      "address": "Address",
       "status": "Status",
       "role": "Role"
     },
     "placeholders": {
       "selectStatus": "Select status",
-      "selectRole": "Select role"
+      "selectRole": "Select role",
+      "fullName": "Enter full name",
+      "phone": "Enter phone number",
+      "nationalId": "Enter national ID",
+      "address": "Enter address"
     },
     "status": {
       "active": "Active",
@@ -396,8 +430,21 @@
         "required": "Email cannot be empty."
       },
       "role": {
-        "required": "Please select a role for the staff.",
+        "required": "Role must be selected for the staff.",
         "selectMessage": "Please select a role for the staff."
+      },
+      "fullName": {
+        "required": "Full name cannot be empty."
+      },
+      "phone": {
+        "required": "Phone number cannot be empty.",
+        "invalid": "Phone number is invalid."
+      },
+      "nationalId": {
+        "required": "National ID cannot be empty."
+      },
+      "address": {
+        "required": "Address cannot be empty."
       },
       "password": {
         "minLength": "New password must be at least 8 characters.",
@@ -1891,13 +1938,16 @@
     "fields": {
       "username": "Username",
       "email": "Email",
-      "status": "Status"
+      "status": "Status",
+      "roles": "Roles",
+      "permissions": "Permissions"
     },
     "status": {
       "active": "Active",
       "inactive": "Inactive"
     },
     "sections": {
+      "accountInfo": "Account Information",
       "building": "Building",
       "linkedUnits": "Linked units"
     },
@@ -1910,7 +1960,8 @@
       "unknownBuilding": "Unknown building",
       "unknownUnitCode": "Unknown apartment code",
       "houseOwner": "House owner",
-      "from": "From"
+      "from": "From",
+      "joinedAt": "Joined at"
     },
     "roles": {
       "noRoles": "No roles"

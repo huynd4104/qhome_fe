@@ -20,6 +20,10 @@ export interface UserAccountInfo {
   buildingCode?: string;
   buildingName?: string;
   residentId?: string;
+  fullName?: string;
+  phone?: string;
+  nationalId?: string;
+  address?: string;
 }
 
 export interface UserStatusInfo {
@@ -45,6 +49,10 @@ export interface UpdateStaffAccountPayload {
   active?: boolean;
   roles?: string[];
   newPassword?: string;
+  fullName?: string;
+  phone?: string;
+  nationalId?: string;
+  address?: string;
 }
 
 export interface UpdateResidentAccountPayload {
@@ -59,6 +67,10 @@ export interface CreateStaffAccountPayload {
   password: string;
   roles: string[];
   active?: boolean;
+  fullName: string;
+  phone?: string;
+  nationalId?: string;
+  address?: string;
 }
 
 export interface StaffImportRowResult {

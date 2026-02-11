@@ -15,7 +15,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={currentLocale}>
-      <body>
+      <body suppressHydrationWarning={true}>
         <Providers initialLocale={currentLocale} initialMessages={messages}>
           <Navbar />
           <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
