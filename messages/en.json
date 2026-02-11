@@ -966,6 +966,8 @@
     "buildingCode": "Building Code",
     "buildingName": "Building Name",
     "requestlist": "Building List",
+    "subTitle": "Manage buildings and apartments list",
+    "searchPlaceholder": "Search by name or code...",
     "projectName": "Project Name",
     "floors": "Floors",
     "status": "Status",
@@ -1097,7 +1099,15 @@
       "importing": "Importing...",
       "selectFileToImport": "Select Excel file to import",
       "exportBuildings": "Export Excel (Buildings)",
-      "exportBuildingsWithUnits": "Export Excel (Buildings + Units)"
+      "exportBuildingsWithUnits": "Export Excel (Buildings + Units)",
+      "add": "Add Building",
+      "edit": "Edit",
+      "changeStatus": "Change Status"
+    },
+    "filters": {
+      "allStatus": "All Status",
+      "active": "Active",
+      "inactive": "Inactive"
     },
     "messages": {
       "updateStatusError": "Failed to update building status",
@@ -2770,6 +2780,25 @@
       "paymentPending": "Payment Pending",
       "paid": "Paid"
     },
+    "statusLabels": {
+      "pending": "Pending",
+      "readyForPayment": "Ready for Payment",
+      "paymentPending": "Payment Pending",
+      "approved": "Approved",
+      "completed": "Completed",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "paymentStatusLabels": {
+      "unpaid": "Unpaid",
+      "paymentPending": "Payment Pending",
+      "paymentApproval": "Payment Approval",
+      "paid": "Paid"
+    },
+    "requestTypes": {
+      "newCard": "New Card",
+      "renewal": "Renewal"
+    },
     "table": {
       "resident": "Resident",
       "apartment": "Apartment",
@@ -4379,6 +4408,7 @@
     "services": {
       "electricity": "Electricity",
       "water": "Water",
+      "maintenance": "Maintenance",
       "vehicleCard": "Vehicle Card",
       "elevatorCard": "Elevator Card",
       "residentCard": "Resident Card"
@@ -4387,7 +4417,8 @@
       "draft": "Draft",
       "published": "Published",
       "paid": "Paid",
-      "void": "Void"
+      "void": "Void",
+      "unpaid": "Unpaid"
     },
     "loading": "Loading...",
     "errors": {
@@ -4552,13 +4583,164 @@
     }
   },
   "RentalReview": {
+    "title": "Rental Contract Review",
+    "subtitle": "Manage and review all rental contracts in the system",
+    "statistics": {
+      "totalContracts": "Total Contracts",
+      "expiringContracts": "Expiring Contracts",
+      "expiringDays": "Remaining ≤ 30 days",
+      "needingInspection": "Needs Inspection",
+      "needingInspectionDesc": "Expired/Cancelled contracts not inspected"
+    },
+    "filters": {
+      "building": "Building",
+      "unit": "Apartment",
+      "status": "Status",
+      "search": "Search",
+      "allBuildings": "All Buildings",
+      "allUnits": "All Apartments",
+      "allStatus": "All",
+      "active": "Active",
+      "expiring": "Expiring Soon (≤30 days)",
+      "expired": "Expired",
+      "cancelled": "Cancelled",
+      "notInspected": "Not Inspected",
+      "searchPlaceholder": "Contract number, unit code..."
+    },
+    "table": {
+      "contractNumber": "Contract No.",
+      "building": "Building",
+      "unit": "Apartment",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "monthlyRent": "Monthly Rent",
+      "inspectionDate": "Inspection Date",
+      "status": "Status",
+      "actions": "Actions",
+      "contractList": "Contract List",
+      "refresh": "Refresh",
+      "viewDetail": "View Detail",
+      "inspectAssets": "Inspect Assets",
+      "loading": "Loading...",
+      "noContracts": "No rental contracts yet",
+      "noResults": "No contracts found matching filters"
+    },
+    "status": {
+      "cancelled": "Cancelled",
+      "inactive": "Inactive",
+      "expired": "Expired",
+      "invalid": "Invalid",
+      "active": "Active",
+      "expiring": "Expiring soon ({days} days left)"
+    },
+    "detailModal": {
+      "title": "Contract Details",
+      "close": "Close",
+      "loading": "Loading...",
+      "contractNumber": "Contract Number",
+      "contractType": "Contract Type",
+      "rental": "Rental",
+      "purchase": "Purchase",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "monthlyRent": "Monthly Rent",
+      "paymentMethod": "Payment Method",
+      "status": "Status",
+      "paymentTerms": "Payment Terms",
+      "notes": "Notes",
+      "attachments": "Attachments",
+      "file": "File",
+      "view": "View",
+      "notFound": "Contract not found. It may have been deleted or does not exist.",
+      "goToCreate": "Go to Create Contract"
+    },
+    "inspectionModal": {
+      "title": "Asset Inspection on Contract Expiry",
+      "close": "Close",
+      "loading": "Loading...",
+      "expiredContract": "Contract Expired",
+      "assignTechnician": "Assign technician for asset inspection",
+      "selectTechnician": "Please select a technician from the list to assign asset inspection for this contract.",
+      "selectTechnicianLabel": "Select Technician",
+      "required": "*",
+      "loadingTechnicians": "Loading technicians...",
+      "noTechnicians": "No technicians in the system",
+      "noTechniciansDesc": "Please create a technician account (role: TECHNICIAN) before assigning inspection.",
+      "selectPlaceholder": "-- Select Technician (Required) --",
+      "assigning": "Assigning...",
+      "assign": "Assign Inspection",
+      "inspectionDate": "Inspection Date",
+      "status": "Status",
+      "inspector": "Inspector",
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "startInspection": "Start Inspection",
+      "equipmentList": "Asset Checklist",
+      "noEquipment": "No assets in checklist yet",
+      "inspectionNotes": "Inspection Notes",
+      "notesPlaceholder": "Enter notes on asset condition...",
+      "completeInspection": "Complete Inspection",
+      "results": "Inspection Results",
+      "meterReadings": "Meter Readings",
+      "loadingMeters": "Loading meters...",
+      "readingDate": "Reading Date",
+      "activeCycle": "Reading Cycle",
+      "noAssignment": "⚠️ No assignment for this cycle. Meter readings will not be saved to cycle.",
+      "currentIndex": "Current Index",
+      "indexPlaceholder": "Enter index",
+      "note": "Note",
+      "notePlaceholder": "Note (optional)",
+      "adminNote": "Note",
+      "adminNoteDesc": "You only need to assign a technician. The technician will perform asset inspection and meter readings after assignment.",
+      "lastReading": "Previous Index",
+      "noMeters": "This unit has no meters.",
+      "condition": {
+        "good": "Good",
+        "damaged": "Damaged",
+        "missing": "Missing",
+        "repaired": "Repaired",
+        "replaced": "Replaced",
+        "notInspected": "Not Inspected"
+      },
+      "item": {
+        "condition": "Condition",
+        "selectCondition": "Select Condition",
+        "notes": "Notes",
+        "notesPlaceholder": "Notes on asset condition...",
+        "save": "Save",
+        "inspected": "Inspected"
+      }
+    },
+    "errors": {
+      "loadData": "Failed to load data",
+      "loadBuildings": "Failed to load buildings",
+      "loadUnits": "Failed to load units",
+      "loadContracts": "Failed to load contracts",
+      "loadDetail": "Failed to load contract details",
+      "loadTechnicians": "Failed to load technicians",
+      "createInspection": "Failed to create inspection checklist",
+      "startInspection": "Failed to start inspection",
+      "updateItem": "Failed to update",
+      "completeInspection": "Failed to complete inspection",
+      "selectTechnician": "Please select a technician to assign inspection",
+      "technicianNotFound": "Selected technician not found. Please select again.",
+      "notTechnician": "Selected user is not a technician. Please select another user.",
+      "noTechnicians": "No technicians found. Please create a technician account first.",
+      "someReadingsFailed": "Inspection created but {count} meter readings failed"
+    },
     "success": {
       "assignInspection": "Assigned inspection to technician {name}",
       "reassignInspection": "Reassigned inspection to technician {name}",
-      "startInspection": "Started inspection",
-      "completeInspection": "Completed inspection",
-      "createInspectionWithReadings": "Created inspection with {readingCount} meter readings",
-      "completeInspectionWithReadings": "Completed inspection with {readingCount} meter readings"
+      "startInspection": "Started asset inspection",
+      "completeInspection": "Completed asset inspection",
+      "createInspectionWithReadings": "Created inspection and {readingCount} meter readings",
+      "completeInspectionWithReadings": "Completed inspection and {readingCount} meter readings"
+    },
+    "notification": {
+      "title": "Inspection Required",
+      "message": "There are {count} units requiring asset inspection after contract expiry/cancellation."
     }
   },
   "TechnicianInspections": {
