@@ -108,6 +108,17 @@ export default function AccountListPage() {
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('ALL');
   const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState<'ALL' | number>('ALL');
+  const [canScroll, setCanScroll] = useState(false);
+  const floorScrollRef = useRef<HTMLDivElement>(null);
+
+  // Hàm kiểm tra xem danh sách có đang bị tràn hay không
+  const checkOverflow = useCallback(() => {
+    if (floorScrollRef.current) {
+      const { scrollWidth, clientWidth } = floorScrollRef.current;
+      // Nếu chiều rộng nội dung (scrollWidth) lớn hơn chiều rộng hiển thị (clientWidth)
+      setCanScroll(scrollWidth > clientWidth);
+    }
+  }, []);
 
   // -- LOGIC PRESERVED FROM ORIGINAL FILE --
 
@@ -200,6 +211,22 @@ export default function AccountListPage() {
     const building = buildings.find((b) => b.id === selectedBuildingId);
     return building?.floorsMax ?? 0;
   }, [selectedBuildingId, buildings]);
+
+  // Kiểm tra lại mỗi khi dữ liệu tòa nhà/tầng thay đổi hoặc khi resize màn hình
+  useEffect(() => {
+    checkOverflow();
+
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [selectedBuildingId, buildings, selectedBuildingFloorsMax, checkOverflow]);
+
+  // Gọi lại checkOverflow sau một khoảng nghỉ ngắn khi tab active thay đổi để đảm bảo DOM đã render xong
+  useEffect(() => {
+    if (activeTab === 'RESIDENT') {
+      const timer = setTimeout(checkOverflow, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, checkOverflow]);
 
   useEffect(() => {
     const created = searchParams.get('created');
@@ -575,34 +602,6 @@ export default function AccountListPage() {
       </div>
     );
   };
-
-  const [canScroll, setCanScroll] = useState(false);
-  const floorScrollRef = useRef<HTMLDivElement>(null);
-
-  // Hàm kiểm tra xem danh sách có đang bị tràn hay không
-  const checkOverflow = useCallback(() => {
-    if (floorScrollRef.current) {
-      const { scrollWidth, clientWidth } = floorScrollRef.current;
-      // Nếu chiều rộng nội dung (scrollWidth) lớn hơn chiều rộng hiển thị (clientWidth)
-      setCanScroll(scrollWidth > clientWidth);
-    }
-  }, []);
-
-  // Kiểm tra lại mỗi khi dữ liệu tòa nhà/tầng thay đổi hoặc khi resize màn hình
-  useEffect(() => {
-    checkOverflow();
-
-    window.addEventListener('resize', checkOverflow);
-    return () => window.removeEventListener('resize', checkOverflow);
-  }, [selectedBuildingId, buildings, selectedBuildingFloorsMax, checkOverflow]);
-
-  // Gọi lại checkOverflow sau một khoảng nghỉ ngắn khi tab active thay đổi để đảm bảo DOM đã render xong
-  useEffect(() => {
-    if (activeTab === 'RESIDENT') {
-      const timer = setTimeout(checkOverflow, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [activeTab, checkOverflow]);
 
   // Hàm xử lý cuộn
   const scrollFloors = (direction: 'left' | 'right') => {
