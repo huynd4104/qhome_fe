@@ -79,16 +79,12 @@ export const exportResidents = async (year: number, buildingId?: string, floor?:
 export const importResidents = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    // Note: Axis + Multipart often needs content-type header, but sometimes axios sets it automatically with boundary.
-    // Explicitly setting it to multipart/form-data with axios sometimes causes issues with boundary.
-    // It's safer to let axios set it, or use specific config.
     const response = await axios.post(`${BASE_URL}/api/resident-view/import`, formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
         withCredentials: true,
+        responseType: 'arraybuffer',
+        validateStatus: (status) => status === 200 || status === 400,
     });
-    return response.data;
+    return response;
 };
 
 export const downloadTemplate = async () => {

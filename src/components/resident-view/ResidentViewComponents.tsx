@@ -404,20 +404,13 @@ export const ImportModal = ({ onClose, onSuccess }: { onClose: () => void, onSuc
         setUploading(true);
         setError(null);
         try {
-            const errorReport = await importResidents(file);
-            // The service returns Blob if responseType is blob, or JSON if error? 
-            // My service definition says response.data. 
-            // If error report (byte[]), it will be a Blob because I might change service to return Blob for error?
-            // Actually, my importResidents endpoint returns 400 with Excel body if error. 
-            // Axios might throw error on 400. I need to handle error response for 400 and get Blob.
-            // But let's assume successful 200 means OK, and catch block handles 400.
-            onSuccess();
-            onClose();
-        } catch (err: any) {
-            console.error("Upload failed", err);
-            // If 400 and has data, it might be the excel file
-            if (err.response && err.response.status === 400 && err.response.data) {
-                const blob = new Blob([err.response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const response = await importResidents(file);
+            if (response.status === 200) {
+                onSuccess();
+                onClose();
+                window.location.reload();
+            } else if (response.status === 400 && response.data && response.data.byteLength > 0) {
+                const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -428,8 +421,11 @@ export const ImportModal = ({ onClose, onSuccess }: { onClose: () => void, onSuc
                 document.body.removeChild(a);
                 setError(t('importErrorsDesc'));
             } else {
-                setError(err.message || t('uploadFailed'));
+                setError(t('uploadFailed'));
             }
+        } catch (err: any) {
+            console.error("Upload failed", err);
+            setError(err.message || t('uploadFailed'));
         } finally {
             setUploading(false);
         }
