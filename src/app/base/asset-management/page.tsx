@@ -733,7 +733,6 @@ export default function AssetManagementPage() {
             unitId: editingAsset.unitId,
             assetType: editingAsset.assetType,
             roomType: editingAsset.roomType,
-            roomType: editingAsset.roomType,
             assetCode: editingAsset.assetCode.trim(),
             name: editingAsset.name.trim() || undefined,
             active: editingAsset.active,
@@ -767,7 +766,6 @@ export default function AssetManagementPage() {
 
         const payload: UpdateAssetRequest = {
           assetCode: editingAsset.assetCode.trim(),
-          roomType: editingAsset.roomType,
           roomType: editingAsset.roomType,
           name: editingAsset.name.trim() || undefined,
           active: editingAsset.active,
@@ -1125,8 +1123,6 @@ export default function AssetManagementPage() {
             className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'list'
               ? 'border-blue-500 text-blue-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
             Danh sách thiết bị
@@ -1136,8 +1132,6 @@ export default function AssetManagementPage() {
             className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'missing'
               ? 'border-blue-500 text-blue-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
             Căn hộ chưa có thiết bị
@@ -1400,8 +1394,6 @@ export default function AssetManagementPage() {
                             className={`px-2 py-1 text-xs font-medium rounded ${asset.active
                               ? 'bg-green-100 text-green-700'
                               : 'bg-gray-100 text-gray-700'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-700'
                               }`}
                           >
                             {asset.active ? 'Đang hoạt động' : 'Đã ngừng'}
@@ -1494,8 +1486,6 @@ export default function AssetManagementPage() {
                           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${touchedFields.buildingId && formErrors.buildingId
                             ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 focus:ring-blue-500'
-                              ? 'border-red-500 focus:ring-red-500'
-                              : 'border-gray-300 focus:ring-blue-500'
                             }`}
                           disabled={!isCreateMode}
                           required
@@ -1545,8 +1535,6 @@ export default function AssetManagementPage() {
                           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 disabled:bg-gray-100 disabled:cursor-not-allowed ${touchedFields.unitId && formErrors.unitId
                             ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 focus:ring-blue-500'
-                              ? 'border-red-500 focus:ring-red-500'
-                              : 'border-gray-300 focus:ring-blue-500'
                             }`}
                           disabled={!selectedBuildingId && isCreateMode}
                           required
@@ -1713,8 +1701,6 @@ export default function AssetManagementPage() {
                           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 bg-gray-50 ${touchedFields.assetCode && formErrors.assetCode
                             ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 focus:ring-blue-500'
-                              ? 'border-red-500 focus:ring-red-500'
-                              : 'border-gray-300 focus:ring-blue-500'
                             }`}
                           placeholder={isCreateMode ? "Mã sẽ được tạo tự động" : "VD: AC-A101-001"}
                           readOnly={isCreateMode}
