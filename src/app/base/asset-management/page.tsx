@@ -219,6 +219,7 @@ export default function AssetManagementPage() {
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
   const [selectedAssetType, setSelectedAssetType] = useState<AssetType | ''>('');
+  const [selectedRoomType, setSelectedRoomType] = useState<RoomType | ''>('');
   const [showActiveOnly, setShowActiveOnly] = useState(false);
 
   // Buildings and Units for dropdowns
@@ -272,7 +273,7 @@ export default function AssetManagementPage() {
   useEffect(() => {
     loadAssets();
     setPageNo(0);
-  }, [selectedBuildingId, selectedUnitId, selectedAssetType, showActiveOnly]);
+  }, [selectedBuildingId, selectedUnitId, selectedAssetType, selectedRoomType, showActiveOnly]);
 
   // Validate active asset when form is opened or editingAsset changes
   useEffect(() => {
@@ -361,6 +362,10 @@ export default function AssetManagementPage() {
         data = await getAssetsByType(selectedAssetType as AssetType);
       } else {
         data = await getAllAssets();
+      }
+
+      if (selectedRoomType) {
+        data = data.filter(asset => asset.roomType === selectedRoomType);
       }
 
       if (showActiveOnly) {
@@ -459,7 +464,7 @@ export default function AssetManagementPage() {
       id: asset.id,
       unitId: asset.unitId,
       assetType: asset.assetType,
-      roomType: asset.roomType || ASSET_TYPE_TO_ROOM[asset.assetType] || RoomType.LIVING_ROOM,
+      roomType: asset.roomType,
       assetCode: asset.assetCode,
       name: asset.name || '',
       active: asset.active,
@@ -728,6 +733,7 @@ export default function AssetManagementPage() {
             unitId: editingAsset.unitId,
             assetType: editingAsset.assetType,
             roomType: editingAsset.roomType,
+            roomType: editingAsset.roomType,
             assetCode: editingAsset.assetCode.trim(),
             name: editingAsset.name.trim() || undefined,
             active: editingAsset.active,
@@ -761,6 +767,7 @@ export default function AssetManagementPage() {
 
         const payload: UpdateAssetRequest = {
           assetCode: editingAsset.assetCode.trim(),
+          roomType: editingAsset.roomType,
           roomType: editingAsset.roomType,
           name: editingAsset.name.trim() || undefined,
           active: editingAsset.active,
@@ -1118,6 +1125,8 @@ export default function AssetManagementPage() {
             className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'list'
               ? 'border-blue-500 text-blue-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
             Danh sách thiết bị
@@ -1127,6 +1136,8 @@ export default function AssetManagementPage() {
             className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'missing'
               ? 'border-blue-500 text-blue-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
             Căn hộ chưa có thiết bị
@@ -1139,7 +1150,7 @@ export default function AssetManagementPage() {
 
           {/* Filters */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Tòa nhà
@@ -1187,6 +1198,32 @@ export default function AssetManagementPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Loại phòng
+                </label>
+                <select
+                  value={selectedRoomType}
+                  onChange={(e) => {
+                    const newRoomType = e.target.value as RoomType | '';
+                    setSelectedRoomType(newRoomType);
+                    // Reset assetType nếu không thuộc phòng mới
+                    if (newRoomType && selectedAssetType && ASSET_TYPE_TO_ROOM[selectedAssetType as AssetType] !== newRoomType) {
+                      setSelectedAssetType('');
+                    }
+                    setPageNo(0);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Tất cả phòng</option>
+                  {Object.entries(ROOM_TYPE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Loại thiết bị
                 </label>
                 <select
@@ -1198,11 +1235,13 @@ export default function AssetManagementPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Tất cả loại</option>
-                  {Object.entries(ASSET_TYPE_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
+                  {Object.entries(ASSET_TYPE_LABELS)
+                    .filter(([value]) => !selectedRoomType || ASSET_TYPE_TO_ROOM[value as AssetType] === selectedRoomType)
+                    .map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -1288,7 +1327,10 @@ export default function AssetManagementPage() {
                         Tên/Model
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Loại
+                        Loại thiết bị
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Loại phòng
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Căn hộ
@@ -1334,6 +1376,11 @@ export default function AssetManagementPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className={`text-sm ${asset.active ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {asset.roomType ? ROOM_TYPE_LABELS[asset.roomType] : '-'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm ${asset.active ? 'text-gray-900' : 'text-gray-500'}`}>
                             {asset.unitCode || '-'}
                           </div>
                           {asset.buildingCode && (
@@ -1353,6 +1400,8 @@ export default function AssetManagementPage() {
                             className={`px-2 py-1 text-xs font-medium rounded ${asset.active
                               ? 'bg-green-100 text-green-700'
                               : 'bg-gray-100 text-gray-700'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-100 text-gray-700'
                               }`}
                           >
                             {asset.active ? 'Đang hoạt động' : 'Đã ngừng'}
@@ -1445,6 +1494,8 @@ export default function AssetManagementPage() {
                           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${touchedFields.buildingId && formErrors.buildingId
                             ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 focus:ring-blue-500'
+                              ? 'border-red-500 focus:ring-red-500'
+                              : 'border-gray-300 focus:ring-blue-500'
                             }`}
                           disabled={!isCreateMode}
                           required
@@ -1494,6 +1545,8 @@ export default function AssetManagementPage() {
                           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 disabled:bg-gray-100 disabled:cursor-not-allowed ${touchedFields.unitId && formErrors.unitId
                             ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 focus:ring-blue-500'
+                              ? 'border-red-500 focus:ring-red-500'
+                              : 'border-gray-300 focus:ring-blue-500'
                             }`}
                           disabled={!selectedBuildingId && isCreateMode}
                           required
@@ -1520,6 +1573,54 @@ export default function AssetManagementPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Loại phòng <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={editingAsset.roomType || ''}
+                          onChange={(e) => {
+                            const newRoomType = e.target.value as RoomType;
+                            // Lọc ra assetType đầu tiên thuộc phòng mới
+                            const matchingTypes = Object.entries(ASSET_TYPE_TO_ROOM)
+                              .filter(([, room]) => room === newRoomType)
+                              .map(([type]) => type as AssetType);
+                            const currentTypeMatchesRoom = ASSET_TYPE_TO_ROOM[editingAsset.assetType] === newRoomType;
+                            const newAssetType = currentTypeMatchesRoom ? editingAsset.assetType : (matchingTypes[0] || editingAsset.assetType);
+
+                            // Auto-update name, price, and asset code when asset type changes
+                            const currentNameLabel = editingAsset.assetType ? ASSET_TYPE_LABELS[editingAsset.assetType] : '';
+                            const newName = (isCreateMode && (!editingAsset.name || editingAsset.name === currentNameLabel))
+                              ? ASSET_TYPE_LABELS[newAssetType]
+                              : editingAsset.name;
+                            const currentPriceDefault = editingAsset.assetType ? ASSET_TYPE_DEFAULT_PRICE[editingAsset.assetType] : 0;
+                            const newPrice = (isCreateMode && (!editingAsset.purchasePrice || editingAsset.purchasePrice === currentPriceDefault))
+                              ? ASSET_TYPE_DEFAULT_PRICE[newAssetType]
+                              : editingAsset.purchasePrice;
+                            let newAssetCode = editingAsset.assetCode;
+                            if (isCreateMode && editingAsset.unitId && newAssetType !== editingAsset.assetType) {
+                              newAssetCode = generateAssetCode(newAssetType, editingAsset.unitId);
+                            }
+
+                            setEditingAsset({
+                              ...editingAsset,
+                              roomType: newRoomType,
+                              assetType: newAssetType,
+                              name: newName,
+                              purchasePrice: newPrice,
+                              assetCode: newAssetCode,
+                            });
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {Object.entries(ROOM_TYPE_LABELS).map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Loại thiết bị <span className="text-red-500">*</span>
                         </label>
                         <select
@@ -1527,7 +1628,6 @@ export default function AssetManagementPage() {
                           onChange={(e) => {
                             const newAssetType = e.target.value as AssetType;
                             let newAssetCode = editingAsset.assetCode;
-                            // Only auto-update name if it's empty or matches the current asset type label (preserve user edits)
                             const currentNameLabel = editingAsset.assetType ? ASSET_TYPE_LABELS[editingAsset.assetType] : '';
                             const newName = (isCreateMode && (!editingAsset.name || editingAsset.name === currentNameLabel))
                               ? ASSET_TYPE_LABELS[newAssetType]
@@ -1537,7 +1637,6 @@ export default function AssetManagementPage() {
                               ? ASSET_TYPE_DEFAULT_PRICE[newAssetType]
                               : editingAsset.purchasePrice;
 
-                            // Auto-generate asset code in create mode
                             if (isCreateMode && editingAsset.unitId && newAssetType) {
                               newAssetCode = generateAssetCode(newAssetType, editingAsset.unitId);
                             }
@@ -1551,18 +1650,19 @@ export default function AssetManagementPage() {
                               roomType: ASSET_TYPE_TO_ROOM[newAssetType] || editingAsset.roomType || RoomType.LIVING_ROOM,
                             };
                             setEditingAsset(updatedAsset);
-                            // Validate duplicate active asset when asset type changes
                             if (updatedAsset.active && updatedAsset.unitId && newAssetType) {
                               validateActiveAsset(updatedAsset.unitId, newAssetType, updatedAsset.active, updatedAsset.id);
                             }
                           }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                          {Object.entries(ASSET_TYPE_LABELS).map(([value, label]) => (
-                            <option key={value} value={value}>
-                              {label}
-                            </option>
-                          ))}
+                          {Object.entries(ASSET_TYPE_LABELS)
+                            .filter(([value]) => !editingAsset.roomType || ASSET_TYPE_TO_ROOM[value as AssetType] === editingAsset.roomType)
+                            .map(([value, label]) => (
+                              <option key={value} value={value}>
+                                {label}
+                              </option>
+                            ))}
                         </select>
                       </div>
 
@@ -1613,6 +1713,8 @@ export default function AssetManagementPage() {
                           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 bg-gray-50 ${touchedFields.assetCode && formErrors.assetCode
                             ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 focus:ring-blue-500'
+                              ? 'border-red-500 focus:ring-red-500'
+                              : 'border-gray-300 focus:ring-blue-500'
                             }`}
                           placeholder={isCreateMode ? "Mã sẽ được tạo tự động" : "VD: AC-A101-001"}
                           readOnly={isCreateMode}

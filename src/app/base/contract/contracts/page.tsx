@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
@@ -16,7 +16,7 @@ import {
   getAllContracts,
 } from '@/src/services/base/contractService';
 import { getAssetsByUnit, createAsset } from '@/src/services/base/assetService';
-import { AssetType, type Asset, type CreateAssetRequest } from '@/src/types/asset';
+import { AssetType, RoomType, type Asset, type CreateAssetRequest } from '@/src/types/asset';
 import { createMeter, getAllServices, getMeters, type ServiceDto, type MeterCreateReq, type MeterDto, ALLOWED_SERVICE_CODES } from '@/src/services/base/waterService';
 import DateBox from '@/src/components/customer-interaction/DateBox';
 import { uploadNewsImageFile, uploadNewsImageFiles } from '@/src/services/customer-interaction/newService';
@@ -45,6 +45,184 @@ const DEFAULT_CONTRACTS_STATE: AsyncState<ContractSummary[]> = {
   error: null,
 };
 
+
+// Labels tiếng Việt cho RoomType
+const ROOM_TYPE_LABELS: Record<RoomType, string> = {
+  [RoomType.BATHROOM]: 'Nhà tắm & Vệ sinh',
+  [RoomType.LIVING_ROOM]: 'Phòng khách',
+  [RoomType.BEDROOM]: 'Phòng ngủ',
+  [RoomType.KITCHEN]: 'Nhà bếp',
+  [RoomType.HALLWAY]: 'Hành lang',
+};
+
+// Labels tiếng Việt cho AssetType (25 loại)
+const ASSET_TYPE_LABELS: Record<AssetType, string> = {
+  // Nhà tắm & Vệ sinh
+  [AssetType.TOILET]: 'Bồn cầu',
+  [AssetType.BATHROOM_SINK]: 'Chậu rửa nhà tắm',
+  [AssetType.WATER_HEATER]: 'Bình nóng lạnh',
+  [AssetType.SHOWER_SYSTEM]: 'Hệ sen vòi nhà tắm',
+  [AssetType.BATHROOM_FAUCET]: 'Vòi chậu rửa',
+  [AssetType.BATHROOM_LIGHT]: 'Đèn nhà tắm',
+  [AssetType.BATHROOM_DOOR]: 'Cửa nhà tắm',
+  [AssetType.BATHROOM_ELECTRICAL]: 'Hệ thống điện nhà vệ sinh',
+  // Phòng khách
+  [AssetType.LIVING_ROOM_DOOR]: 'Cửa phòng khách',
+  [AssetType.LIVING_ROOM_LIGHT]: 'Đèn phòng khách',
+  [AssetType.AIR_CONDITIONER]: 'Điều hòa',
+  [AssetType.INTERNET_SYSTEM]: 'Hệ thống mạng Internet',
+  [AssetType.FAN]: 'Quạt',
+  [AssetType.LIVING_ROOM_ELECTRICAL]: 'Hệ thống điện phòng khách',
+  // Phòng ngủ
+  [AssetType.BEDROOM_ELECTRICAL]: 'Hệ thống điện phòng ngủ',
+  [AssetType.BEDROOM_AIR_CONDITIONER]: 'Điều hòa phòng ngủ',
+  [AssetType.BEDROOM_DOOR]: 'Cửa phòng ngủ',
+  [AssetType.BEDROOM_WINDOW]: 'Cửa sổ phòng ngủ',
+  // Nhà bếp
+  [AssetType.KITCHEN_LIGHT]: 'Hệ thống đèn nhà bếp',
+  [AssetType.KITCHEN_ELECTRICAL]: 'Hệ thống điện nhà bếp',
+  [AssetType.ELECTRIC_STOVE]: 'Bếp điện',
+  [AssetType.KITCHEN_DOOR]: 'Cửa bếp và logia',
+  // Hành lang
+  [AssetType.HALLWAY_LIGHT]: 'Hệ thống đèn hành lang',
+  [AssetType.HALLWAY_ELECTRICAL]: 'Hệ thống điện hành lang',
+  // Khác
+  [AssetType.OTHER]: 'Khác',
+};
+
+// Map AssetType to RoomType
+const ASSET_TYPE_TO_ROOM: Record<AssetType, RoomType> = {
+  // Nhà tắm & Vệ sinh
+  [AssetType.TOILET]: RoomType.BATHROOM,
+  [AssetType.BATHROOM_SINK]: RoomType.BATHROOM,
+  [AssetType.WATER_HEATER]: RoomType.BATHROOM,
+  [AssetType.SHOWER_SYSTEM]: RoomType.BATHROOM,
+  [AssetType.BATHROOM_FAUCET]: RoomType.BATHROOM,
+  [AssetType.BATHROOM_LIGHT]: RoomType.BATHROOM,
+  [AssetType.BATHROOM_DOOR]: RoomType.BATHROOM,
+  [AssetType.BATHROOM_ELECTRICAL]: RoomType.BATHROOM,
+  // Phòng khách
+  [AssetType.LIVING_ROOM_DOOR]: RoomType.LIVING_ROOM,
+  [AssetType.LIVING_ROOM_LIGHT]: RoomType.LIVING_ROOM,
+  [AssetType.AIR_CONDITIONER]: RoomType.LIVING_ROOM,
+  [AssetType.INTERNET_SYSTEM]: RoomType.LIVING_ROOM,
+  [AssetType.FAN]: RoomType.LIVING_ROOM,
+  [AssetType.LIVING_ROOM_ELECTRICAL]: RoomType.LIVING_ROOM,
+  // Phòng ngủ
+  [AssetType.BEDROOM_ELECTRICAL]: RoomType.BEDROOM,
+  [AssetType.BEDROOM_AIR_CONDITIONER]: RoomType.BEDROOM,
+  [AssetType.BEDROOM_DOOR]: RoomType.BEDROOM,
+  [AssetType.BEDROOM_WINDOW]: RoomType.BEDROOM,
+  // Nhà bếp
+  [AssetType.KITCHEN_LIGHT]: RoomType.KITCHEN,
+  [AssetType.KITCHEN_ELECTRICAL]: RoomType.KITCHEN,
+  [AssetType.ELECTRIC_STOVE]: RoomType.KITCHEN,
+  [AssetType.KITCHEN_DOOR]: RoomType.KITCHEN,
+  // Hành lang
+  [AssetType.HALLWAY_LIGHT]: RoomType.HALLWAY,
+  [AssetType.HALLWAY_ELECTRICAL]: RoomType.HALLWAY,
+  // Khác
+  [AssetType.OTHER]: RoomType.LIVING_ROOM,
+};
+
+// Map AssetType to prefix for asset code generation
+const ASSET_TYPE_PREFIX: Record<AssetType, string> = {
+  // Nhà tắm & Vệ sinh
+  [AssetType.TOILET]: 'TLT',
+  [AssetType.BATHROOM_SINK]: 'BSK',
+  [AssetType.WATER_HEATER]: 'WH',
+  [AssetType.SHOWER_SYSTEM]: 'SHW',
+  [AssetType.BATHROOM_FAUCET]: 'BFC',
+  [AssetType.BATHROOM_LIGHT]: 'BLT',
+  [AssetType.BATHROOM_DOOR]: 'BDR',
+  [AssetType.BATHROOM_ELECTRICAL]: 'BEL',
+  // Phòng khách
+  [AssetType.LIVING_ROOM_DOOR]: 'LRD',
+  [AssetType.LIVING_ROOM_LIGHT]: 'LRL',
+  [AssetType.AIR_CONDITIONER]: 'AC',
+  [AssetType.INTERNET_SYSTEM]: 'INT',
+  [AssetType.FAN]: 'FAN',
+  [AssetType.LIVING_ROOM_ELECTRICAL]: 'LRE',
+  // Phòng ngủ
+  [AssetType.BEDROOM_ELECTRICAL]: 'BRE',
+  [AssetType.BEDROOM_AIR_CONDITIONER]: 'BAC',
+  [AssetType.BEDROOM_DOOR]: 'BRD',
+  [AssetType.BEDROOM_WINDOW]: 'BRW',
+  // Nhà bếp
+  [AssetType.KITCHEN_LIGHT]: 'KLT',
+  [AssetType.KITCHEN_ELECTRICAL]: 'KEL',
+  [AssetType.ELECTRIC_STOVE]: 'EST',
+  [AssetType.KITCHEN_DOOR]: 'KDR',
+  // Hành lang
+  [AssetType.HALLWAY_LIGHT]: 'HLT',
+  [AssetType.HALLWAY_ELECTRICAL]: 'HEL',
+  // Khác
+  [AssetType.OTHER]: 'OTH',
+};
+
+// Map AssetType to default purchase price (VND)
+const ASSET_TYPE_DEFAULT_PRICE: Record<AssetType, number> = {
+  // Nhà tắm & Vệ sinh
+  [AssetType.TOILET]: 3000000,
+  [AssetType.BATHROOM_SINK]: 1500000,
+  [AssetType.WATER_HEATER]: 3000000,
+  [AssetType.SHOWER_SYSTEM]: 2000000,
+  [AssetType.BATHROOM_FAUCET]: 500000,
+  [AssetType.BATHROOM_LIGHT]: 300000,
+  [AssetType.BATHROOM_DOOR]: 2000000,
+  [AssetType.BATHROOM_ELECTRICAL]: 1000000,
+  // Phòng khách
+  [AssetType.LIVING_ROOM_DOOR]: 3000000,
+  [AssetType.LIVING_ROOM_LIGHT]: 500000,
+  [AssetType.AIR_CONDITIONER]: 8000000,
+  [AssetType.INTERNET_SYSTEM]: 1000000,
+  [AssetType.FAN]: 500000,
+  [AssetType.LIVING_ROOM_ELECTRICAL]: 1500000,
+  // Phòng ngủ
+  [AssetType.BEDROOM_ELECTRICAL]: 1500000,
+  [AssetType.BEDROOM_AIR_CONDITIONER]: 8000000,
+  [AssetType.BEDROOM_DOOR]: 2000000,
+  [AssetType.BEDROOM_WINDOW]: 1500000,
+  // Nhà bếp
+  [AssetType.KITCHEN_LIGHT]: 300000,
+  [AssetType.KITCHEN_ELECTRICAL]: 1000000,
+  [AssetType.ELECTRIC_STOVE]: 3000000,
+  [AssetType.KITCHEN_DOOR]: 2000000,
+  // Hành lang
+  [AssetType.HALLWAY_LIGHT]: 300000,
+  [AssetType.HALLWAY_ELECTRICAL]: 1000000,
+  // Khác
+  [AssetType.OTHER]: 1000000,
+};
+
+// All asset types grouped by room (excluding OTHER)
+const ROOM_ASSET_TYPES: Record<RoomType, AssetType[]> = {
+  [RoomType.BATHROOM]: [
+    AssetType.TOILET, AssetType.BATHROOM_SINK, AssetType.WATER_HEATER,
+    AssetType.SHOWER_SYSTEM, AssetType.BATHROOM_FAUCET, AssetType.BATHROOM_LIGHT,
+    AssetType.BATHROOM_DOOR, AssetType.BATHROOM_ELECTRICAL,
+  ],
+  [RoomType.LIVING_ROOM]: [
+    AssetType.LIVING_ROOM_DOOR, AssetType.LIVING_ROOM_LIGHT, AssetType.AIR_CONDITIONER,
+    AssetType.INTERNET_SYSTEM, AssetType.FAN, AssetType.LIVING_ROOM_ELECTRICAL,
+  ],
+  [RoomType.BEDROOM]: [
+    AssetType.BEDROOM_ELECTRICAL, AssetType.BEDROOM_AIR_CONDITIONER,
+    AssetType.BEDROOM_DOOR, AssetType.BEDROOM_WINDOW,
+  ],
+  [RoomType.KITCHEN]: [
+    AssetType.KITCHEN_LIGHT, AssetType.KITCHEN_ELECTRICAL,
+    AssetType.ELECTRIC_STOVE, AssetType.KITCHEN_DOOR,
+  ],
+  [RoomType.HALLWAY]: [
+    AssetType.HALLWAY_LIGHT, AssetType.HALLWAY_ELECTRICAL,
+  ],
+};
+
+// Room display order
+const ROOM_ORDER: RoomType[] = [
+  RoomType.BATHROOM, RoomType.LIVING_ROOM, RoomType.BEDROOM, RoomType.KITCHEN, RoomType.HALLWAY,
+];
 
 const BASE_API_URL = (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8081').replace(/\/$/, '');
 const DATA_DOCS_API_URL = (process.env.NEXT_PUBLIC_DATA_DOCS_URL || 'http://localhost:8082').replace(/\/$/, '');
@@ -98,6 +276,7 @@ export default function ContractManagementPage() {
   const [unitAssets, setUnitAssets] = useState<Asset[]>([]);
   const [checkingAssets, setCheckingAssets] = useState(false);
   const [missingAssetTypes, setMissingAssetTypes] = useState<AssetType[]>([]);
+  const [selectedAssetTypes, setSelectedAssetTypes] = useState<Set<AssetType>>(new Set());
   const [creatingMissingAssets, setCreatingMissingAssets] = useState(false);
   const [showCreateAssetsConfirm, setShowCreateAssetsConfirm] = useState(false);
 
@@ -657,21 +836,18 @@ export default function ContractManagementPage() {
       const assets = await getAssetsByUnit(unitId);
       setUnitAssets(assets);
 
-      // Required asset types for contract: AIR_CONDITIONER, ELECTRIC_STOVE, WATER_HEATER
-      const requiredTypes: AssetType[] = [
-        AssetType.AIR_CONDITIONER,
-        AssetType.ELECTRIC_STOVE,
-        AssetType.WATER_HEATER,
-      ];
-
-      const existingTypes = new Set(assets.map(a => a.assetType));
-      const missing = requiredTypes.filter(type => !existingTypes.has(type));
+      // Check all asset types (except OTHER)
+      const allTypes = Object.values(AssetType).filter(t => t !== AssetType.OTHER) as AssetType[];
+      const existingActiveTypes = new Set(assets.filter(a => a.active).map(a => a.assetType));
+      const missing = allTypes.filter(type => !existingActiveTypes.has(type));
       setMissingAssetTypes(missing);
+      // Auto-select all missing types by default
+      setSelectedAssetTypes(new Set(missing));
     } catch (error: any) {
       console.error('Failed to check unit assets:', error);
-      // Don't block contract creation if asset check fails
       setUnitAssets([]);
       setMissingAssetTypes([]);
+      setSelectedAssetTypes(new Set());
     } finally {
       setCheckingAssets(false);
     }
@@ -752,125 +928,22 @@ export default function ContractManagementPage() {
     }
   };
 
-  // Create missing assets
+  // Create missing assets (only selected ones)
   const handleCreateMissingAssets = async () => {
-    if (!formState.unitId || missingAssetTypes.length === 0) return;
+    if (!formState.unitId || selectedAssetTypes.size === 0) return;
 
     setCreatingMissingAssets(true);
     const errors: string[] = [];
     let successCount = 0;
 
     try {
-      // Asset type labels and prefixes (same as asset management - 25 types)
-      const ASSET_TYPE_LABELS: Record<AssetType, string> = {
-        // Nhà tắm & Vệ sinh
-        [AssetType.TOILET]: 'Bồn cầu',
-        [AssetType.BATHROOM_SINK]: 'Chậu rửa nhà tắm',
-        [AssetType.WATER_HEATER]: 'Bình nóng lạnh',
-        [AssetType.SHOWER_SYSTEM]: 'Hệ sen vòi nhà tắm',
-        [AssetType.BATHROOM_FAUCET]: 'Vòi chậu rửa',
-        [AssetType.BATHROOM_LIGHT]: 'Đèn nhà tắm',
-        [AssetType.BATHROOM_DOOR]: 'Cửa nhà tắm',
-        [AssetType.BATHROOM_ELECTRICAL]: 'Hệ thống điện nhà vệ sinh',
-        // Phòng khách
-        [AssetType.LIVING_ROOM_DOOR]: 'Cửa phòng khách',
-        [AssetType.LIVING_ROOM_LIGHT]: 'Đèn phòng khách',
-        [AssetType.AIR_CONDITIONER]: 'Điều hòa',
-        [AssetType.INTERNET_SYSTEM]: 'Hệ thống mạng Internet',
-        [AssetType.FAN]: 'Quạt',
-        [AssetType.LIVING_ROOM_ELECTRICAL]: 'Hệ thống điện phòng khách',
-        // Phòng ngủ
-        [AssetType.BEDROOM_ELECTRICAL]: 'Hệ thống điện phòng ngủ',
-        [AssetType.BEDROOM_AIR_CONDITIONER]: 'Điều hòa phòng ngủ',
-        [AssetType.BEDROOM_DOOR]: 'Cửa phòng ngủ',
-        [AssetType.BEDROOM_WINDOW]: 'Cửa sổ phòng ngủ',
-        // Nhà bếp
-        [AssetType.KITCHEN_LIGHT]: 'Hệ thống đèn nhà bếp',
-        [AssetType.KITCHEN_ELECTRICAL]: 'Hệ thống điện nhà bếp',
-        [AssetType.ELECTRIC_STOVE]: 'Bếp điện',
-        [AssetType.KITCHEN_DOOR]: 'Cửa bếp và logia',
-        // Hành lang
-        [AssetType.HALLWAY_LIGHT]: 'Hệ thống đèn hành lang',
-        [AssetType.HALLWAY_ELECTRICAL]: 'Hệ thống điện hành lang',
-        // Khác
-        [AssetType.OTHER]: 'Khác',
-      };
-
-      const ASSET_TYPE_PREFIX: Record<AssetType, string> = {
-        // Nhà tắm & Vệ sinh
-        [AssetType.TOILET]: 'TLT',
-        [AssetType.BATHROOM_SINK]: 'BSK',
-        [AssetType.WATER_HEATER]: 'WH',
-        [AssetType.SHOWER_SYSTEM]: 'SHW',
-        [AssetType.BATHROOM_FAUCET]: 'BFC',
-        [AssetType.BATHROOM_LIGHT]: 'BLT',
-        [AssetType.BATHROOM_DOOR]: 'BDR',
-        [AssetType.BATHROOM_ELECTRICAL]: 'BEL',
-        // Phòng khách
-        [AssetType.LIVING_ROOM_DOOR]: 'LRD',
-        [AssetType.LIVING_ROOM_LIGHT]: 'LRL',
-        [AssetType.AIR_CONDITIONER]: 'AC',
-        [AssetType.INTERNET_SYSTEM]: 'INT',
-        [AssetType.FAN]: 'FAN',
-        [AssetType.LIVING_ROOM_ELECTRICAL]: 'LRE',
-        // Phòng ngủ
-        [AssetType.BEDROOM_ELECTRICAL]: 'BRE',
-        [AssetType.BEDROOM_AIR_CONDITIONER]: 'BAC',
-        [AssetType.BEDROOM_DOOR]: 'BRD',
-        [AssetType.BEDROOM_WINDOW]: 'BRW',
-        // Nhà bếp
-        [AssetType.KITCHEN_LIGHT]: 'KLT',
-        [AssetType.KITCHEN_ELECTRICAL]: 'KEL',
-        [AssetType.ELECTRIC_STOVE]: 'EST',
-        [AssetType.KITCHEN_DOOR]: 'KDR',
-        // Hành lang
-        [AssetType.HALLWAY_LIGHT]: 'HLT',
-        [AssetType.HALLWAY_ELECTRICAL]: 'HEL',
-        // Khác
-        [AssetType.OTHER]: 'OTH',
-      };
-
-      const ASSET_TYPE_DEFAULT_PRICE: Record<AssetType, number> = {
-        // Nhà tắm & Vệ sinh
-        [AssetType.TOILET]: 3000000,
-        [AssetType.BATHROOM_SINK]: 1500000,
-        [AssetType.WATER_HEATER]: 3000000,
-        [AssetType.SHOWER_SYSTEM]: 2000000,
-        [AssetType.BATHROOM_FAUCET]: 500000,
-        [AssetType.BATHROOM_LIGHT]: 300000,
-        [AssetType.BATHROOM_DOOR]: 2000000,
-        [AssetType.BATHROOM_ELECTRICAL]: 1000000,
-        // Phòng khách
-        [AssetType.LIVING_ROOM_DOOR]: 3000000,
-        [AssetType.LIVING_ROOM_LIGHT]: 500000,
-        [AssetType.AIR_CONDITIONER]: 8000000,
-        [AssetType.INTERNET_SYSTEM]: 1000000,
-        [AssetType.FAN]: 500000,
-        [AssetType.LIVING_ROOM_ELECTRICAL]: 1500000,
-        // Phòng ngủ
-        [AssetType.BEDROOM_ELECTRICAL]: 1500000,
-        [AssetType.BEDROOM_AIR_CONDITIONER]: 8000000,
-        [AssetType.BEDROOM_DOOR]: 2000000,
-        [AssetType.BEDROOM_WINDOW]: 1500000,
-        // Nhà bếp
-        [AssetType.KITCHEN_LIGHT]: 300000,
-        [AssetType.KITCHEN_ELECTRICAL]: 1000000,
-        [AssetType.ELECTRIC_STOVE]: 3000000,
-        [AssetType.KITCHEN_DOOR]: 2000000,
-        // Hành lang
-        [AssetType.HALLWAY_LIGHT]: 300000,
-        [AssetType.HALLWAY_ELECTRICAL]: 1000000,
-        // Khác
-        [AssetType.OTHER]: 1000000,
-      };
-
       const unit = unitsState.data.find(u => u.id === formState.unitId);
       if (!unit) {
         setCreateError('Không tìm thấy thông tin căn hộ');
         return;
       }
 
-      for (const assetType of missingAssetTypes) {
+      for (const assetType of Array.from(selectedAssetTypes)) {
         // Generate asset code
         const prefix = ASSET_TYPE_PREFIX[assetType];
         const existingAssetsOfType = unitAssets.filter(
@@ -898,6 +971,7 @@ export default function ContractManagementPage() {
           const payload: CreateAssetRequest = {
             unitId: formState.unitId,
             assetType,
+            roomType: ASSET_TYPE_TO_ROOM[assetType],
             assetCode,
             name: ASSET_TYPE_LABELS[assetType],
             active: true,
@@ -919,6 +993,7 @@ export default function ContractManagementPage() {
         await checkUnitAssets(formState.unitId);
         // Refresh meter list
         await checkUnitMeters(formState.unitId);
+        setShowCreateAssetsConfirm(false);
       }
 
       if (errors.length > 0 && successCount === 0) {
@@ -941,6 +1016,7 @@ export default function ContractManagementPage() {
       setContractsState(DEFAULT_CONTRACTS_STATE);
       setUnitAssets([]);
       setMissingAssetTypes([]);
+      setSelectedAssetTypes(new Set());
       return;
     }
 
@@ -2058,46 +2134,148 @@ export default function ContractManagementPage() {
                   </div>
                 </div>
 
-                {/* Asset check warning */}
+                {/* Asset check - Hierarchical checkbox by room */}
                 {formState.unitId && (
-                  <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4">
+                  <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
                     {checkingAssets ? (
-                      <div className="text-sm text-yellow-800">{t('assetWarning.checking')}</div>
-                    ) : missingAssetTypes.length > 0 ? (
-                      <div>
-                        <div className="flex items-start">
-                          <svg className="h-5 w-5 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                          <div className="flex-1">
-                            <h3 className="text-sm font-medium text-yellow-800 mb-1">
-                              {t('assetWarning.missingTypes', { count: missingAssetTypes.length })}
-                            </h3>
-                            <p className="text-sm text-yellow-700 mb-3">
-                              {t('assetWarning.missingList', {
-                                list: missingAssetTypes.map((type: AssetType) => {
-                                  return t(`assetWarning.types.${type}`);
-                                }).join(', ')
-                              })}
-                            </p>
+                      <div className="p-4 text-sm text-gray-600 flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Đang kiểm tra thiết bị...
+                      </div>
+                    ) : (
+                      <>
+                        {/* Header */}
+                        <div className="p-3 border-b border-gray-200 bg-gray-50 rounded-t-lg flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <svg className="h-5 w-5 text-[#02542D]" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-sm font-semibold text-[#02542D]">
+                              Thiết bị bàn giao ({Object.values(AssetType).filter(t => t !== AssetType.OTHER).length - missingAssetTypes.length}/{Object.values(AssetType).filter(t => t !== AssetType.OTHER).length} đã có)
+                            </span>
+                          </div>
+                          {missingAssetTypes.length > 0 && (
+                            <span className="text-xs font-medium text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
+                              Thiếu {missingAssetTypes.length} thiết bị
+                            </span>
+                          )}
+                          {missingAssetTypes.length === 0 && (
+                            <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              Đầy đủ
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Room groups */}
+                        <div className="divide-y divide-gray-100">
+                          {ROOM_ORDER.map((roomType) => {
+                            const roomAssets = ROOM_ASSET_TYPES[roomType];
+                            const existingActiveTypes = new Set(unitAssets.filter(a => a.active).map(a => a.assetType));
+                            const missingInRoom = roomAssets.filter(t => !existingActiveTypes.has(t));
+                            const selectedInRoom = roomAssets.filter(t => selectedAssetTypes.has(t));
+                            const allMissingSelected = missingInRoom.length > 0 && missingInRoom.every(t => selectedAssetTypes.has(t));
+                            const someMissingSelected = missingInRoom.some(t => selectedAssetTypes.has(t));
+
+                            return (
+                              <div key={roomType} className="px-3 py-2">
+                                {/* Room header with checkbox */}
+                                <div className="flex items-center gap-2 mb-1">
+                                  {missingInRoom.length > 0 ? (
+                                    <input
+                                      type="checkbox"
+                                      checked={allMissingSelected}
+                                      ref={(el) => {
+                                        if (el) el.indeterminate = someMissingSelected && !allMissingSelected;
+                                      }}
+                                      onChange={(e) => {
+                                        const newSelected = new Set(selectedAssetTypes);
+                                        if (e.target.checked) {
+                                          missingInRoom.forEach(t => newSelected.add(t));
+                                        } else {
+                                          missingInRoom.forEach(t => newSelected.delete(t));
+                                        }
+                                        setSelectedAssetTypes(newSelected);
+                                      }}
+                                      className="h-4 w-4 text-[#02542D] border-gray-300 rounded cursor-pointer accent-[#02542D]"
+                                    />
+                                  ) : (
+                                    <svg className="h-4 w-4 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                  )}
+                                  <span className="text-sm font-medium text-gray-800">
+                                    {ROOM_TYPE_LABELS[roomType]}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    ({roomAssets.length - missingInRoom.length}/{roomAssets.length})
+                                  </span>
+                                </div>
+
+                                {/* Asset items in this room */}
+                                <div className="ml-6 grid grid-cols-2 gap-x-4 gap-y-0.5">
+                                  {roomAssets.map((assetType) => {
+                                    const exists = existingActiveTypes.has(assetType);
+                                    const isSelected = selectedAssetTypes.has(assetType);
+                                    return (
+                                      <label
+                                        key={assetType}
+                                        className={`flex items-center gap-1.5 py-0.5 text-xs ${exists ? 'text-green-700' : 'text-gray-700 cursor-pointer hover:text-gray-900'}`}
+                                      >
+                                        {exists ? (
+                                          <svg className="h-3.5 w-3.5 text-green-500 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                          </svg>
+                                        ) : (
+                                          <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={(e) => {
+                                              const newSelected = new Set(selectedAssetTypes);
+                                              if (e.target.checked) {
+                                                newSelected.add(assetType);
+                                              } else {
+                                                newSelected.delete(assetType);
+                                              }
+                                              setSelectedAssetTypes(newSelected);
+                                            }}
+                                            className="h-3.5 w-3.5 text-[#02542D] border-gray-300 rounded cursor-pointer accent-[#02542D] flex-shrink-0"
+                                          />
+                                        )}
+                                        <span className={exists ? 'line-through opacity-60' : ''}>
+                                          {ASSET_TYPE_LABELS[assetType]}
+                                        </span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Action footer */}
+                        {missingAssetTypes.length > 0 && (
+                          <div className="p-3 border-t border-gray-200 bg-gray-50 rounded-b-lg flex items-center justify-between">
+                            <span className="text-xs text-gray-600">
+                              Đã chọn {selectedAssetTypes.size} thiết bị cần tạo
+                            </span>
                             <button
                               type="button"
                               onClick={() => setShowCreateAssetsConfirm(true)}
-                              disabled={creatingMissingAssets}
-                              className="px-4 py-2 bg-yellow-600 text-white text-sm rounded-md hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                              disabled={creatingMissingAssets || selectedAssetTypes.size === 0}
+                              className="px-4 py-1.5 bg-[#02542D] text-white text-sm rounded-md hover:bg-[#013d20] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
                             >
-                              {t('assetWarning.createMissing', { count: missingAssetTypes.length })}
+                              Tạo {selectedAssetTypes.size} thiết bị đã chọn
                             </button>
                           </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center text-sm text-green-700">
-                        <svg className="h-5 w-5 text-green-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        {t('assetWarning.allComplete')}
-                      </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
@@ -2820,69 +2998,57 @@ export default function ContractManagementPage() {
       </div>
 
       {/* Create Missing Assets Confirmation Modal */}
-      {showCreateAssetsConfirm && formState.unitId && missingAssetTypes.length > 0 && (
+      {showCreateAssetsConfirm && formState.unitId && selectedAssetTypes.size > 0 && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 relative z-[10000]">
             <div className="p-6">
               <div className="flex items-start mb-4">
                 <div className="flex-shrink-0">
-                  <svg className="h-6 w-6 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  <svg className="h-6 w-6 text-[#02542D]" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div className="ml-3 flex-1">
                   <h3 className="text-lg font-medium text-gray-900">
-                    Xác nhận tạo thiết bị tự động
+                    Xác nhận tạo thiết bị
                   </h3>
                 </div>
               </div>
 
               <div className="mb-6 space-y-3">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-                  <p className="text-sm font-medium text-yellow-800 mb-2">
-                    ⚠️ Cảnh báo: Bạn sắp tạo thiết bị tự động cho căn hộ
-                  </p>
-                  <div className="text-sm text-yellow-700 space-y-2">
+                <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
+                  <div className="text-sm text-gray-700 space-y-2">
                     <p><strong>Căn hộ:</strong> {unitsState.data.find(u => u.id === formState.unitId)?.code || '-'}</p>
-                    <p><strong>Số lượng thiết bị:</strong> {missingAssetTypes.length} thiết bị</p>
+                    <p><strong>Số lượng:</strong> {selectedAssetTypes.size} thiết bị</p>
                     <div className="mt-2">
-                      <p className="font-medium mb-1">Các thiết bị sẽ được tạo:</p>
-                      <ul className="list-disc list-inside space-y-1 ml-2">
-                        {missingAssetTypes.map((type: AssetType) => {
-                          const ASSET_TYPE_LABELS: Partial<Record<AssetType, string>> = {
-                            [AssetType.AIR_CONDITIONER]: 'Điều hòa',
-                            // [AssetType.KITCHEN]: 'Bếp',
-                            [AssetType.WATER_HEATER]: 'Bình nước nóng',
-                            // [AssetType.FURNITURE]: 'Nội thất',
-                            [AssetType.OTHER]: 'Khác',
-                          };
-                          const ASSET_TYPE_DEFAULT_PRICE: Partial<Record<AssetType, number>> = {
-                            [AssetType.AIR_CONDITIONER]: 8000000,
-                            // [AssetType.KITCHEN]: 5000000,
-                            [AssetType.WATER_HEATER]: 3000000,
-                            // [AssetType.FURNITURE]: 2000000,
-                            [AssetType.OTHER]: 1000000,
-                          };
+                      <p className="font-medium mb-2">Các thiết bị sẽ được tạo:</p>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {ROOM_ORDER.map((roomType) => {
+                          const roomSelected = ROOM_ASSET_TYPES[roomType].filter(t => selectedAssetTypes.has(t));
+                          if (roomSelected.length === 0) return null;
                           return (
-                            <li key={type}>
-                              {ASSET_TYPE_LABELS[type] ?? type}: {formatNumberWithDots(ASSET_TYPE_DEFAULT_PRICE[type] ?? 0)} VND
-                            </li>
+                            <div key={roomType}>
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                {ROOM_TYPE_LABELS[roomType]}
+                              </p>
+                              <ul className="space-y-0.5 ml-2">
+                                {roomSelected.map((type) => (
+                                  <li key={type} className="flex items-center justify-between text-sm">
+                                    <span>• {ASSET_TYPE_LABELS[type]}</span>
+                                    <span className="text-gray-500">{formatNumberWithDots(ASSET_TYPE_DEFAULT_PRICE[type])} VND</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
                           );
                         })}
-                      </ul>
+                      </div>
                     </div>
                     <p><strong>Ngày lắp đặt:</strong> {new Date().toLocaleDateString('vi-VN')} (hôm nay)</p>
-                    <p className="mt-2 pt-2 border-t border-yellow-300">
+                    <p className="mt-2 pt-2 border-t border-gray-300">
                       <strong>Tổng số tiền:</strong> <span className="text-red-600 font-bold text-base">
-                        {formatNumberWithDots(missingAssetTypes.reduce((total, type) => {
-                          const ASSET_TYPE_DEFAULT_PRICE: Partial<Record<AssetType, number>> = {
-                            [AssetType.AIR_CONDITIONER]: 8000000,
-                            // [AssetType.KITCHEN]: 5000000,
-                            [AssetType.WATER_HEATER]: 3000000,
-                            // [AssetType.FURNITURE]: 2000000,
-                            [AssetType.OTHER]: 1000000,
-                          };
-                          return total + (ASSET_TYPE_DEFAULT_PRICE[type] ?? 0);
+                        {formatNumberWithDots(Array.from(selectedAssetTypes).reduce((total, type) => {
+                          return total + ASSET_TYPE_DEFAULT_PRICE[type];
                         }, 0))} VND
                       </span>
                     </p>
@@ -2904,9 +3070,9 @@ export default function ContractManagementPage() {
                 <button
                   onClick={handleCreateMissingAssets}
                   disabled={creatingMissingAssets}
-                  className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                  className="px-4 py-2 bg-[#02542D] text-white rounded-md hover:bg-[#013d20] disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
                 >
-                  {creatingMissingAssets ? 'Đang tạo...' : `Xác nhận tạo ${missingAssetTypes.length} thiết bị`}
+                  {creatingMissingAssets ? 'Đang tạo...' : `Xác nhận tạo ${selectedAssetTypes.size} thiết bị`}
                 </button>
               </div>
             </div>
@@ -2987,4 +3153,5 @@ export default function ContractManagementPage() {
     </div>
   );
 }
+
 
