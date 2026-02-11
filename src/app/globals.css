@@ -25,16 +25,24 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.input{ @apply w-full border-0 bg-[#E8E5DC] rounded-md px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30; }
-.btn-primary{ @apply px-4 py-2.5 rounded-md bg-[#6B9B6E] text-white text-sm font-medium hover:bg-[#5d8660] transition-colors; }
-.btn-secondary{ @apply px-4 py-2.5 rounded-md border-0 bg-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-300 transition-colors; }
+.input {
+  @apply w-full border-0 bg-[#E8E5DC] rounded-md px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30;
+}
+
+.btn-primary {
+  @apply px-4 py-2.5 rounded-md bg-[#6B9B6E] text-white text-sm font-medium hover:bg-[#5d8660] transition-colors;
+}
+
+.btn-secondary {
+  @apply px-4 py-2.5 rounded-md border-0 bg-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-300 transition-colors;
+}
 
 
 ::-webkit-calendar-picker-indicator {
-  opacity: 0;           
-  width: 100%;          
+  opacity: 0;
+  width: 100%;
   height: 100%;
-  position: absolute;   
+  position: absolute;
   cursor: pointer;
 }
 
@@ -52,6 +60,7 @@ body {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -63,6 +72,7 @@ body {
     opacity: 0;
     transform: translateY(-5px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -74,6 +84,7 @@ body {
     opacity: 0;
     transform: scale(0.8);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -85,6 +96,7 @@ body {
     stroke-dasharray: 0 24;
     stroke-dashoffset: 0;
   }
+
   100% {
     stroke-dasharray: 24 24;
     stroke-dashoffset: 0;
@@ -109,3 +121,32 @@ body {
   stroke-dashoffset: 0;
 }
 
+/* Tùy chỉnh thanh cuộn cho các vùng có class .custom-scrollbar */
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    height: 6px;
+    /* Độ mỏng của thanh cuộn ngang */
+    width: 6px;
+    /* Độ mỏng của thanh cuộn dọc (nếu có) */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    /* Nền của thanh cuộn trong suốt để tránh cảm giác thô */
+    margin: 0 10px;
+    /* Tạo khoảng trống ở 2 đầu thanh cuộn */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    /* Màu slate-200: nhẹ nhàng, không gây phân tâm */
+    border-radius: 100px;
+    /* Bo tròn hoàn toàn */
+    transition: all 0.3s ease;
+  }
+
+  .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    /* Màu slate-300: đậm hơn một chút khi người dùng tương tác */
+  }
+}

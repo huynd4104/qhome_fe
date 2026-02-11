@@ -21,6 +21,7 @@ import Select from '@/src/components/customer-interaction/Select';
 import PopupConfirm from '@/src/components/common/PopupComfirm';
 import { useNotifications } from '@/src/hooks/useNotifications';
 import {
+  ChevronLeft, ChevronRight,
   Search,
   Filter,
   Download,
@@ -316,10 +317,12 @@ export default function AccountListPage() {
     if (activeTab === 'STAFF') {
       setBuildingFilter('ALL');
       setSelectedBuildingId('ALL');
+      // Reset resident list to full list when switching to STAFF tab
+      loadResidentsByBuilding('ALL', 'ALL');
     } else {
       setRoleFilter('ALL');
     }
-  }, [activeTab]);
+  }, [activeTab, loadResidentsByBuilding]);
 
   const staffTotalPages = Math.max(1, Math.ceil(filteredStaff.length / PAGE_SIZE));
   const residentTotalPages = Math.max(1, Math.ceil(filteredResidents.length / PAGE_SIZE));
@@ -573,6 +576,45 @@ export default function AccountListPage() {
     );
   };
 
+  const [canScroll, setCanScroll] = useState(false);
+  const floorScrollRef = useRef<HTMLDivElement>(null);
+
+  // Hàm kiểm tra xem danh sách có đang bị tràn hay không
+  const checkOverflow = useCallback(() => {
+    if (floorScrollRef.current) {
+      const { scrollWidth, clientWidth } = floorScrollRef.current;
+      // Nếu chiều rộng nội dung (scrollWidth) lớn hơn chiều rộng hiển thị (clientWidth)
+      setCanScroll(scrollWidth > clientWidth);
+    }
+  }, []);
+
+  // Kiểm tra lại mỗi khi dữ liệu tòa nhà/tầng thay đổi hoặc khi resize màn hình
+  useEffect(() => {
+    checkOverflow();
+
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [selectedBuildingId, buildings, selectedBuildingFloorsMax, checkOverflow]);
+
+  // Gọi lại checkOverflow sau một khoảng nghỉ ngắn khi tab active thay đổi để đảm bảo DOM đã render xong
+  useEffect(() => {
+    if (activeTab === 'RESIDENT') {
+      const timer = setTimeout(checkOverflow, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, checkOverflow]);
+
+  // Hàm xử lý cuộn
+  const scrollFloors = (direction: 'left' | 'right') => {
+    if (floorScrollRef.current) {
+      const scrollAmount = 200; // Độ dài mỗi lần cuộn (px)
+      floorScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth', // Hiệu ứng lướt mượt mà
+      });
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
@@ -610,7 +652,7 @@ export default function AccountListPage() {
       {/* Main Content */}
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white/50 overflow-hidden">
         {/* Filters Bar */}
-        <div className="p-6 border-b border-slate-100 space-y-4 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="relative group w-full md:max-w-md">
@@ -675,7 +717,7 @@ export default function AccountListPage() {
 
           {/* Building Sub-tabs */}
           {activeTab === 'RESIDENT' && (
-            <div className="space-y-2 pt-2 animate-in slide-in-from-top-2 duration-300">
+            <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
               {/* Building Sub-tabs */}
               <div className="flex flex-wrap gap-2">
                 <button
@@ -701,30 +743,72 @@ export default function AccountListPage() {
                 ))}
               </div>
 
-              {/* Floor Sub-tabs */}
+              {/* Section: Floor Selection */}
               {selectedBuildingId !== 'ALL' && selectedBuildingFloorsMax > 0 && (
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-300 animate-in slide-in-from-top-1 duration-200">
-                  <button
-                    onClick={() => handleFloorTabClick('ALL')}
-                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-all whitespace-nowrap flex-shrink-0 ${selectedFloor === 'ALL'
-                      ? 'bg-teal-50 text-teal-700 border-teal-200'
-                      : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                      }`}
-                  >
-                    Tất cả các tầng
-                  </button>
-                  {Array.from({ length: selectedBuildingFloorsMax }, (_, i) => i + 1).map((floor) => (
-                    <button
-                      key={floor}
-                      onClick={() => handleFloorTabClick(floor)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-all whitespace-nowrap flex-shrink-0 ${selectedFloor === floor
-                        ? 'bg-teal-50 text-teal-700 border-teal-200'
-                        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                        }`}
+                <div className="mt-2 animate-in slide-in-from-top-1 duration-200">
+
+                  <div className="mx-2 mb-4 border-t border-slate-100/80" />
+
+                  <div className="flex items-start w-full px-1">
+
+                    {/* Icon Trái - Chỉ hiện khi canScroll = true */}
+                    {canScroll && (
+                      <button
+                        type="button"
+                        onClick={() => scrollFloors('left')}
+                        className="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-white border border-emerald-100 text-emerald-600 rounded-full shadow-sm hover:bg-emerald-50 transition-all mt-[5px]"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                    )}
+
+                    {/* Danh sách cuộn: mx-3 chỉ kích hoạt khi có icon để tránh khoảng trống thừa */}
+                    <div
+                      ref={floorScrollRef}
+                      className={`
+          flex-1 
+          ${canScroll ? 'mx-3' : 'mx-0'} 
+          flex gap-2 
+          overflow-x-auto 
+          custom-scrollbar 
+          pt-1 
+          pb-3
+        `}
                     >
-                      Tầng {floor}
-                    </button>
-                  ))}
+                      <button
+                        onClick={() => handleFloorTabClick('ALL')}
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all whitespace-nowrap flex-shrink-0 ${selectedFloor === 'ALL'
+                          ? 'bg-teal-50 text-teal-700 border-teal-200 shadow-sm'
+                          : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                          }`}
+                      >
+                        Tất cả các tầng
+                      </button>
+                      {Array.from({ length: selectedBuildingFloorsMax }, (_, i) => i + 1).map((floor) => (
+                        <button
+                          key={floor}
+                          onClick={() => handleFloorTabClick(floor)}
+                          className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all whitespace-nowrap flex-shrink-0 ${selectedFloor === floor
+                            ? 'bg-teal-50 text-teal-700 border-teal-200 shadow-sm'
+                            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                            }`}
+                        >
+                          Tầng {floor}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Icon Phải - Chỉ hiện khi canScroll = true */}
+                    {canScroll && (
+                      <button
+                        type="button"
+                        onClick={() => scrollFloors('right')}
+                        className="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-white border border-emerald-100 text-emerald-600 rounded-full shadow-sm hover:bg-emerald-50 transition-all mt-[5px]"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
