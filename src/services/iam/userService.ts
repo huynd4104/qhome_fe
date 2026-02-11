@@ -154,9 +154,13 @@ export async function fetchStaffAccounts(): Promise<UserAccountInfo[]> {
   return response.data;
 }
 
-export async function fetchResidentAccounts(buildingId?: string): Promise<UserAccountInfo[]> {
-  const url = buildingId
-    ? `${IAM_URL}/api/users/residents?buildingId=${buildingId}`
+export async function fetchResidentAccounts(buildingId?: string, floor?: number): Promise<UserAccountInfo[]> {
+  const params = new URLSearchParams();
+  if (buildingId) params.append('buildingId', buildingId);
+  if (floor !== undefined && floor !== null) params.append('floor', floor.toString());
+  const query = params.toString();
+  const url = query
+    ? `${IAM_URL}/api/users/residents?${query}`
     : `${IAM_URL}/api/users/residents`;
   const response = await axios.get<UserAccountInfo[]>(url, { withCredentials: true });
   return response.data;

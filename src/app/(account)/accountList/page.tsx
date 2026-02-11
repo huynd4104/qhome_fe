@@ -106,6 +106,7 @@ export default function AccountListPage() {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('ALL');
   const [loadingBuildings, setLoadingBuildings] = useState(false);
+  const [selectedFloor, setSelectedFloor] = useState<'ALL' | number>('ALL');
 
   // -- LOGIC PRESERVED FROM ORIGINAL FILE --
 
@@ -165,11 +166,12 @@ export default function AccountListPage() {
     }
   }, [activeTab]);
 
-  const loadResidentsByBuilding = useCallback(async (buildingId: string) => {
+  const loadResidentsByBuilding = useCallback(async (buildingId: string, floor?: 'ALL' | number) => {
     setLoadingResidents(true);
     try {
       const residentRes = await fetchResidentAccounts(
-        buildingId === 'ALL' ? undefined : buildingId
+        buildingId === 'ALL' ? undefined : buildingId,
+        floor !== undefined && floor !== 'ALL' ? floor : undefined
       );
       setResidentAccounts(residentRes.map((row) => toAccountRow(row, 'resident')));
     } catch (err) {
@@ -181,9 +183,22 @@ export default function AccountListPage() {
 
   const handleBuildingTabClick = (buildingId: string) => {
     setSelectedBuildingId(buildingId);
-    loadResidentsByBuilding(buildingId);
+    setSelectedFloor('ALL');
+    loadResidentsByBuilding(buildingId, 'ALL');
     setResidentPage(1);
   };
+
+  const handleFloorTabClick = (floor: 'ALL' | number) => {
+    setSelectedFloor(floor);
+    loadResidentsByBuilding(selectedBuildingId, floor);
+    setResidentPage(1);
+  };
+
+  const selectedBuildingFloorsMax = useMemo(() => {
+    if (selectedBuildingId === 'ALL') return 0;
+    const building = buildings.find((b) => b.id === selectedBuildingId);
+    return building?.floorsMax ?? 0;
+  }, [selectedBuildingId, buildings]);
 
   useEffect(() => {
     const created = searchParams.get('created');
@@ -595,7 +610,7 @@ export default function AccountListPage() {
       {/* Main Content */}
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white/50 overflow-hidden">
         {/* Filters Bar */}
-        <div className="p-6 border-b border-slate-100 space-y-4">
+        <div className="p-6 border-b border-slate-100 space-y-4 overflow-hidden">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="relative group w-full md:max-w-md">
@@ -660,28 +675,58 @@ export default function AccountListPage() {
 
           {/* Building Sub-tabs */}
           {activeTab === 'RESIDENT' && (
-            <div className="flex flex-wrap gap-2 pt-2 animate-in slide-in-from-top-2 duration-300">
-              <button
-                onClick={() => handleBuildingTabClick('ALL')}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${selectedBuildingId === 'ALL'
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                  }`}
-              >
-                {t('filters.allBuildings')}
-              </button>
-              {buildings.map((b) => (
+            <div className="space-y-2 pt-2 animate-in slide-in-from-top-2 duration-300">
+              {/* Building Sub-tabs */}
+              <div className="flex flex-wrap gap-2">
                 <button
-                  key={b.id}
-                  onClick={() => handleBuildingTabClick(b.id)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${selectedBuildingId === b.id
+                  onClick={() => handleBuildingTabClick('ALL')}
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${selectedBuildingId === 'ALL'
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                     }`}
                 >
-                  {b.name || b.code}
+                  {t('filters.allBuildings')}
                 </button>
-              ))}
+                {buildings.map((b) => (
+                  <button
+                    key={b.id}
+                    onClick={() => handleBuildingTabClick(b.id)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${selectedBuildingId === b.id
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                      }`}
+                  >
+                    {b.name || b.code}
+                  </button>
+                ))}
+              </div>
+
+              {/* Floor Sub-tabs */}
+              {selectedBuildingId !== 'ALL' && selectedBuildingFloorsMax > 0 && (
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-300 animate-in slide-in-from-top-1 duration-200">
+                  <button
+                    onClick={() => handleFloorTabClick('ALL')}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-all whitespace-nowrap flex-shrink-0 ${selectedFloor === 'ALL'
+                      ? 'bg-teal-50 text-teal-700 border-teal-200'
+                      : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                      }`}
+                  >
+                    Tất cả các tầng
+                  </button>
+                  {Array.from({ length: selectedBuildingFloorsMax }, (_, i) => i + 1).map((floor) => (
+                    <button
+                      key={floor}
+                      onClick={() => handleFloorTabClick(floor)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-all whitespace-nowrap flex-shrink-0 ${selectedFloor === floor
+                        ? 'bg-teal-50 text-teal-700 border-teal-200'
+                        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                        }`}
+                    >
+                      Tầng {floor}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
