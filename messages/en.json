@@ -649,6 +649,7 @@
     "loading": "Processing...",
     "success": "Signed in successfully",
     "error": "Invalid credentials",
+    "wrongCredentials": "Username or password is incorrect",
     "contact_support": "Contact support"
   },
   "Popup": {

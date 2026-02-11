@@ -87,7 +87,9 @@ export default function LoginForm() {
     } catch (error: any) {
       let errorMessage = t("Login.error");
 
-      if (error?.response?.data) {
+      if (error?.response?.status === 403) {
+        errorMessage = t("Login.wrongCredentials");
+      } else if (error?.response?.data) {
         errorMessage = error.response.data.message || error.response.data;
       } else if (error?.code === "ERR_NETWORK" || error?.message?.includes("Network")) {
         errorMessage = "Không thể kết nối đến server. Vui lòng kiểm tra kết nối.";

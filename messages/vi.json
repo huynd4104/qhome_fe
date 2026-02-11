@@ -669,6 +669,7 @@
     "loading": "Đang xử lý...",
     "success": "Đăng nhập thành công",
     "error": "Thông tin đăng nhập không hợp lệ",
+    "wrongCredentials": "Tài khoản đăng nhập không chính xác",
     "contact_support": "Liên hệ hỗ trợ"
   },
   "Popup": {
@@ -985,6 +986,8 @@
     "buildingCode": "Mã tòa nhà",
     "buildingName": "Tên tòa nhà",
     "requestlist": "Danh sách tòa nhà",
+    "subTitle": "Quản lý danh sách tòa nhà và căn hộ",
+    "searchPlaceholder": "Tìm kiếm theo tên hoặc mã...",
     "projectName": "Tên dự án",
     "floors": "Số tầng",
     "status": "Trạng thái",
@@ -1128,7 +1131,15 @@
       "importing": "Đang import...",
       "selectFileToImport": "Chọn file Excel để import",
       "exportBuildings": "Xuất Excel (Tòa nhà)",
-      "exportBuildingsWithUnits": "Xuất Excel (Tòa + Căn hộ)"
+      "exportBuildingsWithUnits": "Xuất Excel (Tòa + Căn hộ)",
+      "add": "Thêm tòa nhà",
+      "edit": "Chỉnh sửa",
+      "changeStatus": "Đổi trạng thái"
+    },
+    "filters": {
+      "allStatus": "Tất cả trạng thái",
+      "active": "Đang hoạt động",
+      "inactive": "Ngưng hoạt động"
     },
     "importResult": {
       "summary": "Tổng dòng: {totalRows} | Thành công: {successCount} | Lỗi: {errorCount}",
