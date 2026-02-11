@@ -46,20 +46,18 @@ export default function UnitListPage() {
   const unitsWithContext = useMemo<UnitWithContext[]>(() => {
     const result: UnitWithContext[] = [];
 
-    // Only process ACTIVE buildings
-    buildings
-      .filter((building) => building.status?.toUpperCase() === 'ACTIVE')
-      .forEach((building) => {
-        building.units?.forEach((unit) => {
-          result.push({
-            ...unit,
-            buildingId: building.id,
-            buildingName: building.name,
-            buildingCode: building.code,
-            buildingStatus: building.status,
-          });
+    // Include units from all buildings (ACTIVE and INACTIVE) so INACTIVE buildings can be selected for testing
+    buildings.forEach((building) => {
+      building.units?.forEach((unit) => {
+        result.push({
+          ...unit,
+          buildingId: building.id,
+          buildingName: building.name,
+          buildingCode: building.code,
+          buildingStatus: building.status,
         });
       });
+    });
 
     return result;
   }, [buildings]);
@@ -107,10 +105,7 @@ export default function UnitListPage() {
       return;
     }
 
-    // Only check ACTIVE buildings
-    const buildingExists = buildings.some(
-      (building) => building.id === selectedBuildingId && building.status?.toUpperCase() === 'ACTIVE'
-    );
+    const buildingExists = buildings.some((building) => building.id === selectedBuildingId);
 
     if (!buildingExists) {
       setSelectedBuildingId('all');
@@ -119,17 +114,12 @@ export default function UnitListPage() {
   }, [buildings, selectedBuildingId]);
 
   const filteredBuildings = useMemo(() => {
-    // First filter only ACTIVE buildings
-    const activeBuildings = buildings.filter(
-      (building) => building.status?.toUpperCase() === 'ACTIVE'
-    );
-
+    // Show all buildings (ACTIVE and INACTIVE) so user can select INACTIVE building for testing
     const query = normalizeText(buildingSearch);
     if (!query) {
-      return activeBuildings;
+      return buildings;
     }
-
-    return activeBuildings.filter((building) => {
+    return buildings.filter((building) => {
       const buildingMatch = normalizeText(`${building.name ?? ''} ${building.code ?? ''}`).includes(query);
       return buildingMatch;
     });
@@ -138,10 +128,8 @@ export default function UnitListPage() {
   const filteredUnits = useMemo(() => {
     const unitQuery = normalizeText(unitSearch);
 
-    // Filter only ACTIVE units
-    let scopedUnits = unitsWithContext.filter((unit) => 
-      unit.status?.toUpperCase() === 'ACTIVE'
-    );
+    // Include all units (ACTIVE and INACTIVE) so units of INACTIVE building are visible when selected
+    let scopedUnits = unitsWithContext;
 
     if (selectedBuildingId !== 'all') {
       scopedUnits = scopedUnits.filter((unit) => unit.buildingId === selectedBuildingId);
@@ -248,6 +236,12 @@ export default function UnitListPage() {
     setErrorMessage(null);
   };
 
+  const selectedBuilding = useMemo(
+    () => (selectedBuildingId === 'all' ? null : buildings.find((b) => b.id === selectedBuildingId)),
+    [buildings, selectedBuildingId]
+  );
+  const isAddUnitDisabled = selectedBuilding?.status?.toUpperCase() === 'INACTIVE';
+
   if (loading) {
     return (
       <div className="flex items-center justify-center px-[41px] py-12">
@@ -280,8 +274,15 @@ export default function UnitListPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold text-[#02542D]">{t('unitList')}</h1>
         <button
-          onClick={() => router.push('/base/unit/unitNew')}
-          className="rounded-md bg-[#02542D] px-4 py-2 text-white transition-colors hover:bg-[#024428]"
+          type="button"
+          onClick={() => !isAddUnitDisabled && router.push('/base/unit/unitNew')}
+          className={`rounded-md px-4 py-2 transition-colors ${
+            isAddUnitDisabled
+              ? 'cursor-not-allowed bg-slate-300 text-slate-500'
+              : 'bg-[#02542D] text-white hover:bg-[#024428]'
+          }`}
+          disabled={isAddUnitDisabled}
+          title={isAddUnitDisabled ? t('statusChange.buildingInactiveCannotAdd') : undefined}
         >
           {t('addUnit')}
         </button>
@@ -493,18 +494,12 @@ export default function UnitListPage() {
                         </td> */}
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            {unit.status === 'INACTIVE' || unit.status === 'Inactive' ? (
-                              <span className="inline-flex items-center cursor-not-allowed opacity-50">
-                                <Image src={EditTable} alt={t('altText.viewDetail')} width={24} height={24} />
-                              </span>
-                            ) : (
-                              <Link
-                                href={`/base/unit/unitDetail/${unit.id}`}
-                                className="inline-flex items-center"
-                              >
-                                <Image src={EditTable} alt={t('altText.viewDetail')} width={24} height={24} />
-                              </Link>
-                            )}
+                            <Link
+                              href={`/base/unit/unitDetail/${unit.id}`}
+                              className="inline-flex items-center hover:opacity-80"
+                            >
+                              <Image src={EditTable} alt={t('altText.viewDetail')} width={24} height={24} />
+                            </Link>
                             {/* {!isBuildingInactive && (
                               <button
                                 type="button"

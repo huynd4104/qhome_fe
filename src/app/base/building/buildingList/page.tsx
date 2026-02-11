@@ -18,7 +18,7 @@ import { Building } from '@/src/types/building';
 export default function Home() {
   const { user, hasRole } = useAuth();
   const t = useTranslations('Building');
-  const headers = [t('buildingCode'), t('buildingName'), t('createAt'), t('createBy'), t('action')];
+  const headers = [t('buildingCode'), t('buildingName'), t('status'), t('createAt'), t('createBy'), t('action')];
 
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<BuildingImportResponse | null>(null);
@@ -38,9 +38,8 @@ export default function Home() {
     handlePageChange
   } = useBuildingPage()
 
-  // Filter only ACTIVE buildings and order by code (ABC order)
+  // Show all buildings (ACTIVE and INACTIVE) and order by code (ABC order)
   const ordered = (data?.content || [])
-    .filter((item: any) => item.status === 'ACTIVE')
     .slice()
     .sort((a: any, b: any) => {
       const codeA = (a.code || '').toUpperCase();
@@ -458,9 +457,9 @@ export default function Home() {
         isOpen={confirmOpen}
         onClose={handleCloseConfirm}
         onConfirm={handleConfirmChange}
-        popupTitle={t('confirmDeleteBuildingTitle')}
-        popupContext={t('confirmDeleteBuildingMessage')}
-        isDanger={true}
+        popupTitle={t('confirmChangeStatusTitle')}
+        popupContext={selectedBuildingStatus === 'ACTIVE' ? t('confirmDeactivateBuilding') : t('confirmActivateBuilding')}
+        isDanger={selectedBuildingStatus === 'ACTIVE'}
       />
     </div>
   )

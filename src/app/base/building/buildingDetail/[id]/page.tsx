@@ -404,7 +404,14 @@ export default function BuildingDetail () {
                         </span>
                     </div>
 
-                    <div className="flex space-x-2">
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => router.push('/base/unit/unitNew')}
+                            className="px-4 py-2 rounded-lg bg-[#14AE5C] text-white text-sm font-medium hover:bg-[#0c793f] transition duration-150 flex items-center gap-2"
+                        >
+                            {tUnits('addUnit')}
+                        </button>
                         <button 
                             className={`p-2 rounded-lg bg-[#739559] hover:bg-opacity-80 transition duration-150`}
                             onClick={() => router.push(`/base/building/buildingEdit/${buildingId}`)}

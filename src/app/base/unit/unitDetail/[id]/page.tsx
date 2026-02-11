@@ -12,9 +12,11 @@ import { useUnitDetailPage } from '@/src/hooks/useUnitDetailPage';
 import { getBuilding } from '@/src/services/base/buildingService';
 import PopupConfirm from '@/src/components/common/PopupComfirm';
 import { updateUnitStatus } from '@/src/services/base/unitService';
+import { useNotifications } from '@/src/hooks/useNotifications';
 
 type ApiError = {
     message?: string;
+    response?: { data?: { message?: string } };
 };
 
 export default function UnitDetail() {
@@ -24,54 +26,66 @@ export default function UnitDetail() {
     const unitId = params.id;
 
     const { unitData, loading, error } = useUnitDetailPage(unitId);
+    const { show } = useNotifications();
 
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [buildingName, setBuildingName] = useState<string>('');
+    const [buildingStatus, setBuildingStatus] = useState<string | null>(null);
     const [loadingBuilding, setLoadingBuilding] = useState(false);
 
     useEffect(() => {
-        const loadBuildingName = async () => {
+        const loadBuilding = async () => {
             if (!unitData?.buildingId) return;
 
             try {
                 setLoadingBuilding(true);
                 const building = await getBuilding(unitData.buildingId);
                 setBuildingName(building.name);
+                setBuildingStatus(building.status ?? null);
             } catch (err: unknown) {
                 console.error('Failed to load building:', err);
                 setBuildingName(t('fallbacks.notAvailable'));
+                setBuildingStatus(null);
             } finally {
                 setLoadingBuilding(false);
             }
         };
 
-        loadBuildingName();
+        loadBuilding();
     }, [unitData?.buildingId, t]);
 
     const handleBack = () => {
         router.back();
     };
 
-    const handleDelete = () => {
+    const isUnitActive = unitData?.status?.toUpperCase() === 'ACTIVE';
+    const isBuildingInactive = buildingStatus?.toUpperCase() === 'INACTIVE';
+
+    const handleStatusClick = () => {
         setIsPopupOpen(true);
     };
 
-    const handleConfirmDelete = async () => {
-        if (!unitId || typeof unitId !== 'string') {
+    const handleConfirmStatusChange = async () => {
+        if (!unitId || typeof unitId !== 'string' || !unitData) {
             setIsPopupOpen(false);
             return;
         }
 
+        const newStatus = isUnitActive ? 'INACTIVE' : 'ACTIVE';
         try {
-            await updateUnitStatus(unitId, 'INACTIVE');
+            await updateUnitStatus(unitId, newStatus);
             setIsPopupOpen(false);
 
-            if (unitData?.buildingId) {
+            if (newStatus === 'INACTIVE' && unitData.buildingId) {
                 router.push(`/base/building/buildingDetail/${unitData.buildingId}`);
+            } else {
+                window.location.reload();
             }
         } catch (err: unknown) {
             const e = err as ApiError;
-            console.error('Failed to delete unit:', e?.message ?? err);
+            const message = e?.response?.data?.message || e?.message || (typeof err === 'string' ? err : 'Cập nhật trạng thái thất bại.');
+            console.error('Failed to update unit status:', message);
+            show(message, 'error');
             setIsPopupOpen(false);
         }
     };
@@ -79,6 +93,13 @@ export default function UnitDetail() {
     const handleClosePopup = () => {
         setIsPopupOpen(false);
     };
+
+    const popupTitle = t('statusChange.confirmTitle');
+    const popupContext = isUnitActive
+        ? t('statusChange.confirmDeactivate')
+        : isBuildingInactive
+            ? t('statusChange.confirmActivateInInactiveBuilding')
+            : t('statusChange.confirmActivate');
 
     if (loading) {
         return (
@@ -109,10 +130,10 @@ export default function UnitDetail() {
             <PopupConfirm
                 isOpen={isPopupOpen}
                 onClose={handleClosePopup}
-                onConfirm={handleConfirmDelete}
-                popupTitle={t('deleteUnitT')}
-                popupContext={t('deleteUnitC')}
-                isDanger
+                onConfirm={handleConfirmStatusChange}
+                popupTitle={popupTitle}
+                popupContext={popupContext}
+                isDanger={isUnitActive}
             />
 
             <div
@@ -152,24 +173,24 @@ export default function UnitDetail() {
                         </button>
 
                         <button
-                            className="p-2 rounded-lg bg-[#739559]"
-                            onClick={() =>
-                                router.push(`/base/unit/unitEdit/${unitId}`)
-                            }
+                            type="button"
+                            className={`p-2 rounded-lg ${unitData.status?.toUpperCase() === 'INACTIVE' ? 'bg-slate-300 cursor-not-allowed opacity-70' : 'bg-[#739559] hover:bg-opacity-90'}`}
+                            onClick={() => unitData.status?.toUpperCase() !== 'INACTIVE' && router.push(`/base/unit/unitEdit/${unitId}`)}
+                            disabled={unitData.status?.toUpperCase() === 'INACTIVE'}
+                            title={unitData.status?.toUpperCase() === 'INACTIVE' ? undefined : t('altText.edit')}
                         >
                             <Image src={Edit} alt={t('altText.edit')} width={24} height={24} />
                         </button>
 
                         <button
-                            className="p-2 rounded-lg bg-red-500"
-                            onClick={handleDelete}
+                            type="button"
+                            className={`p-2 min-w-[40px] min-h-[40px] rounded-lg font-bold text-white text-lg leading-none flex items-center justify-center transition ${
+                                isUnitActive ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'
+                            }`}
+                            onClick={handleStatusClick}
+                            title={t('statusChange.buttonTitle')}
                         >
-                            <Image
-                                src={Delete}
-                                alt={t('altText.delete')}
-                                width={24}
-                                height={24}
-                            />
+                            O
                         </button>
                     </div>
                 </div>

@@ -211,7 +211,7 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                             {item.buildingCode}
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-[14px] text-center text-[#024023] font-semibold truncate">{item.buildingName}</td>
-                                        {/* <td className="px-4 py-3 whitespace-nowrap text-[14px] text-center font-semibold">
+                                        <td className="px-4 py-3 whitespace-nowrap text-[14px] text-center font-semibold">
                                             <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
                                                 (item.status || '').toUpperCase() === 'ACTIVE'
                                                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -219,7 +219,7 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                             }`}>
                                                 {(item.status || '').toUpperCase() === 'ACTIVE' ? tBuilding('active') : tBuilding('inactive')}
                                             </span>
-                                        </td> */}
+                                        </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-[14px] text-center font-semibold text-[#024023]">{item.createdAt}</td>
 
                                         <td className={`px-4 py-3 whitespace-nowrap text-center font-semibold text-[#024023]`}>{item.createBy}</td>
@@ -240,10 +240,17 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                                 <button
                                                     type="button"
                                                     onClick={() => onBuildingStatusChange && onBuildingStatusChange(item.buildingId as string)}
-                                                    className="w-[47px] h-[34px] flex items-center justify-center rounded-md bg-red-500 border border-gray-300 hover:bg-red-600 transition"
+                                                    className={`w-[47px] h-[34px] flex items-center justify-center rounded-md border border-gray-300 font-bold text-white text-lg leading-none transition ${
+                                                        (item.status || '').toUpperCase() === 'ACTIVE'
+                                                            ? 'bg-red-500 hover:bg-red-600'
+                                                            : 'bg-emerald-500 hover:bg-emerald-600'
+                                                    }`}
                                                     title={t('actions.changeStatus')}
                                                 >
-                                                    {/* <svg 
+                                                    O
+                                                </button>
+                                                {/* was: icon button - now O
+                                                    <svg 
                                                             xmlns="http://www.w3.org/2000/svg" 
                                                             viewBox="0 0 16 16" 
                                                             height="16" 
@@ -255,13 +262,6 @@ const Table = ({ data, headers, type, onEdit, onDelete, onStatusChange, onBuildi
                                                                 <path fill="currentColor" d="M13.333333333333332 9.333333333333332a1 1 0 0 1 0.09599999999999999 1.9953333333333332L13.333333333333332 11.333333333333332H5.080666666666667l0.96 0.96a1 1 0 0 1 -1.3386666666666667 1.4826666666666668l-0.076 -0.06866666666666665 -2.5526666666666666 -2.5533333333333332c-0.6493333333333333 -0.6493333333333333 -0.22666666666666668 -1.7446666666666666 0.6606666666666666 -1.8166666666666667l0.09333333333333334 -0.004H13.333333333333332ZM9.959999999999999 2.293333333333333a1 1 0 0 1 1.338 -0.06933333333333333l0.076 0.06866666666666665 2.5526666666666666 2.5533333333333332c0.6493333333333333 0.6493333333333333 0.22666666666666668 1.7446666666666666 -0.6606666666666666 1.8166666666666667l-0.09333333333333334 0.004H2.6666666666666665a1 1 0 0 1 -0.09599999999999999 -1.9953333333333332L2.6666666666666665 4.666666666666666h8.252666666666666l-0.96 -0.96a1 1 0 0 1 0 -1.4133333333333333Z" strokeWidth="0.6667"></path>
                                                             </g>
                                                         </svg> */}
-                                                    <Image
-                                                        src={Delete}
-                                                        alt={t('actions.viewDetail')}
-                                                        width={24}
-                                                        height={24}
-                                                    />
-                                                </button>
                                                 {/* )} */}
                                             </div>
                                         </td>

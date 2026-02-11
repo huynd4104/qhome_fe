@@ -1448,7 +1448,9 @@
       "confirmTitle": "Xác nhận thay đổi trạng thái",
       "confirmDeactivate": "Bạn có chắc muốn vô hiệu hoá căn hộ này?",
       "confirmActivate": "Bạn có chắc muốn kích hoạt căn hộ này?",
-      "updateFailed": "Cập nhật trạng thái căn hộ thất bại"
+      "confirmActivateInInactiveBuilding": "Tòa nhà hiện không hoạt động. Bạn có chắc muốn kích hoạt lại căn hộ này?",
+      "updateFailed": "Cập nhật trạng thái căn hộ thất bại",
+      "buildingInactiveCannotAdd": "Không thể thêm căn hộ vì tòa nhà hiện không hoạt động."
     },
     "altText": {
       "viewDetail": "Xem chi tiết",

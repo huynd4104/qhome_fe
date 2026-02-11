@@ -8,6 +8,7 @@ export type Building = {
   floorsMax: number;
   totalApartmentsAll: number;
   totalApartmentsActive: number;
+  status?: string;
 };
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8081';

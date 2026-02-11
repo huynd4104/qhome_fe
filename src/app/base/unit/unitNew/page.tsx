@@ -169,9 +169,10 @@ export default function UnitAdd () {
             console.log('Dữ liệu gửi đi:', completeData);
             await addUnit(completeData);
             router.push(`/base/building/buildingDetail/${selectedBuildingId}`);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Lỗi khi tạo unit:', error);
-            show(t('errorUnit'), 'error');
+            const message = error?.response?.data?.message || error?.message || t('errorUnit');
+            show(message, 'error');
         } finally {
             setIsSubmit(false);
         }
