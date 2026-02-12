@@ -40,7 +40,10 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
-  Activity
+  Activity,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown
 } from 'lucide-react';
 
 const PAGE_SIZE = 10;
@@ -110,6 +113,20 @@ export default function AccountListPage() {
   const [selectedFloor, setSelectedFloor] = useState<'ALL' | number>('ALL');
   const [canScroll, setCanScroll] = useState(false);
   const floorScrollRef = useRef<HTMLDivElement>(null);
+
+  const [sortConfig, setSortConfig] = useState<{ key: keyof AccountRow; direction: 'asc' | 'desc' } | null>(null);
+
+  const handleSort = (key: keyof AccountRow) => {
+    setSortConfig(current => {
+      if (!current || current.key !== key) {
+        return { key, direction: 'asc' };
+      }
+      if (current.direction === 'asc') {
+        return { key, direction: 'desc' };
+      }
+      return null;
+    });
+  };
 
   // Hàm kiểm tra xem danh sách có đang bị tràn hay không
   const checkOverflow = useCallback(() => {
@@ -308,12 +325,34 @@ export default function AccountListPage() {
       return matchesSearch && matchesRole && matchesStatus;
     });
     return filtered.sort((a, b) => {
+      if (sortConfig) {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (aValue === undefined || aValue === null) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (bValue === undefined || bValue === null) return sortConfig.direction === 'asc' ? 1 : -1;
+
+        if (aValue === bValue) return 0;
+
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const comparison = aValue.localeCompare(bValue);
+          return sortConfig.direction === 'asc' ? comparison : -comparison;
+        }
+
+        const aAny = aValue as any;
+        const bAny = bValue as any;
+        if (aAny < bAny) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aAny > bAny) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      }
+
+      // Default sort
       if (a.active !== b.active) return a.active ? -1 : 1;
       const roleA = a.rolesList[0] || '';
       const roleB = b.rolesList[0] || '';
       return roleA.localeCompare(roleB);
     });
-  }, [staffAccounts, searchTerm, roleFilter, statusFilter]);
+  }, [staffAccounts, searchTerm, roleFilter, statusFilter, sortConfig]);
 
   const filteredResidents = useMemo(() => {
     const keyword = searchTerm.toLowerCase();
@@ -328,12 +367,30 @@ export default function AccountListPage() {
       return matchesSearch && matchesRole && matchesStatus;
     });
     return filtered.sort((a, b) => {
+      if (sortConfig) {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (aValue === undefined || aValue === null) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (bValue === undefined || bValue === null) return sortConfig.direction === 'asc' ? 1 : -1;
+
+        // Handle string comparison for Username/Email specifically
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const comparison = aValue.localeCompare(bValue);
+          return sortConfig.direction === 'asc' ? comparison : -comparison;
+        }
+
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      }
+
       if (a.active !== b.active) return a.active ? -1 : 1;
       const roleA = a.rolesList[0] || '';
       const roleB = b.rolesList[0] || '';
       return roleA.localeCompare(roleB);
     });
-  }, [residentAccounts, searchTerm, buildingFilter, statusFilter]);
+  }, [residentAccounts, searchTerm, buildingFilter, statusFilter, sortConfig]);
 
   useEffect(() => {
     setStaffPage(1);
@@ -829,11 +886,27 @@ export default function AccountListPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/50">
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      {t('tableHeaders.username')}
+                    <th
+                      onClick={() => handleSort('username')}
+                      className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group select-none"
+                    >
+                      <div className="flex items-center gap-1">
+                        {t('tableHeaders.username')}
+                        {sortConfig?.key === 'username' ? (
+                          sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : <ArrowDown className="w-3 h-3 text-emerald-600" />
+                        ) : <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-400" />}
+                      </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      {t('tableHeaders.email')}
+                    <th
+                      onClick={() => handleSort('email')}
+                      className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group select-none"
+                    >
+                      <div className="flex items-center gap-1">
+                        {t('tableHeaders.email')}
+                        {sortConfig?.key === 'email' ? (
+                          sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : <ArrowDown className="w-3 h-3 text-emerald-600" />
+                        ) : <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-400" />}
+                      </div>
                     </th>
                     <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
                       {t('tableHeaders.roles')}
