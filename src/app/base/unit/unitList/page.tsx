@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import EditTable from '@/src/assets/EditTable.svg';
 import { useUnitPage } from '@/src/hooks/useUnitPage';
 import { Unit } from '@/src/types/unit';
-import { updateUnitStatus } from '@/src/services/base/unitService';
+import { updateUnitStatus, exportUnits, downloadUnitTemplate, importUnits } from '@/src/services/base/unitService';
 import PopupConfirm from '@/src/components/common/PopupComfirm';
 import { getAllInspections, AssetInspection, InspectionStatus } from '@/src/services/base/assetInspectionService';
 import Pagination from '@/src/components/customer-interaction/Pagination';
@@ -29,6 +29,8 @@ export default function UnitListPage() {
   const { buildings, loading, error, refresh, pageNo, pageSize, handlePageChange } = useUnitPage();
 
   const [selectedBuildingId, setSelectedBuildingId] = useState<'all' | string>('all');
+  const [selectedFloor, setSelectedFloor] = useState<'all' | number>('all');
+  const [selectedBedrooms, setSelectedBedrooms] = useState<'all' | number>('all');
   const [buildingSearch, setBuildingSearch] = useState('');
   const [unitSearch, setUnitSearch] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -42,6 +44,12 @@ export default function UnitListPage() {
   // Asset inspection data
   const [inspections, setInspections] = useState<AssetInspection[]>([]);
   const [loadingInspections, setLoadingInspections] = useState(false);
+
+  // Import modal state
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const unitsWithContext = useMemo<UnitWithContext[]>(() => {
     const result: UnitWithContext[] = [];
@@ -125,6 +133,44 @@ export default function UnitListPage() {
     });
   }, [buildingSearch, buildings]);
 
+  // Available floors for the currently selected building
+  const availableFloors = useMemo(() => {
+    if (selectedBuildingId === 'all') {
+      return [] as number[];
+    }
+
+    const floorSet = new Set<number>();
+    unitsWithContext
+      .filter((unit) => unit.buildingId === selectedBuildingId && typeof unit.floor === 'number')
+      .forEach((unit) => {
+        floorSet.add(unit.floor as number);
+      });
+
+    return Array.from(floorSet).sort((a, b) => a - b);
+  }, [selectedBuildingId, unitsWithContext]);
+
+  // Available bedroom types for current selection (building + floor)
+  const availableBedrooms = useMemo(() => {
+    let scopedUnits = unitsWithContext;
+
+    if (selectedBuildingId !== 'all') {
+      scopedUnits = scopedUnits.filter((unit) => unit.buildingId === selectedBuildingId);
+    }
+
+    if (selectedFloor !== 'all') {
+      scopedUnits = scopedUnits.filter((unit) => unit.floor === selectedFloor);
+    }
+
+    const bedroomSet = new Set<number>();
+    scopedUnits.forEach((unit) => {
+      if (typeof unit.bedrooms === 'number' && !Number.isNaN(unit.bedrooms)) {
+        bedroomSet.add(unit.bedrooms);
+      }
+    });
+
+    return Array.from(bedroomSet).sort((a, b) => a - b);
+  }, [selectedBuildingId, selectedFloor, unitsWithContext]);
+
   const filteredUnits = useMemo(() => {
     const unitQuery = normalizeText(unitSearch);
 
@@ -133,6 +179,14 @@ export default function UnitListPage() {
 
     if (selectedBuildingId !== 'all') {
       scopedUnits = scopedUnits.filter((unit) => unit.buildingId === selectedBuildingId);
+    }
+
+    if (selectedFloor !== 'all') {
+      scopedUnits = scopedUnits.filter((unit) => unit.floor === selectedFloor);
+    }
+
+    if (selectedBedrooms !== 'all') {
+      scopedUnits = scopedUnits.filter((unit) => unit.bedrooms === selectedBedrooms);
     }
 
     let filtered = scopedUnits;
@@ -171,6 +225,8 @@ export default function UnitListPage() {
     });
   }, [
     selectedBuildingId,
+    selectedFloor,
+    selectedBedrooms,
     unitSearch,
     unitsWithContext,
   ]);
@@ -188,12 +244,76 @@ export default function UnitListPage() {
 
   const handleSelectAll = () => {
     setSelectedBuildingId('all');
+    setSelectedFloor('all');
+    setSelectedBedrooms('all');
     handlePageChange(0);
   };
 
   const handleSelectBuilding = (buildingId: string) => {
     setSelectedBuildingId(buildingId);
+    setSelectedFloor('all');
+    setSelectedBedrooms('all');
     handlePageChange(0);
+  };
+
+  const handleSelectFloor = (floor: 'all' | number) => {
+    setSelectedFloor(floor);
+    handlePageChange(0);
+  };
+
+  const handleSelectBedrooms = (bedrooms: 'all' | number) => {
+    setSelectedBedrooms(bedrooms);
+    handlePageChange(0);
+  };
+
+  const handleExport = async () => {
+    try {
+      const blob = await exportUnits(selectedBuildingId === 'all' ? undefined : selectedBuildingId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'units_export.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Failed to export units:', error);
+    }
+  };
+
+  const handleDownloadUnitTemplate = async () => {
+    try {
+      const blob = await downloadUnitTemplate();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'unit_import_template.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Failed to download unit template:', error);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) return;
+    setImporting(true);
+    setImportError(null);
+    try {
+      const response = await importUnits(importFile);
+      console.log('Import units response', response);
+      setIsImportOpen(false);
+      setImportFile(null);
+      refresh();
+    } catch (error: any) {
+      console.error('Failed to import units:', error);
+      setImportError(error?.response?.data?.message || error.message || 'Import failed');
+    } finally {
+      setImporting(false);
+    }
   };
 
   const onUnitStatusChange = (unitId: string) => {
@@ -273,19 +393,35 @@ export default function UnitListPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold text-[#02542D]">{t('unitList')}</h1>
-        <button
-          type="button"
-          onClick={() => !isAddUnitDisabled && router.push('/base/unit/unitNew')}
-          className={`rounded-md px-4 py-2 transition-colors ${
-            isAddUnitDisabled
-              ? 'cursor-not-allowed bg-slate-300 text-slate-500'
-              : 'bg-[#02542D] text-white hover:bg-[#024428]'
-          }`}
-          disabled={isAddUnitDisabled}
-          title={isAddUnitDisabled ? t('statusChange.buildingInactiveCannotAdd') : undefined}
-        >
-          {t('addUnit')}
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={handleExport}
+            className="rounded-md border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-600 transition-colors hover:bg-emerald-50"
+          >
+            Export Excel
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsImportOpen(true)}
+            className="rounded-md border border-emerald-600 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+          >
+            Import Excel
+          </button>
+          <button
+            type="button"
+            onClick={() => !isAddUnitDisabled && router.push('/base/unit/unitNew')}
+            className={`rounded-md px-4 py-2 transition-colors ${
+              isAddUnitDisabled
+                ? 'cursor-not-allowed bg-slate-300 text-slate-500'
+                : 'bg-[#02542D] text-white hover:bg-[#024428]'
+            }`}
+            disabled={isAddUnitDisabled}
+            title={isAddUnitDisabled ? t('statusChange.buildingInactiveCannotAdd') : undefined}
+          >
+            {t('addUnit')}
+          </button>
+        </div>
       </div>
 
       <div
@@ -410,6 +546,67 @@ export default function UnitListPage() {
               />
             </div>
           </div>
+
+          {/* Floor & bedroom filters for the selected building - dropdown style */}
+          {selectedBuildingId !== 'all' && (availableFloors.length > 0 || availableBedrooms.length > 0) && (
+            <div className="border-b border-slate-100 px-6 py-3 bg-slate-50/60">
+              <div className="flex flex-wrap gap-6 items-center text-sm">
+                {availableFloors.length > 0 && (
+                  <label className="flex items-center gap-3">
+                    <span className="font-medium text-slate-700">
+                      {t('floor')}:
+                    </span>
+                    <select
+                      value={selectedFloor === 'all' ? 'all' : String(selectedFloor)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === 'all') {
+                          handleSelectFloor('all');
+                        } else {
+                          handleSelectFloor(Number(value));
+                        }
+                      }}
+                      className="min-w-[140px] rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                    >
+                      <option value="all">Tất cả</option>
+                      {availableFloors.map((floor) => (
+                        <option key={floor} value={floor}>
+                          {t('floor')} {floor}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+
+                {availableBedrooms.length > 0 && (
+                  <label className="flex items-center gap-3">
+                    <span className="font-medium text-slate-700">
+                      Loại phòng:
+                    </span>
+                    <select
+                      value={selectedBedrooms === 'all' ? 'all' : String(selectedBedrooms)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === 'all') {
+                          handleSelectBedrooms('all');
+                        } else {
+                          handleSelectBedrooms(Number(value));
+                        }
+                      }}
+                      className="min-w-[160px] rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                    >
+                      <option value="all">Tất cả</option>
+                      {availableBedrooms.map((bed) => (
+                        <option key={bed} value={bed}>
+                          {bed} phòng ngủ
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-sm">
@@ -552,6 +749,86 @@ export default function UnitListPage() {
       {errorMessage && (
         <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50">
           {errorMessage}
+        </div>
+      )}
+
+      {/* Import Units Modal */}
+      {isImportOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-800">Import danh sách căn hộ</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsImportOpen(false);
+                  setImportFile(null);
+                  setImportError(null);
+                }}
+                className="rounded-full p-1 text-slate-500 hover:bg-slate-100"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-4 text-sm">
+              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
+                <p className="mb-2 font-medium text-slate-700">Chọn file Excel (.xlsx)</p>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setImportFile(file);
+                    setImportError(null);
+                  }}
+                  className="text-xs text-slate-500"
+                />
+                {importFile && (
+                  <p className="mt-2 text-xs font-medium text-emerald-700">
+                    {importFile.name}
+                  </p>
+                )}
+              </div>
+              <div className="text-xs text-slate-500">
+                <p>
+                  Bạn có thể tải file mẫu để điền dữ liệu đúng định dạng.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleDownloadUnitTemplate}
+                  className="mt-1 font-semibold text-emerald-700 hover:underline"
+                >
+                  Tải file mẫu căn hộ
+                </button>
+              </div>
+              {importError && (
+                <div className="rounded-md bg-red-50 p-3 text-xs text-red-700">
+                  {importError}
+                </div>
+              )}
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsImportOpen(false);
+                    setImportFile(null);
+                    setImportError(null);
+                  }}
+                  className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  disabled={!importFile || importing}
+                  onClick={handleImport}
+                  className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {importing ? 'Đang import...' : 'Bắt đầu import'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

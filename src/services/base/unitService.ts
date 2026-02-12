@@ -130,3 +130,52 @@ export async function checkUnitCodeExists(code: string, buildingId: string): Pro
     return false;
   }
 }
+
+/**
+ * GET /api/units/export
+ * Optional query param: buildingId
+ */
+export async function exportUnits(buildingId?: string): Promise<Blob> {
+  const response = await axios.get(
+    `${BASE_URL}/api/units/export`,
+    {
+      params: buildingId ? { buildingId } : {},
+      responseType: 'blob',
+      withCredentials: true,
+    }
+  );
+  return response.data;
+}
+
+/**
+ * GET /api/units/import/template
+ */
+export async function downloadUnitTemplate(): Promise<Blob> {
+  const response = await axios.get(
+    `${BASE_URL}/api/units/import/template`,
+    {
+      responseType: 'blob',
+      withCredentials: true,
+    }
+  );
+  return response.data;
+}
+
+/**
+ * POST /api/units/import
+ */
+export async function importUnits(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await axios.post(
+    `${BASE_URL}/api/units/import`,
+    formData,
+    {
+      withCredentials: true,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }
+  );
+
+  return response.data;
+}
