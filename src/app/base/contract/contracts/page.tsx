@@ -828,7 +828,7 @@ export default function ContractManagementPage() {
   };
 
   // Check unit assets
-  const checkUnitAssets = async (unitId: string) => {
+  const checkUnitAssets = async (unitId: string, autoSelect: boolean = true) => {
     if (!unitId) return;
 
     setCheckingAssets(true);
@@ -841,8 +841,13 @@ export default function ContractManagementPage() {
       const existingActiveTypes = new Set(assets.filter(a => a.active).map(a => a.assetType));
       const missing = allTypes.filter(type => !existingActiveTypes.has(type));
       setMissingAssetTypes(missing);
-      // Auto-select all missing types by default
-      setSelectedAssetTypes(new Set(missing));
+      if (autoSelect) {
+        // Auto-select all missing types on first load
+        setSelectedAssetTypes(new Set(missing));
+      } else {
+        // After creating assets, clear selections (don't force remaining)
+        setSelectedAssetTypes(new Set());
+      }
     } catch (error: any) {
       console.error('Failed to check unit assets:', error);
       setUnitAssets([]);
@@ -990,7 +995,7 @@ export default function ContractManagementPage() {
       if (successCount > 0) {
         setCreateSuccess(`Đã tạo thành công ${successCount} thiết bị${errors.length > 0 ? `. ${errors.length} lỗi.` : ''}`);
         // Refresh asset list
-        await checkUnitAssets(formState.unitId);
+        await checkUnitAssets(formState.unitId, false);
         // Refresh meter list
         await checkUnitMeters(formState.unitId);
         setShowCreateAssetsConfirm(false);
@@ -1371,13 +1376,7 @@ export default function ContractManagementPage() {
         });
       }
 
-      if (missingAssetTypes.length > 0) {
-        const missingAssetsList = missingAssetTypes.map(t => t.toString()).join(', ');
-        errors.assets = t('validation.assetsRecommendedForRental', {
-          assets: missingAssetsList,
-          defaultValue: `Khuyến nghị tạo các thiết bị sau trước khi tạo hợp đồng cho thuê: ${missingAssetsList}.`
-        });
-      }
+      // Assets are optional - do not block contract creation for missing assets
     }
 
     if (Object.keys(errors).length > 0) {
@@ -2709,7 +2708,7 @@ export default function ContractManagementPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={createSubmitting || missingAssetTypes.length > 0 || missingMeterServices.length > 0}
+                    disabled={createSubmitting || missingMeterServices.length > 0}
                     className="inline-flex items-center justify-center rounded-lg bg-[#14AE5C] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c793f] disabled:cursor-not-allowed disabled:bg-[#A3D9B1]"
                   >
                     {createSubmitting ? t('buttons.creating') : t('buttons.create')}
