@@ -38,15 +38,9 @@ export default function Home() {
     handlePageChange
   } = useBuildingPage()
 
-  // Filter only ACTIVE buildings and order by code (ABC order)
+  // Filter only ACTIVE buildings (sorting is now handled in useBuildingPage hook)
   const ordered = (data?.content || [])
-    .filter((item: any) => item.status === 'ACTIVE')
-    .slice()
-    .sort((a: any, b: any) => {
-      const codeA = (a.code || '').toUpperCase();
-      const codeB = (b.code || '').toUpperCase();
-      return codeA.localeCompare(codeB);
-    });
+    .filter((item: any) => item.status === 'ACTIVE');
 
   const tableData = ordered.map((item: any) => ({
     buildingId: item.id,      

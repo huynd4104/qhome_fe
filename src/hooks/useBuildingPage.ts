@@ -53,7 +53,9 @@ export const useBuildingPage = (loadOnMount: boolean = true) => {
         if (!allBuildings || allBuildings.length === 0) {
             return [];
         }
-        return allBuildings.filter(building => {
+        
+        // Filter buildings first
+        let filtered = allBuildings.filter(building => {
             const codeNameMatch = filters.codeName
                 ? building?.name?.toLowerCase().includes(filters.codeName.toLowerCase()) || building?.code?.toLowerCase().includes(filters.codeName.toLowerCase())
                 : true;
@@ -64,6 +66,15 @@ export const useBuildingPage = (loadOnMount: boolean = true) => {
             
             return codeNameMatch && statusMatch;
         });
+        
+        // Sort by building code (A->B->C) in alphabetical order
+        filtered.sort((a, b) => {
+            const codeA = (a.code || '').toUpperCase();
+            const codeB = (b.code || '').toUpperCase();
+            return codeA.localeCompare(codeB);
+        });
+        
+        return filtered;
     }, [allBuildings, filters.codeName, filters.status]); 
 
     const data: PagedResponse<Building> = useMemo(() => {
