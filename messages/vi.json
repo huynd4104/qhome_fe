@@ -1,4 +1,28 @@
 {
+  "StaffAccount": {
+    "importStaff": "Import Nhân viên",
+    "chooseFile": "Chọn tập tin",
+    "clickToUpload": "Nhấn để tải lên",
+    "supportedFormats": "Định dạng hỗ trợ: .xlsx, .xls",
+    "needTemplate": "Cần tập tin mẫu?",
+    "downloadTemplate": "Tải tập tin mẫu",
+    "downloadTemplateFailed": "Tải tập tin mẫu thất bại",
+    "importSuccess": "Import thành công {count} tài khoản nhân viên",
+    "importPartialSuccess": "Import thành công {success} tài khoản, {failure} thất bại",
+    "uploadFailed": "Tải lên thất bại",
+    "import": "Import",
+    "cancel": "Hủy",
+    "uploading": "Đang tải lên...",
+    "messages": {
+      "createSuccess": "Tạo tài khoản nhân viên thành công.",
+      "createError": "Không thể tạo tài khoản nhân viên. Vui lòng thử lại.",
+      "importResult": "Đã xử lý {totalRows} dòng: {successCount} thành công, {failureCount} thất bại."
+    },
+    "errors": {
+      "importFailed": "Không thể import tài khoản nhân viên. Vui lòng thử lại.",
+      "templateDownloadFailed": "Không thể tải file template. Vui lòng thử lại."
+    }
+  },
   "HomePage": {
     "title": "CHÀO MỪNG ĐẾN VỚI </br> QHOME PMS"
   },
@@ -255,7 +279,6 @@
       "supporter": "Hỗ trợ"
     },
     "buttons": {
-      "cancel": "Huỷ bỏ",
       "create": "Tạo tài khoản",
       "creating": "Đang tạo...",
       "downloadingTemplate": "Đang tải template...",
@@ -314,26 +337,17 @@
       "importFailed": "Không thể import tài khoản nhân viên. Vui lòng thử lại.",
       "templateDownloadFailed": "Không thể tải file template. Vui lòng thử lại."
     },
-    "import": {
-      "title": "Import nhanh bằng Excel",
-      "description": "Sử dụng file Excel với các cột: username, email, role, active. Role chỉ được phép có 1 giá trị.",
-      "fileLabel": "File Excel (.xlsx)",
-      "fileSelected": "Đã chọn:",
-      "tableHeaders": {
-        "row": "Dòng",
-        "username": "Username",
-        "email": "Email",
-        "roles": "Role(s)",
-        "active": "Kích hoạt",
-        "result": "Kết quả"
-      },
-      "status": {
-        "yes": "Có",
-        "no": "Không",
-        "success": "Thành công",
-        "failure": "Thất bại"
-      }
-    }
+    "importStaff": "Import Nhân viên",
+    "chooseFile": "Chọn tập tin",
+    "clickToUpload": "Nhấn để tải lên",
+    "supportedFormats": "Định dạng hỗ trợ: .xlsx, .xls",
+    "needTemplate": "Cần tập tin mẫu?",
+    "downloadTemplate": "Tải tập tin mẫu",
+    "downloadTemplateFailed": "Tải tập tin mẫu thất bại",
+    "importSuccess": "Import thành công {count} tài khoản nhân viên",
+    "importPartialSuccess": "Import thành công {success} tài khoản, {failure} thất bại",
+    "uploadFailed": "Tải lên thất bại",
+    "import": "Import"
   },
   "AccountList": {
     "title": "Danh sách tài khoản",

@@ -1,4 +1,28 @@
 {
+  "StaffAccount": {
+    "importStaff": "Import Staff",
+    "chooseFile": "Choose File",
+    "clickToUpload": "Click to upload",
+    "supportedFormats": "Supported formats: .xlsx, .xls",
+    "needTemplate": "Need a template?",
+    "downloadTemplate": "Download Template",
+    "downloadTemplateFailed": "Failed to download template",
+    "importSuccess": "Imported {count} staff accounts successfully",
+    "importPartialSuccess": "Imported {success} accounts successfully, {failure} failed",
+    "uploadFailed": "Upload failed",
+    "import": "Import",
+    "cancel": "Cancel",
+    "uploading": "Uploading...",
+    "messages": {
+      "createSuccess": "Staff account created successfully.",
+      "createError": "Unable to create staff account. Please try again.",
+      "importResult": "Processed {totalRows} rows: {successCount} successful, {failureCount} failed."
+    },
+    "errors": {
+      "importFailed": "Unable to import staff accounts. Please try again.",
+      "templateDownloadFailed": "Unable to download template file. Please try again."
+    }
+  },
   "HomePage": {
     "title": "WELCOME TO </br> QHOME PMS"
   },
@@ -251,7 +275,6 @@
       "supporter": "Supporter"
     },
     "buttons": {
-      "cancel": "Cancel",
       "create": "Create account",
       "creating": "Creating...",
       "downloadingTemplate": "Downloading template...",
@@ -303,26 +326,17 @@
       "importFailed": "Unable to import staff accounts. Please try again.",
       "templateDownloadFailed": "Unable to download template file. Please try again."
     },
-    "import": {
-      "title": "Quick import with Excel",
-      "description": "Use Excel file with columns: username, email, role, active. Role can contain multiple values, separated by commas.",
-      "fileLabel": "Excel file (.xlsx)",
-      "fileSelected": "Selected:",
-      "tableHeaders": {
-        "row": "Row",
-        "username": "Username",
-        "email": "Email",
-        "roles": "Role(s)",
-        "active": "Active",
-        "result": "Result"
-      },
-      "status": {
-        "yes": "Yes",
-        "no": "No",
-        "success": "Success",
-        "failure": "Failure"
-      }
-    }
+    "importStaff": "Import Staff",
+    "chooseFile": "Choose File",
+    "clickToUpload": "Click to upload",
+    "supportedFormats": "Supported formats: .xlsx, .xls",
+    "needTemplate": "Need a template?",
+    "downloadTemplate": "Download Template",
+    "downloadTemplateFailed": "Failed to download template",
+    "importSuccess": "Imported {count} staff accounts successfully",
+    "importPartialSuccess": "Imported {success} accounts successfully, {failure} failed",
+    "uploadFailed": "Upload failed",
+    "import": "Import"
   },
   "AccountList": {
     "title": "Account List",

@@ -77,8 +77,13 @@ export interface StaffImportRowResult {
   rowNumber: number;
   username: string;
   email: string;
+  password?: string;
   roles: string[];
   active: boolean | null;
+  fullName?: string;
+  phone?: string;
+  nationalId?: string;
+  address?: string;
   success: boolean;
   createdUserId: string | null;
   message: string | null;

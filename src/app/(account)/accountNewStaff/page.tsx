@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useMemo, useState, useEffect, useRef } from 'react';
+import { ChangeEvent, FormEvent, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -13,8 +13,6 @@ import {
   Lock,
   Shield,
   Upload,
-  FileSpreadsheet,
-  CheckCircle2,
   XCircle,
   Loader2
 } from 'lucide-react';
@@ -22,13 +20,11 @@ import Select from '@/src/components/customer-interaction/Select';
 import { useAuth } from '@/src/contexts/AuthContext';
 import {
   CreateStaffAccountPayload,
-  StaffImportResponse,
   createStaffAccount,
   checkUsernameExists,
   checkEmailExists,
-  downloadStaffImportTemplate,
-  importStaffAccounts,
 } from '@/src/services/iam/userService';
+import { StaffImportModal } from '@/src/components/account/StaffImportModal';
 
 type FormState = {
   username: string;
@@ -68,6 +64,7 @@ export default function AccountNewStaffPage() {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [roleError, setRoleError] = useState<string | null>(null);
   const [fullNameError, setFullNameError] = useState<string | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Check if user has ADMIN role
   useEffect(() => {
@@ -85,22 +82,6 @@ export default function AccountNewStaffPage() {
     { id: 'TECHNICIAN', label: t('roles.technician') },
     { id: 'SUPPORTER', label: t('roles.supporter') },
   ];
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [importing, setImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [importResult, setImportResult] = useState<StaffImportResponse | null>(null);
-  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // IMPORTANT: All hooks must be called before any conditional returns
-  const importSummary = useMemo(() => {
-    if (!importResult) return null;
-    return t('messages.importResult', {
-      totalRows: importResult.totalRows,
-      successCount: importResult.successCount,
-      failureCount: importResult.failureCount
-    });
-  }, [importResult, t]);
 
   const handleBack = () => {
     router.push('/accountList');
@@ -393,101 +374,29 @@ export default function AccountNewStaffPage() {
     }
   };
 
-  // Show loading while checking auth
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-      </div>
-    );
-  }
-
-  // Don't render if not admin (will redirect to 404)
-  const isAdmin = user?.roles?.some(role => role.toUpperCase() === 'ADMIN') ?? false;
-  if (!user || !isAdmin) {
-    return null;
-  }
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setImportError(null);
-    setImportResult(null);
-    const file = event.target.files?.[0];
-    setImportFile(file ?? null);
-    // Reset input value after a short delay to allow selecting the same file again
-    // This ensures onChange fires even when selecting the same file
-    setTimeout(() => {
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }, 0);
-  };
-
-  const handleImport = async () => {
-    setImportError(null);
-    setImportResult(null);
-
-    if (!importFile) {
-      setImportError(t('validation.excelFileRequired'));
-      return;
-    }
-
-    if (!importFile.name.toLowerCase().endsWith('.xlsx')) {
-      setImportError(t('validation.excelFileFormat'));
-      return;
-    }
-
-    try {
-      setImporting(true);
-      const result = await importStaffAccounts(importFile);
-      setImportResult(result);
-      // Clear the file after successful import to allow re-selecting
-      setImportFile(null);
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        t('errors.importFailed');
-      setImportError(message);
-    } finally {
-      setImporting(false);
-    }
-  };
-
-  const handleDownloadTemplate = async () => {
-    setImportError(null);
-    try {
-      setDownloadingTemplate(true);
-      const blob = await downloadStaffImportTemplate();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'staff_import_template.xlsx';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        t('errors.templateDownloadFailed');
-      setImportError(message);
-    } finally {
-      setDownloadingTemplate(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
       {/* Back Button */}
-      <button
-        onClick={handleBack}
-        className="group mb-6 flex items-center gap-2 rounded-lg py-2 pl-2 pr-4 text-slate-500 transition-all hover:bg-white hover:text-emerald-700 hover:shadow-sm"
-      >
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition-colors group-hover:ring-emerald-200">
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-        </div>
-        <span className="font-semibold">{t('back')}</span>
-      </button>
+      <div className="mb-6 flex items-center justify-between">
+        <button
+          onClick={handleBack}
+          className="group flex items-center gap-2 rounded-lg py-2 pl-2 pr-4 text-slate-500 transition-all hover:bg-white hover:text-emerald-700 hover:shadow-sm"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition-colors group-hover:ring-emerald-200">
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+          </div>
+          <span className="font-semibold">{t('back')}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setIsImportModalOpen(true)}
+          className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm transition-all hover:bg-emerald-50 hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:ring-offset-2"
+        >
+          <Upload className="mr-2 h-4 w-4" />
+          {t('importStaff')}
+        </button>
+      </div>
 
       <div className="mx-auto max-w-5xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Main Form Card */}
@@ -683,13 +592,7 @@ export default function AccountNewStaffPage() {
 
             {/* Actions */}
             <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-end border-t border-slate-100">
-              <button
-                type="button"
-                onClick={handleBack}
-                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-2"
-              >
-                {t('buttons.cancel')}
-              </button>
+
               <button
                 type="submit"
                 disabled={submitting}
@@ -707,152 +610,16 @@ export default function AccountNewStaffPage() {
             </div>
           </form>
         </div>
-
-        {/* Import Section */}
-        <div className="overflow-hidden rounded-3xl border border-dashed border-emerald-200 bg-white/60 p-6 shadow-sm backdrop-blur-sm transition-all hover:bg-white/80 sm:p-8">
-          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-            <div className="space-y-2">
-              <h2 className="flex items-center text-xl font-semibold text-slate-800">
-                <FileSpreadsheet className="mr-2 h-5 w-5 text-emerald-600" />
-                {t('import.title')}
-              </h2>
-              <p className="text-sm text-slate-500 max-w-xl">
-                {t('import.description')}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleDownloadTemplate}
-              disabled={downloadingTemplate}
-              className="group inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50/50 px-4 py-2 text-sm font-medium text-emerald-700 transition-all hover:bg-emerald-100 hover:border-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {downloadingTemplate ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Upload className="mr-2 h-4 w-4" />
-              )}
-              {downloadingTemplate ? t('buttons.downloadingTemplate') : t('buttons.downloadTemplate')}
-            </button>
-          </div>
-
-          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end">
-            <div className="flex-1 space-y-2">
-              <label className="block text-sm font-medium text-slate-700">{t('import.fileLabel')}</label>
-              <div className="relative">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  onChange={handleFileChange}
-                  className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100 focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-100"
-                />
-              </div>
-              {importFile && (
-                <p className="flex items-center text-xs text-emerald-600 animate-in slide-in-from-top-1">
-                  <CheckCircle2 className="mr-1 h-3 w-3" />
-                  {t('import.fileSelected')} <span className="ml-1 font-medium">{importFile.name}</span>
-                </p>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleImport}
-              disabled={importing}
-              className="inline-flex items-center justify-center rounded-xl bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-slate-200 transition-all hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {importing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('buttons.importing')}
-                </>
-              ) : (
-                t('buttons.import')
-              )}
-            </button>
-          </div>
-
-          {(importError || importSummary) && (
-            <div className="mt-6 space-y-3 animate-in fade-in slide-in-from-top-2">
-              {importError && (
-                <div className="flex items-start rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-                  <XCircle className="mr-2 h-5 w-5 shrink-0 text-red-600" />
-                  <span>{importError}</span>
-                </div>
-              )}
-              {importSummary && (
-                <div className="flex items-start rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-                  <CheckCircle2 className="mr-2 h-5 w-5 shrink-0 text-emerald-600" />
-                  <span>{importSummary}</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {importResult && importResult.rows.length > 0 && (
-            <div className="mt-8 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm animate-in fade-in slide-in-from-bottom-2">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200 text-sm">
-                  <thead className="bg-slate-50/80 backdrop-blur-sm">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-600">{t('import.tableHeaders.row')}</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-600">{t('import.tableHeaders.username')}</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-600">{t('import.tableHeaders.email')}</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-600">{t('import.tableHeaders.roles')}</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-600">{t('import.tableHeaders.active')}</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-600">{t('import.tableHeaders.result')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {importResult.rows.map((row) => (
-                      <tr key={`${row.rowNumber}-${row.username}`} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-4 py-3 text-slate-500 font-medium">#{row.rowNumber}</td>
-                        <td className="px-4 py-3 font-medium text-slate-800">{row.username}</td>
-                        <td className="px-4 py-3 text-slate-600">{row.email}</td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {row.roles.map(r => (
-                            <span key={r} className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
-                              {r}
-                            </span>
-                          ))}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {row.active === null ? '-' : row.active ? (
-                            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
-                              {t('import.status.yes')}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-                              {t('import.status.no')}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          {row.success ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-100">
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              {t('import.status.success')}
-                            </span>
-                          ) : (
-                            <div className="flex flex-col gap-1">
-                              <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 border border-red-100">
-                                <XCircle className="h-3.5 w-3.5" />
-                                {t('import.status.failure')}
-                              </span>
-                              {row.message && <p className="ml-1 text-[11px] text-red-500">{row.message}</p>}
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
+      {isImportModalOpen && (
+        <StaffImportModal
+          onClose={() => setIsImportModalOpen(false)}
+          onSuccess={() => {
+            router.push('/accountList?created=true');
+            setIsImportModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
