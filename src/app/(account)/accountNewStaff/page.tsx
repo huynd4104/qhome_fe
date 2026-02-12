@@ -479,21 +479,19 @@ export default function AccountNewStaffPage() {
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
       {/* Back Button */}
-      <div
-        className="mx-auto mb-8 flex max-w-5xl cursor-pointer items-center group"
+      <button
         onClick={handleBack}
+        className="group mb-6 flex items-center gap-2 rounded-lg py-2 pl-2 pr-4 text-slate-500 transition-all hover:bg-white hover:text-emerald-700 hover:shadow-sm"
       >
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm transition-all group-hover:bg-emerald-50 group-hover:shadow-md">
-          <ArrowLeft className="h-5 w-5 text-slate-600 transition-colors group-hover:text-emerald-600" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition-colors group-hover:ring-emerald-200">
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
         </div>
-        <span className="ml-3 text-lg font-semibold text-slate-600 transition-colors group-hover:text-emerald-700">
-          {t('back')}
-        </span>
-      </div>
+        <span className="font-semibold">{t('back')}</span>
+      </button>
 
-      <div className="mx-auto max-w-5xl space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="mx-auto max-w-5xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Main Form Card */}
-        <div className="overflow-visible rounded-3xl border border-white/50 bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
+        <div className="relative z-10 overflow-visible rounded-3xl border border-white/50 bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
           <div className="border-b border-slate-100 p-6 md:p-8">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">{t('title')}</h1>
             <p className="mt-2 text-slate-500">
@@ -509,26 +507,26 @@ export default function AccountNewStaffPage() {
                 {t('sections.accountInfo') || 'Thông tin tài khoản'}
               </h3>
 
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
                 <div className="group space-y-2">
-                  <label className="text-sm font-medium text-slate-700 transition-colors group-focus-within:text-emerald-600">{t('fields.username')}</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-emerald-500" />
-                    <input
-                      type="text"
-                      value={form.username}
-                      onChange={(e) => {
-                        handleChange('username')(e);
-                        if (usernameError) setUsernameError(null);
-                      }}
-                      placeholder={t('placeholders.username')}
-                      maxLength={16}
-                      className={`w-full rounded-xl border bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-4 ${usernameError
-                        ? 'border-red-200 focus:border-red-500 focus:ring-red-100'
-                        : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
-                        }`}
-                    />
-                  </div>
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                    <User className="h-4 w-4 text-emerald-500" />
+                    {t('fields.username')}
+                  </label>
+                  <input
+                    type="text"
+                    value={form.username}
+                    onChange={(e) => {
+                      handleChange('username')(e);
+                      if (usernameError) setUsernameError(null);
+                    }}
+                    placeholder={t('placeholders.username')}
+                    maxLength={16}
+                    className={`h-11 w-full rounded-xl border px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 ${usernameError
+                      ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-red-100 placeholder:text-red-300'
+                      : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500 focus:ring-emerald-500/20 hover:border-emerald-200'
+                      }`}
+                  />
                   {usernameError && (
                     <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1">
                       <XCircle className="mr-1 h-3 w-3" />
@@ -538,24 +536,24 @@ export default function AccountNewStaffPage() {
                 </div>
 
                 <div className="group space-y-2">
-                  <label className="text-sm font-medium text-slate-700 transition-colors group-focus-within:text-emerald-600">{t('fields.email')}</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-emerald-500" />
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => {
-                        handleChange('email')(e);
-                        if (emailError) setEmailError(null);
-                      }}
-                      placeholder={t('placeholders.email')}
-                      maxLength={40}
-                      className={`w-full rounded-xl border bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-4 ${emailError
-                        ? 'border-red-200 focus:border-red-500 focus:ring-red-100'
-                        : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
-                        }`}
-                    />
-                  </div>
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                    <Mail className="h-4 w-4 text-emerald-500" />
+                    {t('fields.email')}
+                  </label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => {
+                      handleChange('email')(e);
+                      if (emailError) setEmailError(null);
+                    }}
+                    placeholder={t('placeholders.email')}
+                    maxLength={40}
+                    className={`h-11 w-full rounded-xl border px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 ${emailError
+                      ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-red-100 placeholder:text-red-300'
+                      : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500 focus:ring-emerald-500/20 hover:border-emerald-200'
+                      }`}
+                  />
                   {emailError && (
                     <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1">
                       <XCircle className="mr-1 h-3 w-3" />
@@ -575,25 +573,25 @@ export default function AccountNewStaffPage() {
                 {t('sections.personalInfo') || 'Thông tin cá nhân'}
               </h3>
 
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
                 <div className="group space-y-2">
-                  <label className="text-sm font-medium text-slate-700 transition-colors group-focus-within:text-emerald-600">{t('fields.fullName')}</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-emerald-500" />
-                    <input
-                      type="text"
-                      value={form.fullName}
-                      onChange={(e) => {
-                        handleChange('fullName')(e);
-                        if (fullNameError) setFullNameError(null);
-                      }}
-                      placeholder={t('placeholders.fullName')}
-                      className={`w-full rounded-xl border bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-4 ${fullNameError
-                        ? 'border-red-200 focus:border-red-500 focus:ring-red-100'
-                        : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
-                        }`}
-                    />
-                  </div>
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                    <User className="h-4 w-4 text-emerald-500" />
+                    {t('fields.fullName')}
+                  </label>
+                  <input
+                    type="text"
+                    value={form.fullName}
+                    onChange={(e) => {
+                      handleChange('fullName')(e);
+                      if (fullNameError) setFullNameError(null);
+                    }}
+                    placeholder={t('placeholders.fullName')}
+                    className={`h-11 w-full rounded-xl border px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 ${fullNameError
+                      ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-red-100 placeholder:text-red-300'
+                      : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500 focus:ring-emerald-500/20 hover:border-emerald-200'
+                      }`}
+                  />
                   {fullNameError && (
                     <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1">
                       <XCircle className="mr-1 h-3 w-3" />
@@ -603,45 +601,45 @@ export default function AccountNewStaffPage() {
                 </div>
 
                 <div className="group space-y-2">
-                  <label className="text-sm font-medium text-slate-700 transition-colors group-focus-within:text-emerald-600">{t('fields.phone')}</label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-emerald-500" />
-                    <input
-                      type="tel"
-                      value={form.phone}
-                      onChange={handleChange('phone')}
-                      placeholder={t('placeholders.phone')}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-100"
-                    />
-                  </div>
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                    <Phone className="h-4 w-4 text-emerald-500" />
+                    {t('fields.phone')}
+                  </label>
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={handleChange('phone')}
+                    placeholder={t('placeholders.phone')}
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 hover:border-emerald-200"
+                  />
                 </div>
 
                 <div className="group space-y-2">
-                  <label className="text-sm font-medium text-slate-700 transition-colors group-focus-within:text-emerald-600">{t('fields.nationalId')}</label>
-                  <div className="relative">
-                    <CreditCard className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-emerald-500" />
-                    <input
-                      type="text"
-                      value={form.nationalId}
-                      onChange={handleChange('nationalId')}
-                      placeholder={t('placeholders.nationalId')}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-100"
-                    />
-                  </div>
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                    <CreditCard className="h-4 w-4 text-emerald-500" />
+                    {t('fields.nationalId')}
+                  </label>
+                  <input
+                    type="text"
+                    value={form.nationalId}
+                    onChange={handleChange('nationalId')}
+                    placeholder={t('placeholders.nationalId')}
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 hover:border-emerald-200"
+                  />
                 </div>
 
                 <div className="group space-y-2">
-                  <label className="text-sm font-medium text-slate-700 transition-colors group-focus-within:text-emerald-600">{t('fields.address')}</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-emerald-500" />
-                    <input
-                      type="text"
-                      value={form.address}
-                      onChange={handleChange('address')}
-                      placeholder={t('placeholders.address')}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-100"
-                    />
-                  </div>
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                    <MapPin className="h-4 w-4 text-emerald-500" />
+                    {t('fields.address')}
+                  </label>
+                  <input
+                    type="text"
+                    value={form.address}
+                    onChange={handleChange('address')}
+                    placeholder={t('placeholders.address')}
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 hover:border-emerald-200"
+                  />
                 </div>
               </div>
             </div>
@@ -655,9 +653,12 @@ export default function AccountNewStaffPage() {
                 {t('sections.roleInfo') || 'Vai trò'}
               </h3>
 
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">{t('fields.role')}</label>
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                    <Shield className="h-4 w-4 text-emerald-500" />
+                    {t('fields.role')}
+                  </label>
                   <Select
                     options={STAFF_ROLE_OPTIONS}
                     value={form.role}
@@ -681,7 +682,7 @@ export default function AccountNewStaffPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-end">
+            <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-end border-t border-slate-100">
               <button
                 type="button"
                 onClick={handleBack}
