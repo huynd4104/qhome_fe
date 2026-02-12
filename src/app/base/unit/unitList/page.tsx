@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { Building as BuildingIcon, Layers, FileSpreadsheet } from 'lucide-react';
 
 import EditTable from '@/src/assets/EditTable.svg';
 import { useUnitPage } from '@/src/hooks/useUnitPage';
@@ -34,6 +35,8 @@ export default function UnitListPage() {
   const [buildingSearch, setBuildingSearch] = useState('');
   const [unitSearch, setUnitSearch] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [expandedBuildingId, setExpandedBuildingId] = useState<string | null>(null);
+  const [expandedFloorKey, setExpandedFloorKey] = useState<string | null>(null);
 
   // Change unit status with confirmation
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -132,6 +135,34 @@ export default function UnitListPage() {
       return buildingMatch;
     });
   }, [buildingSearch, buildings]);
+
+  // Hierarchical data: buildings -> floors -> units (for sidebar tree)
+  const buildingFloorTree = useMemo(() => {
+    return filteredBuildings.map((building) => {
+      const unitsOfBuilding = unitsWithContext.filter((u) => u.buildingId === building.id);
+      const floorMap = new Map<number, UnitWithContext[]>();
+
+      unitsOfBuilding.forEach((unit) => {
+        if (typeof unit.floor !== 'number') return;
+        if (!floorMap.has(unit.floor)) {
+          floorMap.set(unit.floor, []);
+        }
+        floorMap.get(unit.floor)!.push(unit);
+      });
+
+      const floors = Array.from(floorMap.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([floor, units]) => ({
+          floor,
+          units: units.sort((a, b) => normalizeText(a.code).localeCompare(normalizeText(b.code), 'vi', { numeric: true, sensitivity: 'base' })),
+        }));
+
+      return {
+        building,
+        floors,
+      };
+    });
+  }, [filteredBuildings, unitsWithContext]);
 
   // Available floors for the currently selected building
   const availableFloors = useMemo(() => {
@@ -253,11 +284,18 @@ export default function UnitListPage() {
     setSelectedBuildingId(buildingId);
     setSelectedFloor('all');
     setSelectedBedrooms('all');
+    setExpandedBuildingId(buildingId);
+    setExpandedFloorKey(null);
     handlePageChange(0);
   };
 
   const handleSelectFloor = (floor: 'all' | number) => {
     setSelectedFloor(floor);
+    if (selectedBuildingId !== 'all' && floor !== 'all') {
+      setExpandedFloorKey(`${selectedBuildingId}-${floor}`);
+    } else {
+      setExpandedFloorKey(null);
+    }
     handlePageChange(0);
   };
 
@@ -268,7 +306,8 @@ export default function UnitListPage() {
 
   const handleExport = async () => {
     try {
-      const blob = await exportUnits(selectedBuildingId === 'all' ? undefined : selectedBuildingId);
+      // Export tất cả căn hộ
+      const blob = await exportUnits(undefined, undefined);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -279,6 +318,38 @@ export default function UnitListPage() {
       document.body.removeChild(a);
     } catch (error) {
       console.error('Failed to export units:', error);
+    }
+  };
+
+  const handleExportBuilding = async (buildingId: string, buildingCode?: string) => {
+    try {
+      const blob = await exportUnits(buildingId, undefined);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `units_${buildingCode || buildingId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Failed to export building units:', error);
+    }
+  };
+
+  const handleExportFloor = async (buildingId: string, floor: number, buildingCode?: string) => {
+    try {
+      const blob = await exportUnits(buildingId, floor);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `units_${buildingCode || buildingId}_floor_${floor}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Failed to export floor units:', error);
     }
   };
 
@@ -469,41 +540,145 @@ export default function UnitListPage() {
                     <span className="text-xs text-slate-500">{activeUnitsCount}</span>
                   </button>
 
-                  <div className="max-h-[420px] space-y-1 overflow-y-auto pr-1">
-                    {filteredBuildings.length === 0 ? (
+                  <div className="max-h-[500px] space-y-2 overflow-y-auto pr-1">
+                    {buildingFloorTree.length === 0 ? (
                       <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center text-slate-500">
                         {t('buildingFilter.noData')}
                       </div>
                     ) : (
-                      filteredBuildings.map((building) => {
+                      buildingFloorTree.map(({ building, floors }) => {
                         const isInactive = building.status?.toUpperCase() === 'INACTIVE';
-                        // Count only ACTIVE units for this building
-                        const activeUnitsInBuilding = building.units?.filter(
-                          (unit) => unit.status?.toUpperCase() === 'ACTIVE'
-                        ).length ?? 0;
+                        const totalUnitsInBuilding = floors.reduce((sum, f) => sum + f.units.length, 0);
+                        const isExpanded = expandedBuildingId === building.id;
+
                         return (
-                          <button
+                          <div
                             key={building.id}
-                            type="button"
-                            onClick={() => handleSelectBuilding(building.id)}
-                            className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition ${
+                            className={`rounded-xl border transition ${
                               isInactive
-                                ? 'border-slate-300 bg-slate-100 text-slate-500 cursor-default'
-                                : selectedBuildingId === building.id
-                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                : 'border-transparent hover:bg-slate-50'
+                                ? 'border-slate-300 bg-slate-100'
+                                : isExpanded
+                                ? 'border-emerald-200 bg-emerald-50'
+                                : 'border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40'
                             }`}
                           >
-                            <div className="flex flex-1 flex-col">
-                              <span className={`font-semibold ${isInactive ? 'text-slate-500' : 'text-[#02542D]'}`}>
-                                {building.name}
-                              </span>
-                              <span className="text-xs text-slate-500">{building.code}</span>
+                            <div className="flex w-full items-center justify-between px-3 py-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (isInactive) return;
+                                  const nextExpanded = isExpanded ? null : building.id;
+                                  setExpandedBuildingId(nextExpanded);
+
+                                  // Khi chọn tòa nhà, cập nhật filter bên phải
+                                  setSelectedBuildingId(building.id);
+                                  setSelectedFloor('all');
+                                  setSelectedBedrooms('all');
+                                  setExpandedFloorKey(null);
+                                  handlePageChange(0);
+                                }}
+                                className="flex flex-1 items-center gap-3 text-left"
+                              >
+                                <div
+                                  className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                                    isInactive ? 'bg-slate-200 text-slate-500' : 'bg-emerald-100 text-emerald-700'
+                                  }`}
+                                >
+                                  <BuildingIcon className="h-4 w-4" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span
+                                    className={`font-semibold ${
+                                      isInactive ? 'text-slate-500' : 'text-[#02542D]'
+                                    }`}
+                                  >
+                                    {building.name}
+                                  </span>
+                                  <span className="text-xs text-slate-500">
+                                    {totalUnitsInBuilding} căn hộ
+                                  </span>
+                                </div>
+                              </button>
+                              <div className="flex items-center gap-1">
+                                {!isInactive && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleExportBuilding(building.id, building.code ?? undefined);
+                                    }}
+                                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"
+                                    title="Export Excel"
+                                  >
+                                    <FileSpreadsheet className="w-4 h-4" />
+                                  </button>
+                                )}
+                                <span className="ml-1 text-xs font-medium text-slate-500">
+                                  {isExpanded ? '▴' : '▾'}
+                                </span>
+                              </div>
                             </div>
-                            <span className="text-xs font-medium text-slate-500">
-                              {activeUnitsInBuilding}
-                            </span>
-                          </button>
+
+                            {/* Floors list */}
+                            {isExpanded && floors.length > 0 && (
+                              <div className="border-t border-emerald-100 bg-white/80 px-3 py-2">
+                                <div className="space-y-2">
+                                  {floors.map((floorInfo) => {
+                                    const floorKey = `${building.id}-${floorInfo.floor}`;
+                                    const isFloorSelected = expandedFloorKey === floorKey;
+                                    return (
+                                      <div
+                                        key={floorKey}
+                                        className={`rounded-lg border px-3 py-2 ${
+                                          isFloorSelected
+                                            ? 'border-emerald-300 bg-emerald-50'
+                                            : 'border-slate-200 bg-slate-50'
+                                        }`}
+                                      >
+                                        <div className="flex w-full items-center justify-between">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setSelectedBuildingId(building.id);
+                                              setSelectedFloor(floorInfo.floor);
+                                              setSelectedBedrooms('all');
+                                              setExpandedBuildingId(building.id);
+                                              setExpandedFloorKey(floorKey);
+                                              handlePageChange(0);
+                                            }}
+                                            className="flex flex-1 items-center gap-2 text-left"
+                                          >
+                                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                                              <Layers className="h-3.5 w-3.5" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                              <span className="text-sm font-semibold text-slate-800">
+                                                {t('floor')} {floorInfo.floor}
+                                              </span>
+                                              <span className="text-xs text-slate-500">
+                                                {floorInfo.units.length} căn hộ
+                                              </span>
+                                            </div>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleExportFloor(building.id, floorInfo.floor, building.code ?? undefined);
+                                            }}
+                                            className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"
+                                            title="Export Excel"
+                                          >
+                                            <FileSpreadsheet className="w-4 h-4" />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         );
                       })
                     )}
@@ -547,63 +722,34 @@ export default function UnitListPage() {
             </div>
           </div>
 
-          {/* Floor & bedroom filters for the selected building - dropdown style */}
-          {selectedBuildingId !== 'all' && (availableFloors.length > 0 || availableBedrooms.length > 0) && (
+          {/* Bedroom filter only (floor is selected from the sidebar tree) */}
+          {selectedBuildingId !== 'all' && availableBedrooms.length > 0 && (
             <div className="border-b border-slate-100 px-6 py-3 bg-slate-50/60">
-              <div className="flex flex-wrap gap-6 items-center text-sm">
-                {availableFloors.length > 0 && (
-                  <label className="flex items-center gap-3">
-                    <span className="font-medium text-slate-700">
-                      {t('floor')}:
-                    </span>
-                    <select
-                      value={selectedFloor === 'all' ? 'all' : String(selectedFloor)}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === 'all') {
-                          handleSelectFloor('all');
-                        } else {
-                          handleSelectFloor(Number(value));
-                        }
-                      }}
-                      className="min-w-[140px] rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                    >
-                      <option value="all">Tất cả</option>
-                      {availableFloors.map((floor) => (
-                        <option key={floor} value={floor}>
-                          {t('floor')} {floor}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-
-                {availableBedrooms.length > 0 && (
-                  <label className="flex items-center gap-3">
-                    <span className="font-medium text-slate-700">
-                      Loại phòng:
-                    </span>
-                    <select
-                      value={selectedBedrooms === 'all' ? 'all' : String(selectedBedrooms)}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === 'all') {
-                          handleSelectBedrooms('all');
-                        } else {
-                          handleSelectBedrooms(Number(value));
-                        }
-                      }}
-                      className="min-w-[160px] rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                    >
-                      <option value="all">Tất cả</option>
-                      {availableBedrooms.map((bed) => (
-                        <option key={bed} value={bed}>
-                          {bed} phòng ngủ
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
+              <div className="flex flex-wrap items-center gap-6 text-sm">
+                <label className="flex items-center gap-3">
+                  <span className="font-medium text-slate-700">
+                    Loại phòng:
+                  </span>
+                  <select
+                    value={selectedBedrooms === 'all' ? 'all' : String(selectedBedrooms)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === 'all') {
+                        handleSelectBedrooms('all');
+                      } else {
+                        handleSelectBedrooms(Number(value));
+                      }
+                    }}
+                    className="min-w-[160px] rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                  >
+                    <option value="all">Tất cả</option>
+                    {availableBedrooms.map((bed) => (
+                      <option key={bed} value={bed}>
+                        {bed} phòng ngủ
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
             </div>
           )}
@@ -616,20 +762,14 @@ export default function UnitListPage() {
                     {t('unitCode')}
                   </th>
                   <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-600">
-                    {t('buildingName')}
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-600">
-                    {t('floor')}
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-600">
                     {t('areaM2')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-600">
+                    {t('bedrooms')}
                   </th>
                   <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-600">
                     {t('status')}
                   </th>
-                  {/* <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-600">
-                    {t('ownerName')}
-                  </th> */}
                   <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-600">
                     {t('action')}
                   </th>
@@ -639,7 +779,7 @@ export default function UnitListPage() {
                 {unitsToDisplay.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={5}
                       className="px-4 py-6 text-center text-sm text-slate-500"
                     >
                       {t('noUnit')}
@@ -659,16 +799,10 @@ export default function UnitListPage() {
                           {unit.code}
                         </td>
                         <td className={`px-4 py-3 ${isDisabled ? 'text-slate-500' : 'text-slate-600'}`}>
-                          <div className="flex flex-col">
-                            <span>{unit.buildingName ?? '-'}</span>
-                            <span className="text-xs text-slate-500">{unit.buildingCode ?? '-'}</span>
-                          </div>
-                        </td>
-                        <td className={`px-4 py-3 ${isDisabled ? 'text-slate-500' : 'text-slate-600'}`}>
-                          {unit.floor ?? '-'}
-                        </td>
-                        <td className={`px-4 py-3 ${isDisabled ? 'text-slate-500' : 'text-slate-600'}`}>
                           {unit.areaM2 ?? '-'}
+                        </td>
+                        <td className={`px-4 py-3 ${isDisabled ? 'text-slate-500' : 'text-slate-600'}`}>
+                          {unit.bedrooms ?? '-'}
                         </td>
                         <td className="px-4 py-3">
                           <span
@@ -681,14 +815,6 @@ export default function UnitListPage() {
                             {unit.status === 'ACTIVE' || unit.status === 'Active' ? t('active') : t('inactive')}
                           </span>
                         </td>
-                        {/* <td className={`px-4 py-3 ${isDisabled ? 'text-slate-500' : 'text-slate-600'}`}>
-                          <div className="flex flex-col">
-                            <span>{unit.ownerName ?? '-'}</span>
-                            {unit.ownerContact && (
-                              <span className="text-xs text-slate-500">{unit.ownerContact}</span>
-                            )}
-                          </div>
-                        </td> */}
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <Link
@@ -697,27 +823,6 @@ export default function UnitListPage() {
                             >
                               <Image src={EditTable} alt={t('altText.viewDetail')} width={24} height={24} />
                             </Link>
-                            {/* {!isBuildingInactive && (
-                              <button
-                                type="button"
-                                onClick={() => onUnitStatusChange(unit.id)}
-                                className="w-[34px] h-[34px] flex items-center justify-center rounded-md bg-white border border-gray-300 hover:bg-gray-100 transition"
-                                title={t('statusChange.buttonTitle')}
-                              >
-                                <svg 
-                                  xmlns="http://www.w3.org/2000/svg" 
-                                  viewBox="0 0 16 16" 
-                                  height="16" 
-                                  width="16"
-                                  fill="currentColor"
-                                >
-                                  <g fill="none" fillRule="nonzero">
-                                    <path d="M16 0v16H0V0h16ZM8.395333333333333 15.505333333333333l-0.007333333333333332 0.0013333333333333333 -0.047333333333333324 0.023333333333333334 -0.013333333333333332 0.0026666666666666666 -0.009333333333333332 -0.0026666666666666666 -0.047333333333333324 -0.023333333333333334c-0.006666666666666666 -0.0026666666666666666 -0.012666666666666666 -0.0006666666666666666 -0.016 0.003333333333333333l-0.0026666666666666666 0.006666666666666666 -0.011333333333333334 0.2853333333333333 0.003333333333333333 0.013333333333333332 0.006666666666666666 0.008666666666666666 0.06933333333333333 0.049333333333333326 0.009999999999999998 0.0026666666666666666 0.008 -0.0026666666666666666 0.06933333333333333 -0.049333333333333326 0.008 -0.010666666666666666 0.0026666666666666666 -0.011333333333333334 -0.011333333333333334 -0.2846666666666666c-0.0013333333333333333 -0.006666666666666666 -0.005999999999999999 -0.011333333333333334 -0.011333333333333334 -0.011999999999999999Zm0.17666666666666667 -0.07533333333333334 -0.008666666666666666 0.0013333333333333333 -0.12333333333333332 0.062 -0.006666666666666666 0.006666666666666666 -0.002 0.007333333333333332 0.011999999999999999 0.2866666666666666 0.003333333333333333 0.008 0.005333333333333333 0.004666666666666666 0.134 0.062c0.008 0.0026666666666666666 0.015333333333333332 0 0.019333333333333334 -0.005333333333333333l0.0026666666666666666 -0.009333333333333332 -0.02266666666666667 -0.4093333333333333c-0.002 -0.008 -0.006666666666666666 -0.013333333333333332 -0.013333333333333332 -0.014666666666666665Zm-0.4766666666666666 0.0013333333333333333a0.015333333333333332 0.015333333333333332 0 0 0 -0.018 0.004l-0.004 0.009333333333333332 -0.02266666666666667 0.4093333333333333c0 0.008 0.004666666666666666 0.013333333333333332 0.011333333333333334 0.016l0.009999999999999998 -0.0013333333333333333 0.134 -0.062 0.006666666666666666 -0.005333333333333333 0.0026666666666666666 -0.007333333333333332 0.011333333333333334 -0.2866666666666666 -0.002 -0.008 -0.006666666666666666 -0.006666666666666666 -0.12266666666666666 -0.06133333333333333Z" strokeWidth="0.6667"></path>
-                                    <path fill="currentColor" d="M13.333333333333332 9.333333333333332a1 1 0 0 1 0.09599999999999999 1.9953333333333332L13.333333333333332 11.333333333333332H5.080666666666667l0.96 0.96a1 1 0 0 1 -1.3386666666666667 1.4826666666666668l-0.076 -0.06866666666666665 -2.5526666666666666 -2.5533333333333332c-0.6493333333333333 -0.6493333333333333 -0.22666666666666668 -1.7446666666666666 0.6606666666666666 -1.8166666666666667l0.09333333333333334 -0.004H13.333333333333332ZM9.959999999999999 2.293333333333333a1 1 0 0 1 1.338 -0.06933333333333333l0.076 0.06866666666666665 2.5526666666666666 2.5533333333333332c0.6493333333333333 0.6493333333333333 0.22666666666666668 1.7446666666666666 -0.6606666666666666 1.8166666666666667l-0.09333333333333334 0.004H2.6666666666666665a1 1 0 0 1 -0.09599999999999999 -1.9953333333333332L2.6666666666666665 4.666666666666666h8.252666666666666l-0.96 -0.96a1 1 0 0 1 0 -1.4133333333333333Z" strokeWidth="0.6667"></path>
-                                  </g>
-                                </svg>
-                              </button>
-                            )} */}
                           </div>
                         </td>
                       </tr>

@@ -133,13 +133,23 @@ export async function checkUnitCodeExists(code: string, buildingId: string): Pro
 
 /**
  * GET /api/units/export
- * Optional query param: buildingId
+ * Optional query params: buildingId, floor
  */
-export async function exportUnits(buildingId?: string): Promise<Blob> {
+export async function exportUnits(buildingId?: string, floor?: number): Promise<Blob> {
+  const params: Record<string, any> = {};
+  if (buildingId) {
+    params.buildingId = buildingId;
+  }
+  if (floor !== undefined && floor !== null && typeof floor === 'number') {
+    params.floor = floor;
+  }
+
+  console.log('Export units params:', params);
+
   const response = await axios.get(
     `${BASE_URL}/api/units/export`,
     {
-      params: buildingId ? { buildingId } : {},
+      params,
       responseType: 'blob',
       withCredentials: true,
     }
