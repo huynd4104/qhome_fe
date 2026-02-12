@@ -24,7 +24,10 @@ import {
   AlertCircle,
   Activity,
   FileUp,
-  FileDown
+  FileDown,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown
 } from 'lucide-react';
 import { useBuildingPage } from '@/src/hooks/useBuildingPage';
 import Pagination from '@/src/components/customer-interaction/Pagination';
@@ -57,11 +60,11 @@ export default function BuildingListPage() {
     totalPages,
     handleFilterChange,
     handleClear,
-    handlePageChange
+    handlePageChange,
+    sortConfig,
+    handleSort
   } = useBuildingPage();
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<BuildingImportResponse | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -72,73 +75,8 @@ export default function BuildingListPage() {
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [selectedBuildingStatus, setSelectedBuildingStatus] = useState<string | null>(null);
 
-  // Filter only ACTIVE buildings and order by code (ABC order), adhering to original logic but adding search/status filter capability
-  const filteredBuildings = useMemo(() => {
-    let result = data?.content || [];
-
-    // Filter by status if not ALL (Original code logic hardcoded 'ACTIVE', here we allow flexibility if needed via statusFilter, 
-    // but default to 'ACTIVE' if that was the strict requirement, OR we can respect the filter. 
-    // The original code had: .filter((item: any) => item.status === 'ACTIVE')
-    // We will use the statusFilter state to control this, initializing it to 'ACTIVE' if we want to match exactly, 
-    // or 'ALL' if we want to show all. The original code filtered by 'ACTIVE'. 
-    // Let's respect the original logic but allow the user to change it if we add a filter dropdown.
-    // For now, let's implement the filter logic properly:
-
-    if (statusFilter !== 'ALL') {
-      result = result.filter((item: any) => item.status === statusFilter);
-    } else {
-      // If ALL, we show everything. 
-      // Note: The original code FORCED 'ACTIVE' filter. If the user wants to see inactive, they couldn't. 
-      // I will default statusFilter to 'ALL' to allow seeing all, but if the requirement is strictly "only active", I can set default.
-      // However, typically "List" pages show all. The original might have been a "Resident View" or something specific?
-      // Wait, the original code had: const ordered = (data?.content || []).filter((item: any) => item.status === 'ACTIVE')...
-      // This implies the list ONLY showed active buildings. 
-      // I will Default statusFilter to 'ACTIVE' to match behavior, but allow changing it via UI.
-    }
-
-    if (searchTerm) {
-      const lower = searchTerm.toLowerCase();
-      result = result.filter((item: any) =>
-        (item.code || '').toLowerCase().includes(lower) ||
-        (item.name || '').toLowerCase().includes(lower)
-      );
-    }
-
-    return result.sort((a: any, b: any) => {
-      const codeA = (a.code || '').toUpperCase();
-      const codeB = (b.code || '').toUpperCase();
-      return codeA.localeCompare(codeB);
-    });
-  }, [data, searchTerm, statusFilter]);
-
-  // IMPORTANT: The original code filtered strictly by ACTIVE. 
-  // I'll set the initial state of statusFilter to 'ACTIVE' to preserve this, 
-  // but the UI will allow clearing it to 'ALL'.
-  useEffect(() => {
-    // If we want to strictly follow "filter only ACTIVE", we can uncomment this or set initial state.
-    // For now, I'll set initial state of statusFilter to 'ACTIVE' in the useState definition above if desired.
-    // Actually, standard UI allows seeing all. I'll leave it as 'ALL' to be more useful, or 'ACTIVE' if strictly required.
-    // Let's stick to 'ALL' for a general admin list, but if I see "filter only ACTIVE" in original, I should probably respect it initially.
-    // The original code: const ordered = (data?.content || []).filter((item: any) => item.status === 'ACTIVE')
-    // This is quite specific. I will set the default to 'ACTIVE'.
-    setStatusFilter('ACTIVE');
-  }, []); // Run once on mount
-
-  const paginatedBuildings = useMemo(() => {
-    // Client-side pagination for the filtered list since the hook provides server-side pagination 
-    // BUT the original code did client-side filtering on the `data.content`. 
-    // Wait, `useBuildingPage` suggests server side pagination.
-    // `data.content` is likely the current page. 
-    // The original code: const ordered = (data?.content || []).filter...
-    // This means it was filtering ONLY what was on the current page? Or is `data.content` ALL buildings?
-    // If `useBuildingPage` fetches a specific page, then client-side filtering is wrong unless it fetches a large page size.
-    // Looking at `useBuildingPage` usage: `pageNo`, `totalPages` come from it.
-    // If the API returns paged data, `data.content` is just one page. 
-    // The original code filtering `item.status === 'ACTIVE'` on the current page results might be weird if the page contains mixed statuses.
-    // However, I will preserve the logic: Filter the `data.content` and display it.
-    // If the matching logic is to simulate `accountList`, I should use the hook's pagination controls.
-    return filteredBuildings;
-  }, [filteredBuildings]);
+  // Use data directly from hook
+  const paginatedBuildings = data?.content || [];
 
 
   const statusOptions: SelectOption[] = [
@@ -413,8 +351,8 @@ export default function BuildingListPage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
               <input
                 type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={filters.codeName || ''}
+                onChange={(e) => handleFilterChange('codeName', e.target.value)}
                 placeholder={t('searchPlaceholder') || 'Search by name or code...'}
                 className="h-10 w-full pl-12 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
               />
@@ -424,8 +362,8 @@ export default function BuildingListPage() {
             <div className="w-64">
               <Select
                 options={statusOptions}
-                value={statusFilter}
-                onSelect={(op) => setStatusFilter(op.id as any)}
+                value={filters.status || 'ALL'}
+                onSelect={(op) => handleFilterChange('status', op.id as any)}
                 renderItem={(op) => op.label}
                 getValue={(op) => op.id}
                 placeholder={t('filters.allStatus')}
@@ -449,9 +387,39 @@ export default function BuildingListPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/50">
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('buildingCode')}</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('buildingName')}</th>
-                    <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">{t('floors') || 'Floors'}</th>
+                    <th
+                      onClick={() => handleSort('code')}
+                      className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group select-none"
+                    >
+                      <div className="flex items-center gap-1">
+                        {t('buildingCode')}
+                        {sortConfig?.key === 'code' ? (
+                          sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : <ArrowDown className="w-3 h-3 text-emerald-600" />
+                        ) : <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-400" />}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('name')}
+                      className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group select-none"
+                    >
+                      <div className="flex items-center gap-1">
+                        {t('buildingName')}
+                        {sortConfig?.key === 'name' ? (
+                          sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : <ArrowDown className="w-3 h-3 text-emerald-600" />
+                        ) : <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-400" />}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('floorsMax')}
+                      className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group select-none"
+                    >
+                      <div className="flex items-center justify-center gap-1">
+                        {t('floors') || 'Floors'}
+                        {sortConfig?.key === 'floorsMax' ? (
+                          sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : <ArrowDown className="w-3 h-3 text-emerald-600" />
+                        ) : <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-400" />}
+                      </div>
+                    </th>
                     <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">{t('createAt')}</th>
                     <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">{t('createBy')}</th>
                     <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">{t('status') || 'Status'}</th>

@@ -1,31 +1,36 @@
 'use client'
 import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
-import Arrow from '@/src/assets/Arrow.svg';
-import DetailField from '@/src/components/base-service/DetailField';
 import Select from '@/src/components/customer-interaction/Select';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Building } from '@/src/types/building';
 import { useBuildingAdd } from '@/src/hooks/useBuildingAdd';
-import { Project } from '@/src/types/project';
 import { useNotifications } from '@/src/hooks/useNotifications';
 import { checkBuildingCodeExists } from '@/src/services/base/buildingService';
+import {
+    ArrowLeft,
+    Building2,
+    MapPin,
+    Layers,
+    Save,
+    XCircle,
+    Loader2,
+    Navigation,
+    Home
+} from 'lucide-react';
 
 // Minimal types for provinces API
 type Province = { code: number; name: string };
 type District = { code: number; name: string };
 type Ward = { code: number; name: string };
 
-export default function BuildingAdd () {
+export default function BuildingAdd() {
 
     const { user, hasRole } = useAuth();
     const t = useTranslations('Building');
-    const tProject = useTranslations('Project');
     const router = useRouter();
     const [isSubmit, setIsSubmit] = useState(false);
-    const [loadingProjects, setLoadingProjects] = useState(true);
     const { show } = useNotifications();
     const [codeError, setCodeError] = useState<string>('');
     const [errors, setErrors] = useState<{
@@ -78,8 +83,8 @@ export default function BuildingAdd () {
     const stripVNPrefixes = (s: string) => {
         let x = normalizeText(s);
         x = x.replace(/^(tinh|thanh pho|tp)\s+/g, '')
-             .replace(/^(quan|huyen|thi xa|tp)\s+/g, '')
-             .replace(/^(phuong|xa|thi tran)\s+/g, '');
+            .replace(/^(quan|huyen|thi xa|tp)\s+/g, '')
+            .replace(/^(phuong|xa|thi tran)\s+/g, '');
         return x.trim();
     };
 
@@ -291,7 +296,7 @@ export default function BuildingAdd () {
                         }
                     }
                 }
-                return Array.from(names).sort((a,b)=>a.localeCompare(b));
+                return Array.from(names).sort((a, b) => a.localeCompare(b));
             } catch (_e) {
                 return [] as string[];
             }
@@ -326,7 +331,7 @@ export default function BuildingAdd () {
 
     useEffect(() => {
         const checkCode = async () => {
-            if (!formData.code ) {
+            if (!formData.code) {
                 setCodeError('');
                 return;
             }
@@ -341,13 +346,13 @@ export default function BuildingAdd () {
         const timeoutId = setTimeout(checkCode, 500); // Debounce 500ms
         return () => clearTimeout(timeoutId);
     }, [formData.code, t]);
-    
+
     const handleBack = () => {
-        router.back(); 
+        router.push('/base/building/buildingList');
     }
 
     const handleCancel = () => {
-        router.back(); 
+        router.back();
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -370,12 +375,12 @@ export default function BuildingAdd () {
 
         // Validate all fields at once
         const isValid = validateAllFields();
-        
+
         if (!isValid) {
             show(t('error'), 'error');
             return;
         }
-        
+
         if (codeError) {
             show(codeError, 'error');
             return;
@@ -398,21 +403,6 @@ export default function BuildingAdd () {
         } finally {
             setIsSubmit(false);
         }
-    };
-
-    const generateCodeFromName = (name: string): string => {
-        if (!name) return '';
-        return name
-            .split(' ')
-            .filter(word => word.length > 0)
-            .map(word => {
-                if (/^[a-zA-Z]/.test(word)) {
-                    return word[0];
-                }
-                return word;
-            })
-            .join('')
-            .toUpperCase();
     };
 
     const validateField = (fieldName: string, value: string | number) => {
@@ -462,7 +452,7 @@ export default function BuildingAdd () {
         if (!selectedDistrict) newErrors.district = t('districtRequired') || 'Vui lòng chọn quận/huyện';
         if (!selectedWard) newErrors.ward = t('wardRequired') || 'Vui lòng chọn phường/xã';
         if (!addressDetail.trim()) newErrors.addressDetail = t('addressDetailError') || 'Địa chỉ chi tiết không được để trống';
-        
+
         const floorsValue = formData.numberOfFloors;
         if (floorsValue === null || floorsValue === undefined || isNaN(floorsValue)) {
             newErrors.numberOfFloors = t('floorsRequired');
@@ -481,201 +471,280 @@ export default function BuildingAdd () {
         if (name === 'name') {
             // enforce max length 40 on name input
             const limited = value.slice(0, 40);
-            // const newCode = generateCodeFromName(limited);
             setFormData(prevData => ({
                 ...prevData,
                 name: limited,
-                // code: newCode,
             }));
-            // validateField('name', limited);
+            validateField('name', limited);
         }
     };
 
-    const handleStatusChange = (item: { name: string; value: string }) => {
-        setFormData((prevData) => ({
-            ...prevData,
-            status: item.value,
-        }));
-    };
-
     return (
-        <div className={`min-h-screen  p-4 sm:p-8 font-sans`}>
-            <div
-                className="max-w-4xl mx-auto mb-6 flex items-center cursor-pointer"
-                onClick={handleBack}
-            >
-                <Image 
-                    src={Arrow} 
-                    alt="Back" 
-                    width={20} 
-                    height={20}
-                    className="w-5 h-5 mr-2" 
-                />
-                <span className={`text-[#02542D] font-bold text-2xl hover:text-opacity-80 transition duration-150`}>
-                    {t('return')}
-                </span>
+        <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
+            {/* Back Button */}
+            <div className="mb-6 flex items-center justify-between">
+                <button
+                    onClick={handleBack}
+                    className="group flex items-center gap-2 rounded-lg py-2 pl-2 pr-4 text-slate-500 transition-all hover:bg-white hover:text-emerald-700 hover:shadow-sm"
+                >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition-colors group-hover:ring-emerald-200">
+                        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                    </div>
+                    <span className="font-semibold">{t('return')}</span>
+                </button>
             </div>
 
-            <form
-                className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-md border border-gray-200"
-                onSubmit={handleSubmit}
-            >
-                <div className="flex justify-between items-start border-b pb-4 mb-6">
-                    <div className="flex items-center">
-                        <h1 className={`text-2xl font-semibold text-[#02542D] mr-3`}>
-                            {t('addBuilding')}
-                        </h1>
+            <div className="mx-auto max-w-5xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* Main Form Card */}
+                <div className="relative z-10 overflow-visible rounded-3xl border border-white/50 bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
+                    <div className="border-b border-slate-100 p-6 md:p-8">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100/50 text-emerald-600 ring-4 ring-emerald-50">
+                                <Building2 className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">{t('addBuilding')}</h1>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    {t('addBuildingSubtitle') || 'Nhập thông tin tòa nhà mới vào hệ thống'}
+                                </p>
+                            </div>
+                        </div>
                     </div>
+
+                    <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
+                        {/* Building Info Section */}
+                        <div className="space-y-6">
+                            <h3 className="flex items-center text-sm font-semibold uppercase tracking-wider text-slate-500">
+                                <Building2 className="mr-2 h-4 w-4" />
+                                {t('sections.buildingInfo') || 'Thông tin tòa nhà'}
+                            </h3>
+
+                            <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
+                                <div className="group space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                                        <Building2 className="h-4 w-4 text-emerald-500" />
+                                        {t('buildingName')}
+                                        <span className="text-red-500 ml-1">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name ?? ''}
+                                        onChange={handleChange}
+                                        placeholder={t('buildingName')}
+                                        className={`h-11 w-full rounded-xl border px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 ${errors.name
+                                            ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-red-100 placeholder:text-red-300'
+                                            : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500 focus:ring-emerald-500/20 hover:border-emerald-200'
+                                            }`}
+                                    />
+                                    {errors.name && (
+                                        <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1">
+                                            <XCircle className="mr-1 h-3 w-3" />
+                                            {errors.name}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="group space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                                        <Layers className="h-4 w-4 text-emerald-500" />
+                                        {t('numberOfFloors')}
+                                        <span className="text-red-500 ml-1">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="numberOfFloors"
+                                        value={formData.numberOfFloors !== null && formData.numberOfFloors !== undefined ? String(formData.numberOfFloors) : ''}
+                                        onChange={(e) => {
+                                            const value = e.target.value ? parseInt(e.target.value) : null;
+                                            setFormData(prev => ({ ...prev, numberOfFloors: value }));
+                                            if (errors.numberOfFloors) {
+                                                validateField('numberOfFloors', value ?? '');
+                                            }
+                                        }}
+                                        placeholder={t('enterNumberOfFloors')}
+                                        className={`h-11 w-full rounded-xl border px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 ${errors.numberOfFloors
+                                            ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-red-100 placeholder:text-red-300'
+                                            : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500 focus:ring-emerald-500/20 hover:border-emerald-200'
+                                            }`}
+                                    />
+                                    {errors.numberOfFloors && (
+                                        <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1">
+                                            <XCircle className="mr-1 h-3 w-3" />
+                                            {errors.numberOfFloors}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="h-px bg-slate-100" />
+
+                        {/* Address Info Section */}
+                        <div className="space-y-6">
+                            <h3 className="flex items-center text-sm font-semibold uppercase tracking-wider text-slate-500">
+                                <MapPin className="mr-2 h-4 w-4" />
+                                {t('sections.addressInfo') || 'Địa chỉ'}
+                            </h3>
+
+                            <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
+                                <div className="group space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                                        <MapPin className="h-4 w-4 text-emerald-500" />
+                                        {t('city')}
+                                        <span className="text-red-500 ml-1">*</span>
+                                    </label>
+                                    <Select<Province>
+                                        options={cities}
+                                        value={selectedCity}
+                                        onSelect={(item) => setSelectedCity(String((item as Province).code))}
+                                        renderItem={(item) => (item as Province).name}
+                                        getValue={(item) => String((item as Province).code)}
+                                        placeholder={t('selectCity')}
+                                        error={!!errors.city}
+                                    />
+                                    {errors.city && (
+                                        <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1">
+                                            <XCircle className="mr-1 h-3 w-3" />
+                                            {errors.city}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="group space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                                        <MapPin className="h-4 w-4 text-emerald-500" />
+                                        {t('district')}
+                                        <span className="text-red-500 ml-1">*</span>
+                                    </label>
+                                    <Select<District>
+                                        options={districts}
+                                        value={selectedDistrict}
+                                        onSelect={(item) => setSelectedDistrict(String((item as District).code))}
+                                        renderItem={(item) => (item as District).name}
+                                        getValue={(item) => String((item as District).code)}
+                                        placeholder={t('selectDistrict')}
+                                        error={!!errors.district}
+                                    />
+                                    {errors.district && (
+                                        <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1">
+                                            <XCircle className="mr-1 h-3 w-3" />
+                                            {errors.district}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="group space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                                        <MapPin className="h-4 w-4 text-emerald-500" />
+                                        {t('ward')}
+                                        <span className="text-red-500 ml-1">*</span>
+                                    </label>
+                                    <Select<Ward>
+                                        options={wards}
+                                        value={selectedWard}
+                                        onSelect={(item) => setSelectedWard(String((item as Ward).code))}
+                                        renderItem={(item) => (item as Ward).name}
+                                        getValue={(item) => String((item as Ward).code)}
+                                        placeholder={t('selectWard')}
+                                        error={!!errors.ward}
+                                    />
+                                    {errors.ward && (
+                                        <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1">
+                                            <XCircle className="mr-1 h-3 w-3" />
+                                            {errors.ward}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="group space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                                        <Navigation className="h-4 w-4 text-emerald-500" />
+                                        {t('roadVillage')}
+                                    </label>
+                                    <Select<{ name: string }>
+                                        options={roads}
+                                        value={road}
+                                        onSelect={(item) => setRoad((item as { name: string }).name)}
+                                        renderItem={(item) => (item as { name: string }).name}
+                                        getValue={(item) => (item as { name: string }).name}
+                                        placeholder={roads.length ? t('selectRoadVillage') : t('noRoadVillageData')}
+                                        error={false}
+                                    />
+                                </div>
+
+                                <div className="col-span-full group space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                                        <Home className="h-4 w-4 text-emerald-500" />
+                                        {t('addressDetail')}
+                                        <span className="text-red-500 ml-1">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={addressDetail}
+                                        onChange={(e) => {
+                                            setAddressDetail(e.target.value);
+                                            if (errors.addressDetail) {
+                                                validateField('addressDetail', e.target.value);
+                                            }
+                                        }}
+                                        onPaste={(e) => {
+                                            // Allow paste to update value first
+                                            setTimeout(() => {
+                                                const pasted = (e.target as HTMLInputElement).value;
+                                                void geocodeAndFillFromDetail(pasted);
+                                            }, 0);
+                                        }}
+                                        onBlur={(e) => {
+                                            const v = (e.target as HTMLInputElement).value;
+                                            void geocodeAndFillFromDetail(v);
+                                        }}
+                                        placeholder="Số nhà, toà, tầng..."
+                                        className={`h-11 w-full rounded-xl border px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 ${errors.addressDetail ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-red-100 placeholder:text-red-300'
+                                                : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500 focus:ring-emerald-500/20 hover:border-emerald-200'
+                                            }`}
+                                    />
+                                    {errors.addressDetail && (
+                                        <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1">
+                                            <XCircle className="mr-1 h-3 w-3" />
+                                            {errors.addressDetail}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-end border-t border-slate-100">
+                            <button
+                                type="button"
+                                onClick={handleCancel}
+                                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-2"
+                                disabled={isSubmitting}
+                            >
+                                {t('cancel')}
+                            </button>
+                            <button
+                                type="submit"
+                                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-200 transition-all hover:from-emerald-700 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        {t('saving')}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="mr-2 h-4 w-4" />
+                                        {t('save')}
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                    <DetailField 
-                        label={t('buildingName')}
-                        value={formData.name ?? ''}
-                        onChange={handleChange}
-                        name="name"
-                        placeholder={t('buildingName')}
-                        readonly={false}
-                        error={errors.name}
-                    />
-
-                    <DetailField 
-                        label={t('numberOfFloors')}
-                        value={formData.numberOfFloors !== null && formData.numberOfFloors !== undefined ? String(formData.numberOfFloors) : ''}
-                        onChange={(e) => {
-                            const value = e.target.value ? parseInt(e.target.value) : null;
-                            setFormData(prev => ({ ...prev, numberOfFloors: value }));
-                            if (errors.numberOfFloors) {
-                                validateField('numberOfFloors', value ?? '');
-                            }
-                        }}
-                        name="numberOfFloors"
-                        inputType="number"
-                        placeholder={t('enterNumberOfFloors')}
-                        readonly={false}
-                        error={errors.numberOfFloors}
-                    />
-
-                    {/* <div className={`flex flex-col mb-4 col-span-1`}>
-                        <label className="text-md font-bold text-[#02542D] mb-1">
-                            {tProject('status')}
-                        </label>
-                        <Select
-                            options={[
-                                { name: tProject('inactive'), value: 'INACTIVE' },
-                                { name: tProject('active'), value: 'ACTIVE' },
-                            ]}
-                            value={formData.status}
-                            onSelect={handleStatusChange}
-                            renderItem={(item) => item.name}
-                            getValue={(item) => item.value}
-                            placeholder={tProject('status')}
-                        />
-                    </div> */}
-
-                    {/* Address structured selectors */}
-                    <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex flex-col">
-                            <label className="text-md font-bold text-[#02542D] mb-1">{t('city')}</label>
-                            <Select<Province>
-                                options={cities}
-                                value={selectedCity}
-                                onSelect={(item) => setSelectedCity(String((item as Province).code))}
-                                renderItem={(item) => (item as Province).name}
-                                getValue={(item) => String((item as Province).code)}
-                                placeholder={t('selectCity')}
-                                error={!!errors.city}
-                            />
-                            {errors.city && <span className="text-xs text-red-500 mt-1">{errors.city}</span>}
-                        </div>
-                        <div className="flex flex-col">
-                            <label className="text-md font-bold text-[#02542D] mb-1">{t('district')}</label>
-                            <Select<District>
-                                options={districts}
-                                value={selectedDistrict}
-                                onSelect={(item) => setSelectedDistrict(String((item as District).code))}
-                                renderItem={(item) => (item as District).name}
-                                getValue={(item) => String((item as District).code)}
-                                placeholder={t('selectDistrict')}
-                                error={!!errors.district}
-                            />
-                            {errors.district && <span className="text-xs text-red-500 mt-1">{errors.district}</span>}
-                        </div>
-                        <div className="flex flex-col">
-                            <label className="text-md font-bold text-[#02542D] mb-1">{t('ward')}</label>
-                            <Select<Ward>
-                                options={wards}
-                                value={selectedWard}
-                                onSelect={(item) => setSelectedWard(String((item as Ward).code))}
-                                renderItem={(item) => (item as Ward).name}
-                                getValue={(item) => String((item as Ward).code)}
-                                placeholder={t('selectWard')}
-                                error={!!errors.ward}
-                            />
-                            {errors.ward && <span className="text-xs text-red-500 mt-1">{errors.ward}</span>}
-                        </div>
-                        <div className="flex flex-col">
-                            <label className="text-md font-bold text-[#02542D] mb-1">{t('roadVillage')}</label>
-                            <Select<{ name: string }>
-                                options={roads}
-                                value={road}
-                                onSelect={(item) => setRoad((item as { name: string }).name)}
-                                renderItem={(item) => (item as { name: string }).name}
-                                getValue={(item) => (item as { name: string }).name}
-                                placeholder={roads.length ? t('selectRoadVillage') : t('noRoadVillageData')}
-                                error={false}
-                            />
-                        </div>
-                        <div className="flex flex-col md:col-span-2">
-                            <label className="text-md font-bold text-[#02542D] mb-1">Địa chỉ chi tiết</label>
-                            <input
-                                type="text"
-                                value={addressDetail}
-                                onChange={(e) => {
-                                    setAddressDetail(e.target.value);
-                                    if (errors.addressDetail) {
-                                        validateField('addressDetail', e.target.value);
-                                    }
-                                }}
-                                onPaste={(e) => {
-                                    // Allow paste to update value first
-                                    setTimeout(() => {
-                                        const pasted = (e.target as HTMLInputElement).value;
-                                        void geocodeAndFillFromDetail(pasted);
-                                    }, 0);
-                                }}
-                                onBlur={(e) => {
-                                    const v = (e.target as HTMLInputElement).value;
-                                    void geocodeAndFillFromDetail(v);
-                                }}
-                                placeholder="Số nhà, toà, tầng..."
-                                className={`rounded-lg border px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 ${
-                                    errors.addressDetail ? 'border-red-300 focus:border-red-500 focus:ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-100'
-                                }`}
-                            />
-                            {errors.addressDetail && <span className="text-xs text-red-500 mt-1">{errors.addressDetail}</span>}
-                        </div>
-                    </div>
-
-                    <div className="col-span-full flex justify-center space-x-3 mt-8">
-                        <button 
-                            type="button"
-                            onClick={handleCancel}
-                            className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
-                            disabled={isSubmitting}
-                        >
-                            {t('cancel')}
-                        </button>
-                        <button 
-                            type="submit"
-                            className="px-6 py-2 bg-[#02542D] text-white rounded-lg hover:bg-opacity-80 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? t('saving') : t('save')}
-                        </button>
-                    </div>
-                </div>
-            </form>
+            </div>
         </div>
     );
 };

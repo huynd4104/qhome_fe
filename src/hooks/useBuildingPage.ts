@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 // 1. Import các service và type cần thiết
 import { PagedResponse } from '@/src/services/base/project/projectService';
 import { getBuildings } from '@/src/services/base/buildingService';
-import { filters } from '@/src/components/base-service/FilterForm'; 
+import { filters } from '@/src/components/base-service/FilterForm';
 import { Project } from '../types/project';
 import { Building } from '../types/building';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,7 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 const initialFilters: filters = {
     codeName: '',
     status: '',
-    projectId: '', 
+    projectId: '',
 };
 
 const initialPageSize = 10;
@@ -36,7 +36,7 @@ export const useBuildingPage = (loadOnMount: boolean = true) => {
                 const buildings = await getBuildings();
                 setAllBuildings(buildings);
                 console.log('buildings', buildings);
-                setPageNo(0); 
+                setPageNo(0);
             } catch (err) {
                 setError('Failed to fetch buildings for project.');
                 console.error(err);
@@ -47,24 +47,70 @@ export const useBuildingPage = (loadOnMount: boolean = true) => {
         };
 
         fetchBuildings();
-    }, [filters.projectId]); 
+    }, [filters.projectId]);
+
+    const [sortConfig, setSortConfig] = useState<{ key: keyof Building; direction: 'asc' | 'desc' } | null>(null);
+
+    const handleSort = (key: keyof Building) => {
+        setSortConfig(current => {
+            if (!current || current.key !== key) {
+                return { key, direction: 'asc' };
+            }
+            if (current.direction === 'asc') {
+                return { key, direction: 'desc' };
+            }
+            return null;
+        });
+    };
 
     const filteredBuildings = useMemo(() => {
         if (!allBuildings || allBuildings.length === 0) {
             return [];
         }
-        return allBuildings.filter(building => {
+        const result = allBuildings.filter(building => {
             const codeNameMatch = filters.codeName
                 ? building?.name?.toLowerCase().includes(filters.codeName.toLowerCase()) || building?.code?.toLowerCase().includes(filters.codeName.toLowerCase())
                 : true;
-            
-            const statusMatch = filters.status
+
+            const statusMatch = filters.status && filters.status !== 'ALL'
                 ? building.status === filters.status
                 : true;
-            
+
             return codeNameMatch && statusMatch;
         });
-    }, [allBuildings, filters.codeName, filters.status]); 
+
+        if (sortConfig) {
+            result.sort((a, b) => {
+                const aValue = a[sortConfig.key];
+                const bValue = b[sortConfig.key];
+
+                if (aValue === undefined || aValue === null) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (bValue === undefined || bValue === null) return sortConfig.direction === 'asc' ? 1 : -1;
+
+                if (aValue === bValue) return 0;
+
+                // Handle strings case-insensitively
+                if (typeof aValue === 'string' && typeof bValue === 'string') {
+                    const comparison = aValue.localeCompare(bValue);
+                    return sortConfig.direction === 'asc' ? comparison : -comparison;
+                }
+
+                // Handle numbers or other comparisons
+                const aAny = aValue as any;
+                const bAny = bValue as any;
+                if (aAny < bAny) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (aAny > bAny) return sortConfig.direction === 'asc' ? 1 : -1;
+
+                return 0;
+            });
+        } else {
+            // Default sort by code if no sort config (as per original logic logic was partially alphanumeric check)
+            // Or keep original order. Let's default to Sort by Code ASC if nothing else, as likely expected.
+            result.sort((a, b) => (a.code || '').localeCompare(b.code || ''));
+        }
+
+        return result;
+    }, [allBuildings, filters.codeName, filters.status, sortConfig]);
 
     const data: PagedResponse<Building> = useMemo(() => {
         const totalElements = filteredBuildings.length;
@@ -84,23 +130,24 @@ export const useBuildingPage = (loadOnMount: boolean = true) => {
             ...prevFilters,
             [name]: value,
         }));
-        
+
         if (name !== 'projectId') {
-             setPageNo(0);
+            setPageNo(0);
         }
     };
 
     const handleClear = () => {
         setFilters(initialFilters);
         setPageNo(0);
+        setSortConfig(null);
     };
 
     const handlePageChange = (newPage: number) => {
         setPageNo(newPage);
     };
 
-    const totalPages = pageSize > 0 
-        ? Math.ceil(data.totalElements / pageSize) 
+    const totalPages = pageSize > 0
+        ? Math.ceil(data.totalElements / pageSize)
         : 0;
 
     return {
@@ -110,11 +157,13 @@ export const useBuildingPage = (loadOnMount: boolean = true) => {
         filters,
         allProjects, // return list project
         pageNo,
-        totalPages: totalPages, 
+        totalPages: totalPages,
         pageSize,
-        setPageSize,      
+        setPageSize,
         handleFilterChange,
         handleClear,
         handlePageChange,
+        sortConfig,
+        handleSort,
     }
 }

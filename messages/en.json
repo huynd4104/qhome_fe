@@ -981,6 +981,12 @@
     "buildingName": "Building Name",
     "requestlist": "Building List",
     "subTitle": "Manage buildings and apartments list",
+    "addBuildingSubtitle": "Enter information below to create a new building",
+    "editBuildingSubtitle": "Update building information",
+    "sections": {
+      "buildingInfo": "Building Information",
+      "addressInfo": "Address Information"
+    },
     "searchPlaceholder": "Search by name or code...",
     "projectName": "Project Name",
     "floors": "Floors",

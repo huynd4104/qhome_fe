@@ -1001,6 +1001,12 @@
     "buildingName": "Tên tòa nhà",
     "requestlist": "Danh sách tòa nhà",
     "subTitle": "Quản lý danh sách tòa nhà và căn hộ",
+    "addBuildingSubtitle": "Nhập thông tin bên dưới để thêm mới tòa nhà",
+    "editBuildingSubtitle": "Cập nhật thông tin tòa nhà",
+    "sections": {
+      "buildingInfo": "Thông tin tòa nhà",
+      "addressInfo": "Địa chỉ"
+    },
     "searchPlaceholder": "Tìm kiếm theo tên hoặc mã...",
     "projectName": "Tên dự án",
     "floors": "Số tầng",
