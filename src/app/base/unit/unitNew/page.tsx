@@ -1,9 +1,6 @@
-'use client'
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import Arrow from '@/src/assets/Arrow.svg';
-import DetailField from '@/src/components/base-service/DetailField';
-import Select from '@/src/components/customer-interaction/Select';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -13,8 +10,20 @@ import { getBuilding, getBuildings } from '@/src/services/base/buildingService';
 import { checkUnitCodeExists } from '@/src/services/base/unitService';
 import { useNotifications } from '@/src/hooks/useNotifications';
 import { Building } from '@/src/types/building';
+import Select from '@/src/components/customer-interaction/Select';
+import {
+    ArrowLeft,
+    Building2,
+    Layers,
+    Bed,
+    Maximize,
+    Box,
+    Save,
+    Loader2,
+    XCircle
+} from 'lucide-react';
 
-export default function UnitAdd () {
+export default function UnitAdd() {
 
     const { user, hasRole } = useAuth();
     const t = useTranslations('Unit');
@@ -41,11 +50,11 @@ export default function UnitAdd () {
 
     const { addUnit, loading, error, isSubmitting } = useUnitAdd();
 
-    const [formData, setFormData] = useState<Partial<Unit> & { 
-        floorStr: string; 
-        areaStr: string; 
+    const [formData, setFormData] = useState<Partial<Unit> & {
+        floorStr: string;
+        areaStr: string;
         bedroomsStr: string;
-        status: string 
+        status: string
     }>({
         code: '',
         name: '',
@@ -114,7 +123,7 @@ export default function UnitAdd () {
                 setCodeError('');
                 return;
             }
-            
+
             const exists = await checkUnitCodeExists(formData.code, selectedBuildingId);
             if (exists) {
                 setCodeError(t('codeError'));
@@ -126,18 +135,18 @@ export default function UnitAdd () {
         const timeoutId = setTimeout(checkCode, 500); // Debounce 500ms
         return () => clearTimeout(timeoutId);
     }, [formData.code, selectedBuildingId]);
-    
+
     const handleBack = () => {
-        router.back(); 
+        router.back();
     }
 
     const handleCancel = () => {
-        router.back(); 
+        router.back();
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        
+
         if (isSubmitting) return;
 
         // Validate all fields first before making any API calls
@@ -186,7 +195,7 @@ export default function UnitAdd () {
 
     const validateField = (fieldName: string, value: string | number) => {
         const newErrors = { ...errors };
-        
+
         switch (fieldName) {
             case 'name': {
                 const v = String(value ?? '').trim();
@@ -221,7 +230,7 @@ export default function UnitAdd () {
                 break;
             }
         }
-        
+
         setErrors(newErrors);
     };
 
@@ -233,40 +242,29 @@ export default function UnitAdd () {
             area?: string;
             building?: string;
         } = {};
-        
+
         // Validate building
         if (!selectedBuildingId) {
             newErrors.building = t('buildingRequired') || 'Building is required';
         }
-        
-        // Validate name (if name field is required, uncomment this)
-        // const nameValue = String(formData.name ?? '').trim();
-        // const nameRegex = /^[a-zA-ZÀÁẢÃẠÂẦẤẨẪẬĂẰẮẲẴẶÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐđ0-9\s'-]+$/;
-        // if (!nameValue) {
-        //     newErrors.name = t('nameError');
-        // } else if (nameValue.length > 40) {
-        //     newErrors.name = t('unitNew.nameMaxError');
-        // } else if (!nameRegex.test(nameValue)) {
-        //     newErrors.name = t('unitNew.nameSpecialCharError');
-        // }
-        
+
         // Validate floor
         if (formData.floor === undefined || formData.floor <= 0) {
             newErrors.floor = t('floorError');
         } else if (selectedBuilding && formData.floor > selectedBuilding.floorsMax) {
             newErrors.floor = t('unitNew.floorMaxError', { floorsMax: selectedBuilding.floorsMax });
         }
-        
+
         // Validate bedrooms
         if (formData.bedrooms === undefined || formData.bedrooms <= 0 || formData.bedrooms >= 10) {
             newErrors.bedrooms = t('unitNew.bedroomsErrorRange');
         }
-        
+
         // Validate area
         if (formData.areaM2 === undefined || formData.areaM2 <= 0 || formData.areaM2 >= 150) {
             newErrors.area = t('unitNew.areaErrorRange');
         }
-        
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -315,13 +313,6 @@ export default function UnitAdd () {
         }
     };
 
-    const handleStatusChange = (item: { name: string; value: string }) => {
-        setFormData((prevData) => ({
-            ...prevData,
-            status: item.value,
-        }));
-    };
-
     const handleBuildingChange = (building: Building) => {
         setSelectedBuildingId(building.id);
         setSelectedBuilding(building);
@@ -339,145 +330,177 @@ export default function UnitAdd () {
     };
 
     return (
-        <div className={`min-h-screen  p-4 sm:p-8 font-sans`}>
-            <div
-                className="max-w-4xl mx-auto mb-6 flex items-center cursor-pointer"
-                onClick={handleBack}
-            >
-                <Image 
-                    src={Arrow} 
-                    alt={t('altText.back')} 
-                    width={20} 
-                    height={20}
-                    className="w-5 h-5 mr-2" 
-                />
-                <span className={`text-[#02542D] font-bold text-2xl hover:text-opacity-80 transition duration-150 `}>
-                    {t('return')}
-                </span>
+        <div className="min-h-screen bg-slate-50 p-4 sm:p-8 font-sans">
+            {/* Back Button */}
+            <div className="mb-6 flex items-center justify-between">
+                <button
+                    onClick={handleBack}
+                    className="group flex items-center gap-2 rounded-lg py-2 pl-2 pr-4 text-slate-500 transition-all hover:bg-white hover:text-emerald-700 hover:shadow-sm"
+                >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition-colors group-hover:ring-emerald-200">
+                        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                    </div>
+                    <span className="font-semibold">{t('return')}</span>
+                </button>
             </div>
 
-            <form
-                className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-md border border-gray-200"
-                onSubmit={handleSubmit}
-            >
-                <div className="flex justify-between items-start border-b pb-4 mb-6">
-                    <div className="flex items-center">
-                        <h1 className={`text-2xl font-semibold text-[#02542D] mr-3`}>
+            <div className="mx-auto max-w-5xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* Main Form Card */}
+                <div className="relative z-10 overflow-visible rounded-3xl border border-white/50 bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
+                    <div className="border-b border-slate-100 p-6 md:p-8">
+                        <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
                             {t('unitNew.title')}
                         </h1>
                     </div>
+
+                    <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
+                        <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
+
+                            <div className="col-span-full">
+                                <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 mb-2 transition-colors group-focus-within:text-emerald-600">
+                                    <Building2 className="h-4 w-4 text-emerald-500" />
+                                    {t('building')} <span className="text-red-500">*</span>
+                                </label>
+                                <Select
+                                    options={buildings}
+                                    value={selectedBuildingId}
+                                    onSelect={handleBuildingChange}
+                                    renderItem={(item) => `${item.code} - ${item.name}`}
+                                    getValue={(item) => item.id}
+                                    placeholder={loadingBuildings ? (t('load')) : (t('selectBuilding'))}
+                                    disable={loadingBuildings || !!buildingIdFromParams}
+                                    error={!!errors.building}
+                                />
+                                {errors.building && (
+                                    <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1 mt-1">
+                                        <XCircle className="mr-1 h-3 w-3" />
+                                        {errors.building}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="group space-y-2">
+                                <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                                    <Box className="h-4 w-4 text-emerald-500" />
+                                    {t('unitNew.autoCode')}
+                                </label>
+                                <div className="h-11 w-full flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-500 shadow-sm cursor-not-allowed">
+                                    {formData.code || '...'}
+                                </div>
+                                {codeError && (
+                                    <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1">
+                                        <XCircle className="mr-1 h-3 w-3" />
+                                        {codeError}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="group space-y-2">
+                                <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                                    <Layers className="h-4 w-4 text-emerald-500" />
+                                    {t('floor')} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    name="floor"
+                                    value={formData.floorStr}
+                                    onChange={handleChange}
+                                    placeholder={t('floor')}
+                                    className={`h-11 w-full rounded-xl border px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 ${errors.floor
+                                        ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-red-100 placeholder:text-red-300'
+                                        : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500 focus:ring-emerald-500/20 hover:border-emerald-200'
+                                        }`}
+                                />
+                                {errors.floor && (
+                                    <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1">
+                                        <XCircle className="mr-1 h-3 w-3" />
+                                        {errors.floor}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="group space-y-2">
+                                <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                                    <Bed className="h-4 w-4 text-emerald-500" />
+                                    {t('bedrooms')} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    name="bedrooms"
+                                    value={formData.bedroomsStr}
+                                    onChange={handleChange}
+                                    placeholder={t('bedrooms')}
+                                    className={`h-11 w-full rounded-xl border px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 ${errors.bedrooms
+                                        ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-red-100 placeholder:text-red-300'
+                                        : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500 focus:ring-emerald-500/20 hover:border-emerald-200'
+                                        }`}
+                                />
+                                {errors.bedrooms && (
+                                    <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1">
+                                        <XCircle className="mr-1 h-3 w-3" />
+                                        {errors.bedrooms}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="group space-y-2">
+                                <label className="text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                                    <Maximize className="h-4 w-4 text-emerald-500" />
+                                    {t('areaM2')} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    name="area"
+                                    value={formData.areaStr}
+                                    onChange={handleChange}
+                                    placeholder={t('areaM2')}
+                                    className={`h-11 w-full rounded-xl border px-4 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 ${errors.area
+                                        ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-red-100 placeholder:text-red-300'
+                                        : 'border-slate-200 bg-white text-slate-700 focus:border-emerald-500 focus:ring-emerald-500/20 hover:border-emerald-200'
+                                        }`}
+                                />
+                                {errors.area && (
+                                    <div className="flex items-center text-xs text-red-600 animate-in slide-in-from-left-1">
+                                        <XCircle className="mr-1 h-3 w-3" />
+                                        {errors.area}
+                                    </div>
+                                )}
+                            </div>
+
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-end border-t border-slate-100">
+                            <button
+                                type="button"
+                                onClick={handleCancel}
+                                disabled={isSubmitting}
+                                className="inline-flex items-center justify-center rounded-xl bg-white border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:opacity-60"
+                            >
+                                {t('cancel')}
+                            </button>
+
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-200 transition-all hover:from-emerald-700 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        {t('saving')}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="mr-2 h-4 w-4" />
+                                        {t('save')}
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                    
-                    <div className={`flex flex-col mb-4 col-span-full`}>
-                        <label className="text-md font-bold text-[#02542D] mb-1">
-                            {t('building') || 'Building'} <span className="text-red-500">*</span>
-                        </label>
-                        <Select
-                            options={buildings}
-                            value={selectedBuildingId}
-                            onSelect={handleBuildingChange}
-                            renderItem={(item) => `${item.code} - ${item.name}`}
-                            getValue={(item) => item.id}
-                            placeholder={loadingBuildings ? (t('load')) : (t('selectBuilding'))}
-                            disable={loadingBuildings || !!buildingIdFromParams}
-                            error={!!errors.building}
-                        />
-                        {errors.building && (
-                            <p className="text-red-500 text-sm mt-1">{errors.building}</p>
-                        )}
-                    </div>
-
-                    {/* <DetailField 
-                        label="Mã căn hộ"
-                        value={formData.code || ""}
-                        name="code"
-                        placeholder="Mã căn hộ"
-                        readonly={true}
-                        error={codeError}
-                    /> */}
-
-                    {/* <div className={`flex flex-col mb-4 col-span-1`}>
-                        <label className="text-md font-bold text-[#02542D] mb-1">
-                            {t('status')}
-                        </label>
-                        <Select
-                            options={[
-                                { name: t('inactive'), value: 'INACTIVE' },
-                                { name: t('active'), value: 'ACTIVE' },
-                            ]}
-                            value={formData.status}
-                            onSelect={handleStatusChange}
-                            renderItem={(item) => item.name}
-                            getValue={(item) => item.value}
-                            placeholder={t('status')}
-                        />
-                    </div> */}
-
-                    {/* <DetailField 
-                        label={t('unitName')}
-                        value={formData.name ?? ""}
-                        onChange={handleChange}
-                        name="name"
-                        placeholder={t('unitName')}
-                        readonly={false}
-                        error={errors.name}
-                    /> */}
-
-                    <DetailField 
-                        label={t('floor')}
-                        value={formData.floorStr ?? "0"}
-                        onChange={handleChange}
-                        name="floor"
-                        placeholder={t('floor')}
-                        readonly={false}
-                        error={errors.floor}
-                        inputType="number"
-                    />
-
-                    <DetailField 
-                        label={t('bedrooms')}
-                        value={formData.bedroomsStr ?? "0"}
-                        onChange={handleChange}
-                        name="bedrooms"
-                        placeholder={t('bedrooms')}
-                        readonly={false}
-                        error={errors.bedrooms}
-                        inputType="number"
-                    />
-
-                    <DetailField 
-                        label={t('areaM2')}
-                        value={formData.areaStr ?? "0"}
-                        onChange={handleChange}
-                        name="area"
-                        placeholder={t('areaM2')}
-                        readonly={false}
-                        error={errors.area}
-                        inputType="number"
-                    />
-
-                    <div className="col-span-full flex justify-center space-x-3 mt-8">
-                        <button 
-                            type="button"
-                            onClick={handleCancel}
-                            className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
-                            disabled={isSubmitting}
-                        >
-                            {t('cancel')}
-                        </button>
-                        <button 
-                            type="submit"
-                            className="px-6 py-2 bg-[#14AE5C] text-white font-semibold rounded-lg hover:bg-[#0c793f] transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? t('saving') : t('save')}
-                        </button>
-                    </div>
-                </div>
-            </form>
+            </div>
         </div>
     );
 };
-

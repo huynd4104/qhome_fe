@@ -1,38 +1,49 @@
-'use client'
+'use client';
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
-import Arrow from '@/src/assets/Arrow.svg';
-import Delete from '@/src/assets/Delete.svg';
-import Edit from '@/src/assets/Edit.svg';
-import EditTable from '@/src/assets/EditTable.svg';
-import DetailField from '@/src/components/base-service/DetailField';
-import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useBuildingDetailPage } from '@/src/hooks/useBuildingDetailPage';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { getUnitsByBuildingId } from '@/src/services/base/buildingService';
 import { Unit } from '@/src/types/unit';
-import { fetchCurrentHouseholdByUnit, fetchHouseholdMembersByHousehold, type HouseholdDto, type HouseholdMemberDto } from '@/src/services/base/householdService';
+import { fetchCurrentHouseholdByUnit } from '@/src/services/base/householdService';
 import { fetchResidentById } from '@/src/services/base/residentService';
 import {
-  ServiceDto,
-  createMeter,
-  getAllServices,
-  exportMeters,
-  getUnitsWithoutMeter,
-  UnitWithoutMeterDto,
-  ALLOWED_SERVICE_CODES,
+    ServiceDto,
+    createMeter,
+    getAllServices,
+    exportMeters,
+    getUnitsWithoutMeter,
+    UnitWithoutMeterDto,
+    ALLOWED_SERVICE_CODES,
 } from '@/src/services/base/waterService';
 import PopupConfirm from '@/src/components/common/PopupComfirm';
 import { useDeleteBuilding } from '@/src/hooks/useBuildingDelete';
-import FormulaPopup from '@/src/components/common/FormulaPopup';
 import { downloadUnitImportTemplate, importUnits, exportUnits, type UnitImportResponse } from '@/src/services/base/unitImportService';
+import {
+    ArrowLeft,
+    Building2,
+    MapPin,
+    Layers,
+    Edit,
+    Plus,
+    Download,
+    Upload,
+    FileSpreadsheet,
+    Gauge,
+    Loader2,
+    XCircle,
+    CheckCircle2,
+    AlertCircle
+} from 'lucide-react';
+import Pagination from '@/src/components/customer-interaction/Pagination';
 
-export default function BuildingDetail () {
+export default function BuildingDetail() {
 
     const { user, hasRole } = useAuth();
-    const t = useTranslations('Building'); 
+    const t = useTranslations('Building');
     const tUnits = useTranslations('Unit');
     const router = useRouter();
     const params = useParams();
@@ -43,10 +54,12 @@ export default function BuildingDetail () {
     const [units, setUnits] = useState<Unit[]>([]);
     const [loadingUnits, setLoadingUnits] = useState(false);
     const [unitsError, setUnitsError] = useState<string | null>(null);
-    const [householdsMap, setHouseholdsMap] = useState<Record<string, HouseholdDto | null>>({});
+    const [householdsMap, setHouseholdsMap] = useState<Record<string, any>>({});
     const [primaryResidentNamesMap, setPrimaryResidentNamesMap] = useState<Record<string, string | null>>({});
     const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
-    const { deleteBuildingById, isLoading: isDeleting } = useDeleteBuilding();    
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 9;
+    const { deleteBuildingById, isLoading: isDeleting } = useDeleteBuilding();
     const [importing, setImporting] = useState(false);
     const [importResult, setImportResult] = useState<UnitImportResponse | null>(null);
     const [importError, setImportError] = useState<string | null>(null);
@@ -63,36 +76,34 @@ export default function BuildingDetail () {
     const [loadingUnitsWithoutMeter, setLoadingUnitsWithoutMeter] = useState(false);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const meterDateInputRef = useRef<HTMLInputElement | null>(null);
-    
+
     useEffect(() => {
-        console.log('buildingData', buildingData);
         const loadUnits = async () => {
             if (!buildingId || typeof buildingId !== 'string') return;
-            
+
             try {
                 setLoadingUnits(true);
                 setUnitsError(null);
                 const data = await getUnitsByBuildingId(buildingId);
-                const activeUnits = data.filter(unit => unit.status?.toUpperCase() === 'ACTIVE');
-                setUnits(activeUnits);
-                
+                // Removed filtering to show all units including inactive ones
+                const allUnits = data;
+                setUnits(allUnits);
+
                 // Load current household for each unit
-                const householdsData: Record<string, HouseholdDto | null> = {};
+                const householdsData: Record<string, any> = {};
                 const residentNamesData: Record<string, string | null> = {};
-                
+
                 await Promise.all(
-                    activeUnits.map(async (unit) => {
+                    allUnits.map(async (unit) => {
                         try {
                             const household = await fetchCurrentHouseholdByUnit(unit.id);
                             householdsData[unit.id] = household;
-                            
+
                             // Get primary resident name from resident table only
                             let primaryName: string | null = null;
-                            console.log('household', household);
                             if (household?.primaryResidentId) {
                                 try {
                                     const resident = await fetchResidentById(household.primaryResidentId);
-                                    console.log('resident', resident);
                                     if (resident?.fullName) {
                                         primaryName = resident.fullName;
                                     }
@@ -100,18 +111,12 @@ export default function BuildingDetail () {
                                     console.error(`Failed to load resident ${household.primaryResidentId} for unit ${unit.id}:`, residentErr);
                                 }
                             }
-                            
+
                             residentNamesData[unit.id] = primaryName;
                         } catch (err) {
                             // If no current household found (404), set to null
-                            if (err && typeof err === 'object' && 'response' in err && (err as any).response?.status === 404) {
-                                householdsData[unit.id] = null;
-                                residentNamesData[unit.id] = null;
-                            } else {
-                                console.error(`Failed to load household for unit ${unit.id}:`, err);
-                                householdsData[unit.id] = null;
-                                residentNamesData[unit.id] = null;
-                            }
+                            householdsData[unit.id] = null;
+                            residentNamesData[unit.id] = null;
                         }
                     })
                 );
@@ -129,7 +134,7 @@ export default function BuildingDetail () {
             try {
                 const data = await getAllServices();
                 // Only show active water and electric services
-                setServices(data.filter(service => 
+                setServices(data.filter(service =>
                     service.active && ALLOWED_SERVICE_CODES.includes(service.code)
                 ));
             } catch (err) {
@@ -148,7 +153,7 @@ export default function BuildingDetail () {
                 setUnitsWithoutMeter([]);
                 return;
             }
-            
+
             try {
                 setLoadingUnitsWithoutMeter(true);
                 const unitsWithoutMeterData = await getUnitsWithoutMeter(meterForm.serviceId, buildingId);
@@ -160,7 +165,7 @@ export default function BuildingDetail () {
                 setLoadingUnitsWithoutMeter(false);
             }
         };
-        
+
         loadUnitsWithoutMeter();
     }, [meterForm.serviceId, buildingId]);
 
@@ -168,13 +173,13 @@ export default function BuildingDetail () {
     useEffect(() => {
         const unitIdParam = searchParams.get('unitId');
         const serviceIdParam = searchParams.get('serviceId');
-        
+
         if (unitIdParam && serviceIdParam && units.length > 0 && services.length > 0) {
             // Check if unit exists in the building
             const unitExists = units.some(unit => unit.id === unitIdParam);
             // Check if service exists
             const serviceExists = services.some(service => service.id === serviceIdParam);
-            
+
             if (unitExists && serviceExists) {
                 // Pre-fill form and open it
                 setMeterForm({
@@ -183,7 +188,7 @@ export default function BuildingDetail () {
                     installedAt: '',
                 });
                 setMeterFormVisible(true);
-                
+
                 // Scroll to meter form after a short delay to ensure it's rendered
                 setTimeout(() => {
                     const meterFormElement = document.querySelector('[data-meter-form]');
@@ -191,30 +196,18 @@ export default function BuildingDetail () {
                         meterFormElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
                 }, 300);
-                
+
                 // Clean up URL params after opening form
                 const newParams = new URLSearchParams(searchParams.toString());
                 newParams.delete('unitId');
                 newParams.delete('serviceId');
-                const newUrl = newParams.toString() 
+                const newUrl = newParams.toString()
                     ? `${window.location.pathname}?${newParams.toString()}`
                     : window.location.pathname;
                 router.replace(newUrl, { scroll: false });
             }
         }
     }, [searchParams, units, services, router]);
-
-    const floorOptions = useMemo(() => {
-        const uniqueFloors = Array.from(new Set(units.map(unit => unit.floor?.toString()).filter(Boolean)));
-        return uniqueFloors.sort((a, b) => {
-            const na = Number(a);
-            const nb = Number(b);
-            if (Number.isNaN(na) || Number.isNaN(nb)) {
-                return a.localeCompare(b);
-            }
-            return na - nb;
-        });
-    }, [units]);
 
     const maxFloorFromUnits = useMemo(() => {
         const floors = units.map(unit => unit.floor).filter(floor => floor != null && !Number.isNaN(floor)) as number[];
@@ -232,21 +225,35 @@ export default function BuildingDetail () {
         return "";
     }, [buildingData?.floorsMax, maxFloorFromUnits]);
 
-    const filteredUnits = selectedFloor
-        ? units.filter(unit => unit.floor?.toString() === selectedFloor)
-        : units;
+    const floorOptions = useMemo(() => {
+        const floors = new Set<string>();
+        units.forEach(unit => {
+            if (unit.floor !== undefined && unit.floor !== null) {
+                floors.add(unit.floor.toString());
+            }
+        });
+        return Array.from(floors).sort((a, b) => parseInt(a) - parseInt(b));
+    }, [units]);
 
-    // Helper function to get primary resident name from current household
-    const getPrimaryResidentName = (unitId: string): string | null => {
-        return primaryResidentNamesMap[unitId] || null;
-    };
+    const filteredUnits = useMemo(() => {
+        let result = units;
+        if (selectedFloor) {
+            result = result.filter(unit => unit.floor?.toString() === selectedFloor);
+        }
+        return result.sort((a, b) => (a.code || '').localeCompare(b.code || '', undefined, { numeric: true }));
+    }, [units, selectedFloor]);
+
+    const paginatedUnits = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredUnits.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredUnits, currentPage]);
+
+    const totalPages = Math.ceil(filteredUnits.length / itemsPerPage);
 
     useEffect(() => {
-        if (selectedFloor && !floorOptions.includes(selectedFloor)) {
-            setSelectedFloor(null);
-        }
-    }, [floorOptions, selectedFloor]);
-    
+        setCurrentPage(1);
+    }, [selectedFloor]);
+
     const handleBack = () => {
         router.push(`/base/building/buildingList`);
     }
@@ -320,14 +327,14 @@ export default function BuildingDetail () {
         } catch (e: any) {
             console.error('Import units error:', e);
             let errorMessage = t('messages.importFailed');
-            
+
             if (e?.response?.data) {
                 // Try to get error message from different possible locations
-                errorMessage = e.response.data.message 
-                    || e.response.data.error 
-                    || e.response.data 
+                errorMessage = e.response.data.message
+                    || e.response.data.error
+                    || e.response.data
                     || errorMessage;
-                
+
                 // If it's an object, try to stringify it
                 if (typeof errorMessage === 'object') {
                     errorMessage = JSON.stringify(errorMessage);
@@ -337,7 +344,7 @@ export default function BuildingDetail () {
             } else if (e?.response?.statusText) {
                 errorMessage = `${e.response.status} ${e.response.statusText}`;
             }
-            
+
             setImportError(errorMessage);
         } finally {
             setImporting(false);
@@ -368,7 +375,7 @@ export default function BuildingDetail () {
     };
 
     return (
-        <div className={`min-h-screen p-4 sm:p-8 font-sans`}>
+        <div className="min-h-screen bg-slate-50 p-4 sm:p-8 font-sans">
             <PopupConfirm
                 isOpen={isPopupOpen}
                 onClose={handleClosePopup}
@@ -377,136 +384,111 @@ export default function BuildingDetail () {
                 popupContext={t('deleteBuildingConfirm')}
                 isDanger={true}
             />
-            <div className="max-w-4xl mx-auto mb-6 flex items-center cursor-pointer" onClick={handleBack}>
-                <Image 
-                    src={Arrow} 
-                    alt="Back" 
-                    width={20} 
-                    height={20}
-                    className="w-5 h-5 mr-2" 
-                />
-                <span className={`text-[#02542D] font-bold text-2xl hover:text-opacity-80 transition duration-150 `}>
-                    {t('return')}
-                </span>
+
+            {/* Back Button */}
+            <div className="mb-6 flex items-center justify-between">
+                <button
+                    onClick={handleBack}
+                    className="group flex items-center gap-2 rounded-lg py-2 pl-2 pr-4 text-slate-500 transition-all hover:bg-white hover:text-emerald-700 hover:shadow-sm"
+                >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition-colors group-hover:ring-emerald-200">
+                        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                    </div>
+                    <span className="font-semibold">{t('return')}</span>
+                </button>
             </div>
 
-            <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-md border border-gray-200">
-                
-                <div className="flex justify-between items-start border-b pb-4 mb-6">
-                    <div className="flex items-center">
-                        <h1 className={`text-2xl font-semibold text-[#02542D] mr-3`}>
-                            {t('buildingDetail')}
-                        </h1>
-                        <span 
-                            className={`text-sm font-semibold px-3 py-1 rounded-full ${buildingData?.status === 'Inactive' ? 'bg-[#EEEEEE] text-[#02542D]' : 'bg-[#739559] text-white'}`}
-                        >
-                            {buildingData?.status === 'Inactive' ? t('inactive') : t('active')}
-                        </span>
+            <div className="mx-auto max-w-5xl space-y-6">
+                {/* Main Building Info Card */}
+                <div className="relative z-10 overflow-visible rounded-3xl border border-white/50 bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="border-b border-slate-100 p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                                {t('buildingDetail.title')}
+                            </h1>
+                            <div className="mt-2 flex items-center gap-2">
+                                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${buildingData?.status === 'Inactive'
+                                    ? 'bg-slate-100 text-slate-600 ring-slate-200'
+                                    : 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                                    }`}>
+                                    <span className={`h-1.5 w-1.5 rounded-full ${buildingData?.status === 'Inactive' ? 'bg-slate-400' : 'bg-emerald-500'
+                                        }`} />
+                                    {buildingData?.status === 'Inactive' ? t('inactive') : t('active')}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => router.push('/base/unit/unitNew')}
+                                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-200 transition-all hover:from-emerald-700 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                {tUnits('addUnit')}
+                            </button>
+                            <button
+                                onClick={() => router.push(`/base/building/buildingEdit/${buildingId}`)}
+                                className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+                                title="Edit Building"
+                            >
+                                <Edit className="h-5 w-5" />
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={() => router.push('/base/unit/unitNew')}
-                            className="px-4 py-2 rounded-lg bg-[#14AE5C] text-white text-sm font-medium hover:bg-[#0c793f] transition duration-150 flex items-center gap-2"
-                        >
-                            {tUnits('addUnit')}
-                        </button>
-                        <button 
-                            className={`p-2 rounded-lg bg-[#739559] hover:bg-opacity-80 transition duration-150`}
-                            onClick={() => router.push(`/base/building/buildingEdit/${buildingId}`)}
-                        >
-                            <Image 
-                                src={Edit} 
-                                alt="Edit" 
-                                width={24} 
-                                height={24}
-                                className="w-6 h-6" 
-                            />
-                        </button>
-                        {/* <button 
-                            className="p-2 rounded-lg bg-red-500 hover:bg-opacity-80 transition duration-150"
-                            onClick={handleDelete}
-                        >
-                            <Image 
-                                src={Delete} 
-                                alt="Delete" 
-                                width={24} 
-                                height={24}
-                                className="w-6 h-6" 
-                            />
-                        </button> */}
+                    <div className="p-6 md:p-8">
+                        <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
+                            <div className="group space-y-2">
+                                <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                    <Building2 className="h-4 w-4 text-emerald-500" />
+                                    {t('buildingCode')}
+                                </label>
+                                <div className="h-11 w-full flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 shadow-sm">
+                                    {buildingData?.code ?? ""}
+                                </div>
+                            </div>
+
+                            <div className="group space-y-2">
+                                <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                    <Building2 className="h-4 w-4 text-emerald-500" />
+                                    {t('buildingName')}
+                                </label>
+                                <div className="h-11 w-full flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 shadow-sm">
+                                    {buildingData?.name ?? ""}
+                                </div>
+                            </div>
+
+                            <div className="group space-y-2">
+                                <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                    <MapPin className="h-4 w-4 text-emerald-500" />
+                                    {t('address')}
+                                </label>
+                                <div className="h-11 w-full flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 shadow-sm">
+                                    {buildingData?.address ?? ""}
+                                </div>
+                            </div>
+
+                            <div className="group space-y-2">
+                                <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                    <Layers className="h-4 w-4 text-emerald-500" />
+                                    {t('buildingDetail.floorsLabel')}
+                                </label>
+                                <div className="h-11 w-full flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 shadow-sm">
+                                    {displayFloorsMax}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                    
-                    <DetailField 
-                        label={t('buildingCode')}
-                        value={buildingData?.code ?? ""} 
-                        readonly={true}
-                    />
-                    {/* <div className="col-span-1 hidden md:block"></div> */}
 
-                    <DetailField 
-                        label={t('buildingName')}
-                        value={buildingData?.name ?? ""} 
-                        readonly={true}
-                    />
-
-                    <DetailField 
-                        label={t('address')}
-                        value={buildingData?.address ?? ""} 
-                        readonly={true}
-                    />
-                    <DetailField 
-                        label="Số tầng"
-                        value={displayFloorsMax} 
-                        readonly={true}
-                    />
-
-                    {/* <DetailField 
-                        label={t('createAt')}
-                        value={buildingData?.createdAt ?? ""} 
-                        readonly={true}
-                    />
-                    
-                    <DetailField 
-                        label={t('createBy')} 
-                        value={buildingData?.createdBy ?? ""} 
-                        readonly={true}
-                    /> */}
-                    
-                </div>
-            </div>
-
-            {/* Units List Section */}
-            <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-md border border-gray-200 mt-6">
-                <div className="border-b pb-4 mb-6">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-semibold text-[#02542D]">
+                {/* Units List Section */}
+                <div className="relative z-10 overflow-visible rounded-3xl border border-white/50 bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-8 duration-500">
+                    <div className="border-b border-slate-100 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <h2 className="text-xl font-bold text-slate-800">
                             {tUnits('unitList')}
                         </h2>
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={onDownloadUnitTemplate}
-                                className="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 transition text-sm"
-                            >
-                                {t('downloadUnitTemplate')}
-                            </button>
-                            <button
-                                onClick={onPickUnitFile}
-                                disabled={importing}
-                                className="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition text-sm disabled:opacity-50"
-                            >
-                                {importing ? t('importing') : t('selectExcelFile')}
-                            </button>
-                            <button
-                                onClick={onExportUnits}
-                                className="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition text-sm"
-                            >
-                                Xuất Excel
-                            </button>
+                        <div className="flex flex-wrap items-center gap-2">
                             <input
                                 ref={fileInputRef}
                                 type="file"
@@ -514,402 +496,415 @@ export default function BuildingDetail () {
                                 className="hidden"
                                 onChange={onUnitFileChange}
                             />
+                            <div className="flex bg-slate-100 p-1 rounded-lg">
+                                <button
+                                    onClick={onDownloadUnitTemplate}
+                                    className="p-2 rounded-md hover:bg-white hover:shadow-sm text-slate-600 hover:text-emerald-600 transition-all text-sm font-medium flex items-center gap-2"
+                                    title={t('downloadUnitTemplate')}
+                                >
+                                    <Download className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Template</span>
+                                </button>
+                                <button
+                                    onClick={onPickUnitFile}
+                                    disabled={importing}
+                                    className="p-2 rounded-md hover:bg-white hover:shadow-sm text-slate-600 hover:text-emerald-600 transition-all text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+                                    title={importing ? t('importing') : t('selectExcelFile')}
+                                >
+                                    {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                                    <span className="hidden sm:inline">Import</span>
+                                </button>
+                                <button
+                                    onClick={onExportUnits}
+                                    className="p-2 rounded-md hover:bg-white hover:shadow-sm text-slate-600 hover:text-emerald-600 transition-all text-sm font-medium flex items-center gap-2"
+                                    title="Export Excel"
+                                >
+                                    <FileSpreadsheet className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Export</span>
+                                </button>
+                            </div>
+
                             <button
                                 onClick={() => router.push(`/base/unit/unitNew?buildingId=${buildingId}`)}
-                                className="px-4 py-2 bg-[#14AE5C] text-white text-sm rounded-lg hover:bg-[#0c793f] transition flex items-center gap-2 shadow-sm"
+                                className="hidden sm:flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                                </svg>
+                                <Plus className="mr-2 h-4 w-4" />
                                 {tUnits('addUnit')}
                             </button>
+
                             <button
                                 onClick={() => {
                                     setMeterStatus(null);
                                     setMeterFormVisible(prev => !prev);
                                 }}
-                                className="px-4 py-2 bg-[#1f8b4e] text-white rounded-lg hover:bg-[#166333] transition text-sm flex items-center gap-2 shadow-sm"
+                                className={`flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-all border ${meterFormVisible
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200'
+                                    }`}
                             >
-                                <span className="text-sm font-semibold">{t('addMeter')}</span>
+                                <Gauge className="mr-2 h-4 w-4" />
+                                {t('addMeter')}
                             </button>
                         </div>
                     </div>
-                </div>
 
-                {meterFormVisible && (
-                    <div className="border-b pb-4 mb-6 relative z-10" data-meter-form>
-                        <form
-                            onSubmit={async (e) => {
-                                e.preventDefault();
-                                setMeterStatus(null);
-                                if (!meterForm.unitId || !meterForm.serviceId) {
-                                    setMeterStatus(t('messages.pleaseSelectUnitAndService'));
-                                    return;
-                                }
-                                
-                                // Validate installation date is not in the future
-                                if (meterForm.installedAt) {
-                                    const installedDate = new Date(meterForm.installedAt);
-                                    const today = new Date();
-                                    today.setHours(0, 0, 0, 0);
-                                    installedDate.setHours(0, 0, 0, 0);
-                                    
-                                    if (installedDate > today) {
-                                        setMeterStatus(t('messages.installedDateFuture') || 'Ngày lắp đặt không thể là ngày tương lai');
-                                        return;
-                                    }
-                                }
-                                
-                                setCreatingMeter(true);
-                                try {
-                                    await createMeter({
-                                        unitId: meterForm.unitId,
-                                        serviceId: meterForm.serviceId,
-                                        installedAt: meterForm.installedAt || undefined,
-                                    });
-                                    setMeterStatus(t('messages.meterAddedSuccess'));
-                                    // Reload units without meter for the current service
-                                    if (typeof buildingId === 'string') {
-                                        const updatedUnits = await getUnitsWithoutMeter(meterForm.serviceId, buildingId);
-                                        setUnitsWithoutMeter(updatedUnits);
-                                    }
-                                    // Reset form but keep service selected
-                                    setMeterForm({
-                                        unitId: '',
-                                        serviceId: meterForm.serviceId,
-                                        installedAt: '',
-                                    });
-                                } catch (err: any) {
-                                    console.error('Failed to create meter:', err);
-                                    setMeterStatus(err?.response?.data?.message || t('messages.failedToCreateMeter'));
-                                } finally {
-                                    setCreatingMeter(false);
-                                }
-                            }}
-                        >
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                                <label className="text-sm text-gray-600">
-                                    {t('service')}
-                                    <select
-                                        value={meterForm.serviceId}
-                                        onChange={(e) => {
-                                            setMeterForm(prev => ({ 
-                                                ...prev, 
-                                                serviceId: e.target.value,
-                                                unitId: '' // Reset unit when service changes
-                                            }));
-                                        }}
-                                        className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#739559] focus:border-[#739559]"
-                                    >
-                                        <option value="">{t('selectService')}</option>
-                                        {services.map(service => (
-                                            <option key={service.id} value={service.id}>
-                                                {service.name} ({service.code})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <label className="text-sm text-gray-600">
-                                    {t('unit')}
-                                    <select
-                                        value={meterForm.unitId}
-                                        onChange={(e) => setMeterForm(prev => ({ ...prev, unitId: e.target.value }))}
-                                        disabled={!meterForm.serviceId || loadingUnitsWithoutMeter}
-                                        className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white disabled:bg-gray-100 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#739559] focus:border-[#739559] relative z-20"
-                                    >
-                                        <option value="">
-                                            {!meterForm.serviceId 
-                                                ? 'Chọn dịch vụ trước' 
-                                                : loadingUnitsWithoutMeter 
-                                                    ? t('loading') 
-                                                    : unitsWithoutMeter.length === 0 
-                                                        ? 'Tất cả căn hộ đã có công tơ' 
-                                                        : t('selectUnit')
+                    <div className="p-6">
+                        {meterFormVisible && (
+                            <div className="mb-8 p-6 bg-slate-50/50 rounded-2xl border border-slate-100" data-meter-form>
+                                <form
+                                    onSubmit={async (e) => {
+                                        e.preventDefault();
+                                        setMeterStatus(null);
+                                        if (!meterForm.unitId || !meterForm.serviceId) {
+                                            setMeterStatus(t('messages.pleaseSelectUnitAndService'));
+                                            return;
+                                        }
+
+                                        // Validate installation date is not in the future
+                                        if (meterForm.installedAt) {
+                                            const installedDate = new Date(meterForm.installedAt);
+                                            const today = new Date();
+                                            today.setHours(0, 0, 0, 0);
+                                            installedDate.setHours(0, 0, 0, 0);
+
+                                            if (installedDate > today) {
+                                                setMeterStatus(t('messages.installedDateFuture') || 'Ngày lắp đặt không thể là ngày tương lai');
+                                                return;
                                             }
-                                        </option>
-                                        {unitsWithoutMeter.map(unit => (
-                                            <option key={unit.unitId} value={unit.unitId}>
-                                                {unit.unitCode}{unit.floor != null ? ` (Tầng ${unit.floor})` : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {loadingUnitsWithoutMeter && (
-                                        <div className="text-xs text-gray-500 mt-1">Đang tải danh sách căn hộ chưa có công tơ...</div>
-                                    )}
-                                    {!loadingUnitsWithoutMeter && meterForm.serviceId && unitsWithoutMeter.length === 0 && (
-                                        <div className="text-xs text-green-600 mt-1">✓ Tất cả căn hộ đã có công tơ cho dịch vụ này</div>
-                                    )}
-                                </label>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                                <div className="text-sm text-gray-600">
-                                    <span className="block mb-1">{t('installedDate')}</span>
-                                    <div className="relative">
-                                        <input
-                                            ref={meterDateInputRef}
-                                            type="date"
-                                            value={meterForm.installedAt}
-                                            max={new Date().toISOString().split('T')[0]}
-                                            onChange={(e) => setMeterForm(prev => ({ ...prev, installedAt: e.target.value }))}
-                                            className="absolute inset-0 opacity-0 pointer-events-none"
-                                        />
+                                        }
+
+                                        setCreatingMeter(true);
+                                        try {
+                                            await createMeter({
+                                                unitId: meterForm.unitId,
+                                                serviceId: meterForm.serviceId,
+                                                installedAt: meterForm.installedAt || undefined,
+                                            });
+                                            setMeterStatus(t('messages.meterAddedSuccess'));
+                                            // Reload units without meter for the current service
+                                            if (typeof buildingId === 'string') {
+                                                const updatedUnits = await getUnitsWithoutMeter(meterForm.serviceId, buildingId);
+                                                setUnitsWithoutMeter(updatedUnits);
+                                            }
+                                            // Reset form but keep service selected
+                                            setMeterForm({
+                                                unitId: '',
+                                                serviceId: meterForm.serviceId,
+                                                installedAt: '',
+                                            });
+                                        } catch (err: any) {
+                                            console.error('Failed to create meter:', err);
+                                            setMeterStatus(err?.response?.data?.message || t('messages.failedToCreateMeter'));
+                                        } finally {
+                                            setCreatingMeter(false);
+                                        }
+                                    }}
+                                >
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold text-slate-700">{t('service')}</label>
+                                            <select
+                                                value={meterForm.serviceId}
+                                                onChange={(e) => {
+                                                    setMeterForm(prev => ({
+                                                        ...prev,
+                                                        serviceId: e.target.value,
+                                                        unitId: '' // Reset unit when service changes
+                                                    }));
+                                                }}
+                                                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                            >
+                                                <option value="">{t('selectService')}</option>
+                                                {services.map(service => (
+                                                    <option key={service.id} value={service.id}>
+                                                        {service.name} ({service.code})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold text-slate-700">{t('unit')}</label>
+                                            <select
+                                                value={meterForm.unitId}
+                                                onChange={(e) => setMeterForm(prev => ({ ...prev, unitId: e.target.value }))}
+                                                disabled={!meterForm.serviceId || loadingUnitsWithoutMeter}
+                                                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm bg-white disabled:bg-slate-50 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                            >
+                                                <option value="">
+                                                    {!meterForm.serviceId
+                                                        ? 'Chọn dịch vụ trước'
+                                                        : loadingUnitsWithoutMeter
+                                                            ? t('loading')
+                                                            : unitsWithoutMeter.length === 0
+                                                                ? 'Tất cả căn hộ đã có công tơ'
+                                                                : t('selectUnit')
+                                                    }
+                                                </option>
+                                                {unitsWithoutMeter.map(unit => (
+                                                    <option key={unit.unitId} value={unit.unitId}>
+                                                        {unit.unitCode}{unit.floor != null ? ` (${t('buildingDetail.floorN', { n: unit.floor })})` : ''}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {loadingUnitsWithoutMeter && (
+                                                <div className="text-xs text-slate-500">Đang tải danh sách căn hộ...</div>
+                                            )}
+                                            {!loadingUnitsWithoutMeter && meterForm.serviceId && unitsWithoutMeter.length === 0 && (
+                                                <div className="text-xs text-emerald-600 font-medium">✓ Tất cả căn hộ đã có công tơ</div>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <span className="block text-sm font-semibold text-slate-700">{t('installedDate')}</span>
+                                            <div className="relative">
+                                                <input
+                                                    ref={meterDateInputRef}
+                                                    type="date"
+                                                    value={meterForm.installedAt}
+                                                    max={new Date().toISOString().split('T')[0]}
+                                                    onChange={(e) => setMeterForm(prev => ({ ...prev, installedAt: e.target.value }))}
+                                                    className="absolute inset-0 opacity-0 pointer-events-none"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={openMeterDatePicker}
+                                                    className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-left bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                                >
+                                                    {meterForm.installedAt || 'mm/dd/yyyy'}
+                                                </button>
+                                            </div>
+                                            <span className="text-xs text-slate-500">{t('messages.installedDateHelper') || 'Ngày lắp đặt phải là hôm nay hoặc trước đó'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                         <button
                                             type="button"
-                                            onClick={openMeterDatePicker}
-                                            className="block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white"
+                                            onClick={onExportMeters}
+                                            className="px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition text-sm font-medium flex items-center gap-2"
                                         >
-                                            {meterForm.installedAt || 'mm/dd/yyyy'}
+                                            <Download className="h-4 w-4" />
+                                            {t('exportMeterExcel')}
                                         </button>
+
+                                        <div className="flex gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setMeterFormVisible(false)}
+                                                className="px-6 py-2 bg-white text-slate-700 border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 transition"
+                                            >
+                                                {t('cancel')}
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                disabled={creatingMeter}
+                                                className="px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 flex items-center gap-2"
+                                            >
+                                                {creatingMeter ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                                                {creatingMeter ? t('creating') : t('saveMeter')}
+                                            </button>
+                                        </div>
                                     </div>
-                                    <span className="text-xs text-gray-500 mt-1">{t('messages.installedDateHelper') || 'Ngày lắp đặt phải là hôm nay hoặc trước đó'}</span>
-                                </div>
-                            </div>
-                                <div className="flex flex-wrap gap-3 mb-3">
-                                    <button
-                                        type="button"
-                                        onClick={onExportMeters}
-                                        className="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition text-sm"
-                                    >
-                                        {t('exportMeterExcel')}
-                                    </button>
-                                </div>
-                            {meterStatus && (
-                                <div className={`text-sm mb-3 ${
-                                    meterStatus.includes('thành công') || meterStatus.includes('successfully') 
-                                        ? 'text-green-600' 
-                                        : 'text-red-600'
-                                }`}>
-                                    {meterStatus}
-                                </div>
-                            )}
-                            <div className="flex gap-3">
-                                <button
-                                    type="submit"
-                                    disabled={creatingMeter}
-                                    className="px-4 py-2 bg-[#02542D] text-white rounded-lg text-sm hover:bg-[#024428] transition"
-                                >
-                                    {creatingMeter ? t('creating') : t('saveMeter')}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setMeterFormVisible(false)}
-                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition"
-                                >
-                                    {t('cancel')}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                )}
 
-
-                {importError && (
-                    <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <div className="flex items-center gap-2 text-red-700">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <span className="font-semibold">Lỗi import:</span>
-                        </div>
-                        <p className="mt-1 text-red-600 text-sm">{importError}</p>
-                    </div>
-                )}
-                {importResult && (
-                    <div className="mb-4">
-                        {/* Validation Errors */}
-                        {importResult.hasValidationErrors && importResult.validationErrors && importResult.validationErrors.length > 0 && (
-                            <div className="mb-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-                                <div className="flex items-center gap-2 text-red-700 mb-3">
-                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                    </svg>
-                                    <span className="font-semibold text-lg">Lỗi template/định dạng file</span>
-                                </div>
-                                <ul className="list-disc list-inside space-y-1">
-                                    {importResult.validationErrors.map((err, idx) => (
-                                        <li key={idx} className="text-red-600 text-sm">{err}</li>
-                                    ))}
-                                </ul>
-                                <div className="mt-3 pt-3 border-t border-red-200">
-                                    <p className="text-red-700 text-sm font-medium">
-                                        💡 Vui lòng tải template mẫu và kiểm tra lại file Excel của bạn.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-                        
-                        {/* Summary - Only show if no validation errors */}
-                        {!importResult.hasValidationErrors && (
-                            <div className="mb-3 p-3 rounded-lg border" style={{
-                                backgroundColor: importResult.errorCount > 0 ? '#fef2f2' : '#f0fdf4',
-                                borderColor: importResult.errorCount > 0 ? '#fecaca' : '#bbf7d0'
-                            }}>
-                                <div className="flex items-center gap-2 mb-1">
-                                    {importResult.errorCount > 0 ? (
-                                        <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                        </svg>
-                                    ) : (
-                                        <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                        </svg>
+                                    {meterStatus && (
+                                        <div className={`mt-4 p-3 rounded-xl border ${meterStatus.includes('thành công') || meterStatus.includes('successfully')
+                                            ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
+                                            : 'bg-red-50 border-red-100 text-red-700'
+                                            } flex items-center gap-2 text-sm`}>
+                                            {meterStatus.includes('thành công') || meterStatus.includes('successfully')
+                                                ? <CheckCircle2 className="h-5 w-5" />
+                                                : <AlertCircle className="h-5 w-5" />
+                                            }
+                                            {meterStatus}
+                                        </div>
                                     )}
-                                    <span className={`font-semibold ${importResult.errorCount > 0 ? 'text-red-700' : 'text-green-700'}`}>
-                                        {t('totalRows', { totalRows: importResult.totalRows, successCount: importResult.successCount, errorCount: importResult.errorCount })}
-                                    </span>
-                                </div>
+                                </form>
                             </div>
                         )}
-                        
-                        {/* Results Table - Only show if no validation errors */}
-                        {!importResult.hasValidationErrors && importResult.rows.length > 0 && (
-                        <div className="max-h-96 overflow-auto border rounded-lg shadow-sm">
-                            <table className="min-w-full">
-                                <thead className="bg-gray-50 sticky top-0">
-                                    <tr>
-                                        <th className="border px-3 py-2 text-left text-sm font-semibold text-gray-700">Dòng</th>
-                                        <th className="border px-3 py-2 text-left text-sm font-semibold text-gray-700">Trạng thái</th>
-                                        <th className="border px-3 py-2 text-left text-sm font-semibold text-gray-700">Thông báo</th>
-                                        <th className="border px-3 py-2 text-left text-sm font-semibold text-gray-700">Unit ID</th>
-                                        <th className="border px-3 py-2 text-left text-sm font-semibold text-gray-700">Mã căn hộ</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {importResult.rows.map((r, i) => (
-                                        <tr 
-                                            key={i}
-                                            className={r.success ? 'bg-green-50 hover:bg-green-100' : 'bg-red-50 hover:bg-red-100'}
-                                        >
-                                            <td className="border px-3 py-2 text-sm font-medium">{r.rowNumber}</td>
-                                            <td className="border px-3 py-2 text-sm">
-                                                {r.success ? (
-                                                    <span className="inline-flex items-center gap-1 text-green-700 font-semibold">
-                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                        </svg>
-                                                        Thành công
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1 text-red-700 font-semibold">
-                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                                        </svg>
-                                                        Lỗi
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className={`border px-3 py-2 text-sm ${r.success ? 'text-green-800' : 'text-red-800 font-medium'}`}>
-                                                {r.message}
-                                            </td>
-                                            <td className="border px-3 py-2 text-sm text-gray-600">{r.unitId || '—'}</td>
-                                            <td className="border px-3 py-2 text-sm text-gray-600">{r.code || '—'}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        )}
-                    </div>
-                )}
 
-                {loadingUnits ? (
-                    <div className="text-center py-8 text-gray-500">{t('loading')}</div>
-                ) : unitsError ? (
-                    <div className="text-center py-8 text-red-500">{unitsError}</div>
-                ) : units.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">{tUnits('noUnit')}</div>
-                ) : (
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        {floorOptions.length > 0 && (
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 py-3 border-b border-gray-200">
-                                <div className="text-sm text-gray-600">
-                                    Hiện {filteredUnits.length} trên tổng {units.length} căn hộ
+                        {importError && (
+                            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl relative overflow-hidden">
+                                <div className="flex items-center gap-2 text-red-700 font-semibold mb-1">
+                                    <XCircle className="w-5 h-5" />
+                                    <span>Lỗi import:</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <label htmlFor="floorFilter" className="font-medium text-gray-700">
-                                        Chọn tầng
-                                    </label>
-                                    <select
-                                        id="floorFilter"
-                                        value={selectedFloor ?? ''}
-                                        onChange={(e) => setSelectedFloor(e.target.value || null)}
-                                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
-                                    >
-                                        <option value="">Tất cả tầng</option>
-                                        {floorOptions.map(floor => (
-                                            <option key={floor} value={floor}>
-                                                {floor}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                <p className="text-red-600 text-sm ml-7">{importError}</p>
                             </div>
                         )}
-                        <table className="w-full text-sm">
-                            <thead className="bg-gray-100 border-b border-gray-200">
-                                <tr>
-                                    <th className="px-4 py-3 text-left font-medium text-gray-600">{tUnits('unitCode')}</th>
-                                    <th className="px-4 py-3 text-center font-medium text-gray-600">{tUnits('floor')}</th>
-                                    <th className="px-4 py-3 text-center font-medium text-gray-600">{tUnits('areaM2')}</th>
-                                    <th className="px-4 py-3 text-center font-medium text-gray-600">{tUnits('status')}</th>
-                                    <th className="px-4 py-3 text-left font-medium text-gray-600">{tUnits('ownerName')}</th>
-                                    <th className="px-4 py-3 text-center font-medium text-gray-600">{tUnits('action')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {filteredUnits.map((unit) => (
-                                    <tr key={unit.id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-3">
-                                            <span className="font-medium text-[#739559]">{unit.code}</span>
-                                        </td>
-                                        <td className="px-4 py-3 text-center">{unit.floor}</td>
-                                        <td className="px-4 py-3 text-center">{unit.areaM2 || '-'}</td>
-                                        <td className="px-4 py-3 text-center">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                unit.status === 'ACTIVE' || unit.status === 'Active'
-                                                    ? 'bg-green-100 text-green-800' 
-                                                    : 'bg-gray-100 text-gray-800'
-                                            }`}>
-                                                {unit.status ? tUnits(unit.status.toLowerCase() ?? '') : ''}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div>
-                                                <div className="font-medium text-gray-900">
-                                                    {getPrimaryResidentName(unit.id) || '-'}
-                                                </div>
-                                                {unit.ownerContact && (
-                                                    <div className="text-xs text-gray-500">{unit.ownerContact ? unit.ownerContact : '-'}</div>
-                                                )}
+
+                        {importResult && (
+                            <div className="mb-6">
+                                {importResult.hasValidationErrors && importResult.validationErrors && importResult.validationErrors.length > 0 ? (
+                                    <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+                                        <div className="flex items-center gap-2 text-red-700 font-semibold text-lg mb-3">
+                                            <AlertCircle className="w-5 h-5" />
+                                            <span>Lỗi template/định dạng file</span>
+                                        </div>
+                                        <ul className="list-disc list-inside space-y-1 ml-2">
+                                            {importResult.validationErrors.map((err, idx) => (
+                                                <li key={idx} className="text-red-600 text-sm">{err}</li>
+                                            ))}
+                                        </ul>
+                                        <div className="mt-4 pt-3 border-t border-red-200 text-sm text-red-700 font-medium">
+                                            💡 Vui lòng tải template mẫu và kiểm tra lại file Excel của bạn.
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className={`p-4 rounded-xl border ${importResult.errorCount > 0 ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
+                                        <div className={`flex items-center gap-2 font-semibold ${importResult.errorCount > 0 ? 'text-red-700' : 'text-emerald-700'}`}>
+                                            {importResult.errorCount > 0 ? <AlertCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+                                            {t('totalRows', { totalRows: importResult.totalRows, successCount: importResult.successCount, errorCount: importResult.errorCount })}
+                                        </div>
+
+                                        {importResult.rows.length > 0 && (
+                                            <div className="mt-4 max-h-96 overflow-auto border border-white/50 rounded-lg bg-white shadow-sm">
+                                                <table className="min-w-full divide-y divide-slate-100">
+                                                    <thead className="bg-slate-50 sticky top-0">
+                                                        <tr>
+                                                            <th className="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Dòng</th>
+                                                            <th className="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Trạng thái</th>
+                                                            <th className="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Thông báo</th>
+                                                            <th className="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Unit Code</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100">
+                                                        {importResult.rows.map((r, i) => (
+                                                            <tr key={i} className={r.success ? 'bg-emerald-50/50' : 'bg-red-50/50'}>
+                                                                <td className="px-4 py-2 text-sm font-medium text-slate-900">{r.rowNumber}</td>
+                                                                <td className="px-4 py-2 text-sm">
+                                                                    {r.success ? (
+                                                                        <span className="inline-flex items-center gap-1 text-emerald-700 font-medium text-xs">
+                                                                            <CheckCircle2 className="w-3.5 h-3.5" /> Thành công
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="inline-flex items-center gap-1 text-red-700 font-medium text-xs">
+                                                                            <XCircle className="w-3.5 h-3.5" /> Lỗi
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                                <td className={`px-4 py-2 text-sm ${r.success ? 'text-slate-600' : 'text-red-600'}`}>{r.message}</td>
+                                                                <td className="px-4 py-2 text-sm text-slate-600">{r.code || '-'}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
                                             </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <div className="flex justify-center">
-                                                <Link href={`/base/unit/unitDetail/${unit.id}`}>
-                                                    <button 
-                                                        className="hover:bg-opacity-80 transition duration-150"
-                                                    >
-                                                        <Image 
-                                                            src={EditTable} 
-                                                            alt="View Detail" 
-                                                            width={24} 
-                                                            height={24}
-                                                        />
-                                                    </button>
-                                                </Link>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Floor Selection */}
+                        <div className="mb-6 overflow-x-auto pb-2">
+                            <div className="flex gap-2 min-w-max">
+                                <button
+                                    onClick={() => setSelectedFloor(null)}
+                                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${selectedFloor === null
+                                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20'
+                                        : 'bg-white text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 border border-slate-200'
+                                        }`}
+                                >
+                                    {t('buildingDetail.allFloors')}
+                                </button>
+                                {floorOptions.map(floor => (
+                                    <button
+                                        key={floor}
+                                        onClick={() => setSelectedFloor(floor)}
+                                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${selectedFloor === floor
+                                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20'
+                                            : 'bg-white text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 border border-slate-200'
+                                            }`}
+                                    >
+                                        {t('buildingDetail.floorN', { n: floor })}
+                                    </button>
                                 ))}
-                            </tbody>
-                        </table>
+                            </div>
+                        </div>
+
+                        {/* Loading State */}
+                        {loadingUnits ? (
+                            <div className="flex justify-center items-center py-12">
+                                <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+                            </div>
+                        ) : unitsError ? (
+                            <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-center">
+                                {unitsError}
+                            </div>
+                        ) : filteredUnits.length === 0 ? (
+                            <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                <div className="p-3 bg-slate-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+                                    <Layers className="w-6 h-6 text-slate-400" />
+                                </div>
+                                <p className="text-slate-500 font-medium">Chưa có căn hộ nào{selectedFloor ? ` ở tầng ${selectedFloor}` : ''}</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+                                {paginatedUnits.map((unit) => {
+                                    const household = householdsMap[unit.id];
+                                    const residentName = primaryResidentNamesMap[unit.id];
+                                    const isInactive = unit.status?.toUpperCase() === 'INACTIVE';
+
+                                    return (
+                                        <div
+                                            key={unit.id}
+                                            onClick={() => router.push(`/base/unit/unitDetail/${unit.id}`)}
+                                            className={`group relative bg-white rounded-2xl p-4 border transition-all cursor-pointer hover:shadow-lg ${isInactive
+                                                ? 'border-slate-200 opacity-75 hover:border-slate-300'
+                                                : 'border-slate-200 hover:border-emerald-200 hover:ring-1 hover:ring-emerald-200/50'
+                                                }`}
+                                        >
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div className={`p-2 rounded-xl ${isInactive ? 'bg-slate-100 text-slate-500' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                    <Building2 className="w-5 h-5" />
+                                                </div>
+                                                <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${isInactive
+                                                    ? 'bg-slate-50 text-slate-500 border-slate-100'
+                                                    : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                    }`}>
+                                                    {isInactive ? t('inactive') : t('active')}
+                                                </span>
+                                            </div>
+
+                                            <h3 className="text-lg font-bold text-slate-800 mb-1 group-hover:text-emerald-700 transition-colors">
+                                                {unit.code}
+                                            </h3>
+
+                                            <div className="space-y-2 mb-4">
+                                                <div className="flex items-center text-sm text-slate-600">
+                                                    <Layers className="w-4 h-4 mr-2 text-slate-400" />
+                                                    {t('buildingDetail.floorN', { n: unit.floor })}
+                                                </div>
+                                                <div className="flex items-center text-sm text-slate-600">
+                                                    <MapPin className="w-4 h-4 mr-2 text-slate-400" />
+                                                    {unit.areaM2} m² • {unit.bedrooms} PN
+                                                </div>
+                                            </div>
+
+                                            {residentName && (
+                                                <div className="mt-auto pt-3 border-t border-slate-100 flex items-center gap-2 text-sm text-slate-700 font-medium">
+                                                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                                    {residentName}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {filteredUnits.length > 0 && (
+                            <div className="mt-8">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={setCurrentPage}
+                                />
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );
-};
-
-
-
+}
 

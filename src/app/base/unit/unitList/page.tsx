@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Building as BuildingIcon, Layers, FileSpreadsheet } from 'lucide-react';
+import { Building as BuildingIcon, Layers, FileSpreadsheet, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, ArrowUp, ArrowDown, ArrowUpDown, AlertCircle } from 'lucide-react';
 
 import EditTable from '@/src/assets/EditTable.svg';
 import { useUnitPage } from '@/src/hooks/useUnitPage';
@@ -38,12 +38,26 @@ export default function UnitListPage() {
   const [expandedBuildingId, setExpandedBuildingId] = useState<string | null>(null);
   const [expandedFloorKey, setExpandedFloorKey] = useState<string | null>(null);
 
+  // Sorting state
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({
+    key: null,
+    direction: 'asc',
+  });
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
   // Change unit status with confirmation
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [selectedUnitStatus, setSelectedUnitStatus] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
+
   // Asset inspection data
   const [inspections, setInspections] = useState<AssetInspection[]>([]);
   const [loadingInspections, setLoadingInspections] = useState(false);
@@ -73,12 +87,6 @@ export default function UnitListPage() {
     return result;
   }, [buildings]);
 
-  // Count only ACTIVE units
-  const activeUnitsCount = useMemo(() => {
-    return unitsWithContext.filter((unit) => 
-      unit.status?.toUpperCase() === 'ACTIVE'
-    ).length;
-  }, [unitsWithContext]);
 
   // Create map of unitId -> latest inspection
   const unitInspectionMap = useMemo(() => {
@@ -240,15 +248,32 @@ export default function UnitListPage() {
       });
     }
 
-    // Sort units by building code first, then by unit code
-    return filtered.sort((a, b) => {
+    // Sort units
+    return [...filtered].sort((a, b) => {
+      // If custom sort is active
+      if (sortConfig.key) {
+        if (sortConfig.key === 'code') {
+          const valA = normalizeText(a.code);
+          const valB = normalizeText(b.code);
+          return sortConfig.direction === 'asc'
+            ? valA.localeCompare(valB, 'vi', { numeric: true, sensitivity: 'base' })
+            : valB.localeCompare(valA, 'vi', { numeric: true, sensitivity: 'base' });
+        }
+        if (sortConfig.key === 'areaM2') {
+          const valA = a.areaM2 || 0;
+          const valB = b.areaM2 || 0;
+          return sortConfig.direction === 'asc' ? valA - valB : valB - valA;
+        }
+      }
+
+      // Default sort behavior: Building Code -> Unit Code
       // First sort by building code
       const buildingCodeA = normalizeText(a.buildingCode ?? '');
       const buildingCodeB = normalizeText(b.buildingCode ?? '');
       if (buildingCodeA !== buildingCodeB) {
         return buildingCodeA.localeCompare(buildingCodeB, 'vi', { numeric: true, sensitivity: 'base' });
       }
-      
+
       // Then sort by unit code
       const unitCodeA = normalizeText(a.code ?? '');
       const unitCodeB = normalizeText(b.code ?? '');
@@ -260,6 +285,7 @@ export default function UnitListPage() {
     selectedBedrooms,
     unitSearch,
     unitsWithContext,
+    sortConfig, // Add sortConfig to dependency array
   ]);
 
   // Apply pagination to filtered units
@@ -273,12 +299,7 @@ export default function UnitListPage() {
     return pageSize > 0 ? Math.ceil(filteredUnits.length / pageSize) : 0;
   }, [filteredUnits.length, pageSize]);
 
-  const handleSelectAll = () => {
-    setSelectedBuildingId('all');
-    setSelectedFloor('all');
-    setSelectedBedrooms('all');
-    handlePageChange(0);
-  };
+
 
   const handleSelectBuilding = (buildingId: string) => {
     setSelectedBuildingId(buildingId);
@@ -403,7 +424,7 @@ export default function UnitListPage() {
     const newStatus = selectedUnitStatus?.toUpperCase() === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     try {
       await updateUnitStatus(selectedUnitId, newStatus);
-      
+
       setConfirmOpen(false);
       setSelectedUnitId(null);
       setSelectedUnitStatus(null);
@@ -461,32 +482,37 @@ export default function UnitListPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-semibold text-[#02542D]">{t('unitList')}</h1>
-        <div className="flex flex-wrap gap-3">
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+            {t('unitList')}
+          </h1>
+        </div>
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={handleExport}
-            className="rounded-md border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-600 transition-colors hover:bg-emerald-50"
+            className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-medium text-sm hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
           >
+            <FileSpreadsheet className="w-4 h-4 mr-2 text-slate-500" />
             Export Excel
           </button>
           <button
             type="button"
             onClick={() => setIsImportOpen(true)}
-            className="rounded-md border border-emerald-600 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+            className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-medium text-sm hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
           >
+            <FileSpreadsheet className="w-4 h-4 mr-2 text-slate-500" />
             Import Excel
           </button>
           <button
             type="button"
             onClick={() => !isAddUnitDisabled && router.push('/base/unit/unitNew')}
-            className={`rounded-md px-4 py-2 transition-colors ${
-              isAddUnitDisabled
-                ? 'cursor-not-allowed bg-slate-300 text-slate-500'
-                : 'bg-[#02542D] text-white hover:bg-[#024428]'
-            }`}
+            className={`inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-medium text-sm transition-all shadow-lg shadow-emerald-500/25 ${isAddUnitDisabled
+              ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+              : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:shadow-emerald-500/40 hover:from-emerald-600 hover:to-teal-700'
+              }`}
             disabled={isAddUnitDisabled}
             title={isAddUnitDisabled ? t('statusChange.buildingInactiveCannotAdd') : undefined}
           >
@@ -495,282 +521,311 @@ export default function UnitListPage() {
         </div>
       </div>
 
-      <div
-        className={`relative grid gap-6 ${
-          isSidebarCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-[320px_1fr]'
-        }`}
-      >
+      <div className={`grid grid-cols-1 gap-6 transition-all duration-300 ${isSidebarCollapsed ? '' : 'lg:grid-cols-[320px_1fr]'}`}>
         {!isSidebarCollapsed && (
-          <aside className="space-y-4">
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-800">{t('buildingFilter.title')}</h2>
-                  <p className="text-sm text-slate-500">{t('buildingFilter.description')}</p>
-                </div>
+          <aside className="space-y-4 min-w-[320px]">
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white/50 overflow-hidden">
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-800">{t('buildingFilter.title')}</h2>
                 <button
-                  type="button"
                   onClick={() => setIsSidebarCollapsed(true)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-500 transition hover:border-emerald-300 hover:text-emerald-700"
+                  className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                  title="Collapse sidebar"
                 >
-                  <span className="text-base leading-none">{'«'}</span>
+                  <PanelLeftClose className="w-5 h-5" />
                 </button>
               </div>
-              <div className="px-5 py-4">
-                <div className="relative">
+              <div className="p-5 space-y-4">
+                <div className="relative group">
                   <input
                     type="text"
                     value={buildingSearch}
                     onChange={(event) => setBuildingSearch(event.target.value)}
                     placeholder={t('buildingFilter.searchPlaceholder')}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                   />
                 </div>
-                <div className="mt-4 space-y-2 text-sm">
-                  <button
-                    type="button"
-                    onClick={handleSelectAll}
-                    className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition ${
-                      selectedBuildingId === 'all'
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-transparent hover:bg-slate-50'
-                    }`}
+
+                <div className="max-h-[600px] overflow-y-auto space-y-2 pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  {/* All Units Option */}
+                  <div
+                    className={`rounded-xl border transition-all duration-200 ${selectedBuildingId === 'all'
+                      ? 'border-emerald-200 bg-emerald-50/50 shadow-sm'
+                      : 'border-transparent bg-white hover:bg-slate-50 border-slate-100'
+                      }`}
                   >
-                    <span>{t('buildingFilter.all')}</span>
-                    <span className="text-xs text-slate-500">{activeUnitsCount}</span>
-                  </button>
-
-                  <div className="max-h-[500px] space-y-2 overflow-y-auto pr-1">
-                    {buildingFloorTree.length === 0 ? (
-                      <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center text-slate-500">
-                        {t('buildingFilter.noData')}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedBuildingId('all');
+                        setSelectedFloor('all');
+                        setSelectedBedrooms('all');
+                        setExpandedBuildingId(null);
+                        setExpandedFloorKey(null);
+                        handlePageChange(0);
+                      }}
+                      className="flex w-full items-center gap-3 px-3 py-2.5 text-left group"
+                    >
+                      <div
+                        className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${selectedBuildingId === 'all'
+                          ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
+                          : 'bg-slate-100 text-slate-500 group-hover:bg-emerald-100 group-hover:text-emerald-600'
+                          }`}
+                      >
+                        <Layers className="h-4.5 w-4.5" />
                       </div>
-                    ) : (
-                      buildingFloorTree.map(({ building, floors }) => {
-                        const isInactive = building.status?.toUpperCase() === 'INACTIVE';
-                        const totalUnitsInBuilding = floors.reduce((sum, f) => sum + f.units.length, 0);
-                        const isExpanded = expandedBuildingId === building.id;
+                      <span
+                        className={`text-sm font-semibold transition-colors ${selectedBuildingId === 'all'
+                          ? 'text-emerald-800'
+                          : 'text-slate-700 group-hover:text-emerald-700'
+                          }`}
+                      >
+                        {t('buildingFilter.allUnits')}
+                      </span>
+                    </button>
+                  </div>
 
-                        return (
-                          <div
-                            key={building.id}
-                            className={`rounded-xl border transition ${
-                              isInactive
-                                ? 'border-slate-300 bg-slate-100'
-                                : isExpanded
-                                ? 'border-emerald-200 bg-emerald-50'
-                                : 'border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40'
+                  {buildingFloorTree.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-8 text-center text-sm text-slate-500">
+                      {t('buildingFilter.noData')}
+                    </div>
+                  ) : (
+                    buildingFloorTree.map(({ building, floors }) => {
+                      const isInactive = building.status?.toUpperCase() === 'INACTIVE';
+                      const totalUnitsInBuilding = floors.reduce((sum, f) => sum + f.units.length, 0);
+                      const isExpanded = expandedBuildingId === building.id;
+                      const isSelected = selectedBuildingId === building.id;
+
+                      return (
+                        <div
+                          key={building.id}
+                          className={`rounded-xl border transition-all duration-200 ${isInactive
+                            ? 'border-slate-100 bg-slate-50 opacity-75'
+                            : isSelected || isExpanded
+                              ? 'border-emerald-200 bg-emerald-50/50 shadow-sm'
+                              : 'border-slate-100 bg-white hover:border-emerald-200 hover:bg-emerald-50/30'
                             }`}
-                          >
-                            <div className="flex w-full items-center justify-between px-3 py-2">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (isInactive) return;
-                                  const nextExpanded = isExpanded ? null : building.id;
-                                  setExpandedBuildingId(nextExpanded);
-
-                                  // Khi chọn tòa nhà, cập nhật filter bên phải
-                                  setSelectedBuildingId(building.id);
-                                  setSelectedFloor('all');
-                                  setSelectedBedrooms('all');
-                                  setExpandedFloorKey(null);
-                                  handlePageChange(0);
-                                }}
-                                className="flex flex-1 items-center gap-3 text-left"
-                              >
-                                <div
-                                  className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                                    isInactive ? 'bg-slate-200 text-slate-500' : 'bg-emerald-100 text-emerald-700'
+                        >
+                          <div className="flex w-full items-center justify-between px-3 py-2.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isInactive) return;
+                                const nextExpanded = isExpanded ? null : building.id;
+                                setExpandedBuildingId(nextExpanded);
+                                setSelectedBuildingId(building.id);
+                                setSelectedFloor('all');
+                                setSelectedBedrooms('all');
+                                setExpandedFloorKey(null);
+                                handlePageChange(0);
+                              }}
+                              className="flex flex-1 items-center gap-3 text-left group"
+                            >
+                              <div
+                                className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${isInactive
+                                  ? 'bg-slate-200 text-slate-400'
+                                  : isSelected
+                                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
+                                    : 'bg-emerald-100/50 text-emerald-600 group-hover:bg-emerald-100 group-hover:text-emerald-700'
                                   }`}
-                                >
-                                  <BuildingIcon className="h-4 w-4" />
-                                </div>
-                                <div className="flex flex-col">
-                                  <span
-                                    className={`font-semibold ${
-                                      isInactive ? 'text-slate-500' : 'text-[#02542D]'
+                              >
+                                <BuildingIcon className="h-4.5 w-4.5" />
+                              </div>
+                              <div className="flex flex-col">
+                                <span
+                                  className={`text-sm font-semibold transition-colors ${isInactive ? 'text-slate-500' : isSelected ? 'text-emerald-800' : 'text-slate-700 group-hover:text-emerald-700'
                                     }`}
-                                  >
-                                    {building.name}
-                                  </span>
-                                  <span className="text-xs text-slate-500">
-                                    {totalUnitsInBuilding} căn hộ
-                                  </span>
-                                </div>
-                              </button>
-                              <div className="flex items-center gap-1">
-                                {!isInactive && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleExportBuilding(building.id, building.code ?? undefined);
-                                    }}
-                                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"
-                                    title="Export Excel"
-                                  >
-                                    <FileSpreadsheet className="w-4 h-4" />
-                                  </button>
-                                )}
-                                <span className="ml-1 text-xs font-medium text-slate-500">
-                                  {isExpanded ? '▴' : '▾'}
+                                >
+                                  {building.name}
+                                </span>
+                                <span className="text-xs text-slate-500 font-medium">
+                                  {t('buildingFilter.unitCount', { count: totalUnitsInBuilding })}
                                 </span>
                               </div>
+                            </button>
+                            <div className="flex items-center gap-1">
+                              {!isInactive && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleExportBuilding(building.id, building.code ?? undefined);
+                                  }}
+                                  className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                  title="Export Excel"
+                                >
+                                  <FileSpreadsheet className="w-4 h-4" />
+                                </button>
+                              )}
                             </div>
-
-                            {/* Floors list */}
-                            {isExpanded && floors.length > 0 && (
-                              <div className="border-t border-emerald-100 bg-white/80 px-3 py-2">
-                                <div className="space-y-2">
-                                  {floors.map((floorInfo) => {
-                                    const floorKey = `${building.id}-${floorInfo.floor}`;
-                                    const isFloorSelected = expandedFloorKey === floorKey;
-                                    return (
-                                      <div
-                                        key={floorKey}
-                                        className={`rounded-lg border px-3 py-2 ${
-                                          isFloorSelected
-                                            ? 'border-emerald-300 bg-emerald-50'
-                                            : 'border-slate-200 bg-slate-50'
-                                        }`}
-                                      >
-                                        <div className="flex w-full items-center justify-between">
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setSelectedBuildingId(building.id);
-                                              setSelectedFloor(floorInfo.floor);
-                                              setSelectedBedrooms('all');
-                                              setExpandedBuildingId(building.id);
-                                              setExpandedFloorKey(floorKey);
-                                              handlePageChange(0);
-                                            }}
-                                            className="flex flex-1 items-center gap-2 text-left"
-                                          >
-                                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                                              <Layers className="h-3.5 w-3.5" />
-                                            </div>
-                                            <div className="flex flex-col">
-                                              <span className="text-sm font-semibold text-slate-800">
-                                                {t('floor')} {floorInfo.floor}
-                                              </span>
-                                              <span className="text-xs text-slate-500">
-                                                {floorInfo.units.length} căn hộ
-                                              </span>
-                                            </div>
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleExportFloor(building.id, floorInfo.floor, building.code ?? undefined);
-                                            }}
-                                            className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"
-                                            title="Export Excel"
-                                          >
-                                            <FileSpreadsheet className="w-4 h-4" />
-                                          </button>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
                           </div>
-                        );
-                      })
-                    )}
-                  </div>
+
+                          {isExpanded && floors.length > 0 && (
+                            <div className="px-3 pb-3 pt-1 space-y-1">
+                              {floors.map((floorInfo) => {
+                                const floorKey = `${building.id}-${floorInfo.floor}`;
+                                const isFloorSelected = expandedFloorKey === floorKey;
+                                return (
+                                  <div
+                                    key={floorKey}
+                                    className={`rounded-lg border transition-all ${isFloorSelected
+                                      ? 'border-emerald-200 bg-white shadow-sm'
+                                      : 'border-transparent hover:bg-white/50'
+                                      }`}
+                                  >
+                                    <div className="flex w-full items-center justify-between px-2 py-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedBuildingId(building.id);
+                                          setSelectedFloor(floorInfo.floor);
+                                          setSelectedBedrooms('all');
+                                          setExpandedBuildingId(building.id);
+                                          setExpandedFloorKey(floorKey);
+                                          handlePageChange(0);
+                                        }}
+                                        className="flex flex-1 items-center gap-2 text-left"
+                                      >
+                                        <div className={`flex h-6 w-6 items-center justify-center rounded-md ${isFloorSelected ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                                          }`}>
+                                          <Layers className="h-3.5 w-3.5" />
+                                        </div>
+                                        <span className={`text-sm font-medium ${isFloorSelected ? 'text-emerald-700' : 'text-slate-600'}`}>
+                                          {t('floor')} {floorInfo.floor}
+                                        </span>
+                                        <span className="text-xs text-slate-400 ml-auto mr-2">
+                                          {floorInfo.units.length}
+                                        </span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleExportFloor(building.id, floorInfo.floor, building.code ?? undefined);
+                                        }}
+                                        className="p-1 text-slate-400 hover:text-emerald-600 transition-colors"
+                                        title="Export Excel"
+                                      >
+                                        <FileSpreadsheet className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             </div>
           </aside>
         )}
 
-        <section className="relative rounded-2xl border border-slate-200 bg-white shadow-sm">
-          {isSidebarCollapsed && (
-            <button
-              type="button"
-              onClick={() => setIsSidebarCollapsed(false)}
-              className="absolute left-0 top-5 z-10 inline-flex -translate-x-1/2 items-center justify-center rounded-full border border-slate-300 bg-white p-2 text-slate-500 shadow transition hover:border-emerald-300 hover:text-emerald-700"
-            >
-              <span className="text-sm leading-none">{'»'}</span>
-            </button>
-          )}
-          <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-800">{t('unitList')}</h2>
-              <p className="text-sm text-slate-500">
-                {selectedBuildingId === 'all'
-                  ? t('summary.total', { count: filteredUnits.length })
-                  : t('summary.selectedBuilding', { count: filteredUnits.length })}
-              </p>
-            </div>
-            <div className="w-full max-w-xs">
-              <input
-                type="text"
-                value={unitSearch}
-                onChange={(event) => {
-                  setUnitSearch(event.target.value);
-                  handlePageChange(0);
-                }}
-                placeholder={t('unitSearch.placeholder')}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-              />
-            </div>
-          </div>
-
-          {/* Bedroom filter only (floor is selected from the sidebar tree) */}
-          {selectedBuildingId !== 'all' && availableBedrooms.length > 0 && (
-            <div className="border-b border-slate-100 px-6 py-3 bg-slate-50/60">
-              <div className="flex flex-wrap items-center gap-6 text-sm">
-                <label className="flex items-center gap-3">
-                  <span className="font-medium text-slate-700">
-                    Loại phòng:
-                  </span>
-                  <select
-                    value={selectedBedrooms === 'all' ? 'all' : String(selectedBedrooms)}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === 'all') {
-                        handleSelectBedrooms('all');
-                      } else {
-                        handleSelectBedrooms(Number(value));
-                      }
-                    }}
-                    className="min-w-[160px] rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+        <section className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white/50 overflow-hidden flex flex-col h-full">
+          <div className="p-6 border-b border-slate-100 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                {isSidebarCollapsed && (
+                  <button
+                    onClick={() => setIsSidebarCollapsed(false)}
+                    className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 transition-all shadow-sm"
+                    title="Expand sidebar"
                   >
-                    <option value="all">Tất cả</option>
-                    {availableBedrooms.map((bed) => (
-                      <option key={bed} value={bed}>
-                        {bed} phòng ngủ
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <PanelLeftOpen className="w-5 h-5" />
+                  </button>
+                )}
+                <h2 className="text-lg font-bold text-slate-800">{t('unitList')}</h2>
+              </div>
+              <div className="relative group w-full sm:max-w-xs">
+                <input
+                  type="text"
+                  value={unitSearch}
+                  onChange={(event) => {
+                    setUnitSearch(event.target.value);
+                    handlePageChange(0);
+                  }}
+                  placeholder={t('unitSearch.placeholder')}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                />
               </div>
             </div>
-          )}
+
+            {selectedBuildingId !== 'all' && availableBedrooms.length > 0 && (
+              <div className="flex items-center gap-3 pt-2">
+                <span className="text-sm font-medium text-slate-700 whitespace-nowrap">
+                  {t('bedroomFilter.label')}
+                </span>
+                <select
+                  value={selectedBedrooms === 'all' ? 'all' : String(selectedBedrooms)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === 'all') {
+                      handleSelectBedrooms('all');
+                    } else {
+                      handleSelectBedrooms(Number(value));
+                    }
+                  }}
+                  className="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all cursor-pointer"
+                >
+                  <option value="all">{t('bedroomFilter.all')}</option>
+                  {availableBedrooms.map((bed) => (
+                    <option key={bed} value={bed}>
+                      {t('bedroomFilter.count', { count: bed })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-sm">
-              <thead className="bg-slate-50">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="bg-slate-50/50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-600">
-                    {t('unitCode')}
+                  <th
+                    className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 cursor-pointer hover:bg-slate-100 transition-colors group select-none"
+                    onClick={() => handleSort('code')}
+                  >
+                    <div className="flex items-center gap-1">
+                      {t('unitCode')}
+                      {sortConfig?.key === 'code' ? (
+                        sortConfig.direction === 'asc' ? (
+                          <ArrowUp className="w-4 h-4 text-emerald-600" />
+                        ) : (
+                          <ArrowDown className="w-4 h-4 text-emerald-600" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-4 h-4 text-slate-300 group-hover:text-slate-400" />
+                      )}
+                    </div>
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-600">
-                    {t('areaM2')}
+                  <th
+                    className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 cursor-pointer hover:bg-slate-100 transition-colors group select-none"
+                    onClick={() => handleSort('areaM2')}
+                  >
+                    <div className="flex items-center gap-1">
+                      {t('areaM2')}
+                      {sortConfig?.key === 'areaM2' ? (
+                        sortConfig.direction === 'asc' ? (
+                          <ArrowUp className="w-4 h-4 text-emerald-600" />
+                        ) : (
+                          <ArrowDown className="w-4 h-4 text-emerald-600" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-4 h-4 text-slate-300 group-hover:text-slate-400" />
+                      )}
+                    </div>
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-600">
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     {t('bedrooms')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-600">
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     {t('status')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-600">
+                  <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                     {t('action')}
                   </th>
                 </tr>
@@ -780,9 +835,14 @@ export default function UnitListPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-4 py-6 text-center text-sm text-slate-500"
+                      className="px-6 py-12 text-center text-sm text-slate-500"
                     >
-                      {t('noUnit')}
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                          <Layers className="w-6 h-6" />
+                        </div>
+                        <p>{t('noUnit')}</p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -790,38 +850,47 @@ export default function UnitListPage() {
                     const isBuildingInactive = unit.buildingStatus?.toUpperCase() === 'INACTIVE';
                     const isUnitInactive = unit.status?.toUpperCase() === 'INACTIVE';
                     const isDisabled = isBuildingInactive || isUnitInactive;
+                    const isActive = unit.status === 'ACTIVE' || unit.status === 'Active';
+
                     return (
-                      <tr 
-                        key={unit.id} 
-                        className={isDisabled ? 'bg-slate-100' : 'hover:bg-emerald-50/40'}
+                      <tr
+                        key={unit.id}
+                        className={`transition-colors ${isDisabled ? 'bg-slate-50/50' : 'hover:bg-emerald-50/30'}`}
                       >
-                        <td className={`px-4 py-3 font-medium ${isDisabled ? 'text-slate-500' : 'text-slate-800'}`}>
-                          {unit.code}
-                        </td>
-                        <td className={`px-4 py-3 ${isDisabled ? 'text-slate-500' : 'text-slate-600'}`}>
-                          {unit.areaM2 ?? '-'}
-                        </td>
-                        <td className={`px-4 py-3 ${isDisabled ? 'text-slate-500' : 'text-slate-600'}`}>
-                          {unit.bedrooms ?? '-'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`px-2 py-1 text-xs font-medium ${
-                              unit.status === 'ACTIVE' || unit.status === 'Active'
-                                ? 'rounded bg-emerald-100 text-emerald-700'
-                                : 'rounded bg-slate-100 text-slate-600'
-                            }`}
-                          >
-                            {unit.status === 'ACTIVE' || unit.status === 'Active' ? t('active') : t('inactive')}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`text-sm font-medium ${isDisabled ? 'text-slate-500' : 'text-slate-900'}`}>
+                            {unit.code}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`text-sm ${isDisabled ? 'text-slate-400' : 'text-slate-600'}`}>
+                            {unit.areaM2 ?? '-'} m²
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`text-sm ${isDisabled ? 'text-slate-400' : 'text-slate-600'}`}>
+                            {unit.bedrooms ?? '-'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${isActive
+                              ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                              : 'bg-slate-50 text-slate-500 border-slate-100'
+                              }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full mr-2 ${isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                            {isActive ? t('active') : t('inactive')}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-2">
                             <Link
                               href={`/base/unit/unitDetail/${unit.id}`}
-                              className="inline-flex items-center hover:opacity-80"
+                              className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                              title={t('altText.viewDetail')}
                             >
-                              <Image src={EditTable} alt={t('altText.viewDetail')} width={24} height={24} />
+                              <AlertCircle className="w-5 h-5" />
                             </Link>
                           </div>
                         </td>
@@ -832,37 +901,75 @@ export default function UnitListPage() {
               </tbody>
             </table>
           </div>
-          {totalPages > 0 && (
+
+          <div className="p-6 border-t border-slate-100 mt-auto">
             <Pagination
               currentPage={pageNo + 1}
               totalPages={totalPages}
               onPageChange={(page) => handlePageChange(page - 1)}
             />
-          )}
+          </div>
         </section>
       </div>
+
       <PopupConfirm
         isOpen={confirmOpen}
         onClose={handleCloseConfirm}
         onConfirm={handleConfirmChange}
         popupTitle={t('statusChange.confirmTitle')}
-        popupContext={selectedUnitStatus?.toUpperCase() === 'ACTIVE' 
-          ? t('statusChange.confirmDeactivate')
-          : t('statusChange.confirmActivate')}
-        isDanger={false}
+        popupContext={
+          selectedUnitStatus?.toUpperCase() === 'ACTIVE'
+            ? t('statusChange.confirmDeactivate')
+            : selectedBuilding?.status?.toUpperCase() === 'INACTIVE'
+              ? t('statusChange.confirmActivateInInactiveBuilding')
+              : t('statusChange.confirmActivate')
+        }
+        isDanger={selectedUnitStatus?.toUpperCase() === 'ACTIVE'}
       />
+
       {errorMessage && (
-        <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50">
+        <div className="fixed bottom-4 right-4 z-50 rounded-md bg-red-100 px-4 py-2 text-red-700 shadow-lg border border-red-200">
           {errorMessage}
         </div>
       )}
 
-      {/* Import Units Modal */}
       {isImportOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-800">Import danh sách căn hộ</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+              <h3 className="text-lg font-bold text-slate-800">{t('import.title')}</h3>
+              <button onClick={() => setIsImportOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <span className="text-2xl leading-none">&times;</span>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <button
+                type="button"
+                onClick={handleDownloadUnitTemplate}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
+                {t('import.downloadTemplate')}
+              </button>
+
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".xlsx, .xls"
+                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                  className="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
+                />
+              </div>
+
+              {importError && (
+                <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 border border-red-100">
+                  {importError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-slate-100 px-6 py-4 bg-slate-50/50">
               <button
                 type="button"
                 onClick={() => {
@@ -870,68 +977,18 @@ export default function UnitListPage() {
                   setImportFile(null);
                   setImportError(null);
                 }}
-                className="rounded-full p-1 text-slate-500 hover:bg-slate-100"
+                className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
               >
-                ✕
+                {t('cancel')}
               </button>
-            </div>
-            <div className="space-y-4 text-sm">
-              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
-                <p className="mb-2 font-medium text-slate-700">Chọn file Excel (.xlsx)</p>
-                <input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] || null;
-                    setImportFile(file);
-                    setImportError(null);
-                  }}
-                  className="text-xs text-slate-500"
-                />
-                {importFile && (
-                  <p className="mt-2 text-xs font-medium text-emerald-700">
-                    {importFile.name}
-                  </p>
-                )}
-              </div>
-              <div className="text-xs text-slate-500">
-                <p>
-                  Bạn có thể tải file mẫu để điền dữ liệu đúng định dạng.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleDownloadUnitTemplate}
-                  className="mt-1 font-semibold text-emerald-700 hover:underline"
-                >
-                  Tải file mẫu căn hộ
-                </button>
-              </div>
-              {importError && (
-                <div className="rounded-md bg-red-50 p-3 text-xs text-red-700">
-                  {importError}
-                </div>
-              )}
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsImportOpen(false);
-                    setImportFile(null);
-                    setImportError(null);
-                  }}
-                  className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="button"
-                  disabled={!importFile || importing}
-                  onClick={handleImport}
-                  className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  {importing ? 'Đang import...' : 'Bắt đầu import'}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleImport}
+                disabled={!importFile || importing}
+                className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50 transition-all"
+              >
+                {importing ? t('import.importing') : t('import.import')}
+              </button>
             </div>
           </div>
         </div>
@@ -939,4 +996,3 @@ export default function UnitListPage() {
     </div>
   );
 }
-

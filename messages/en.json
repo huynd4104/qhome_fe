@@ -23,9 +23,6 @@
       "templateDownloadFailed": "Unable to download template file. Please try again."
     }
   },
-  "HomePage": {
-    "title": "WELCOME TO </br> QHOME PMS"
-  },
   "ServiceCategory": {
     "listTitle": "Service Category List",
     "newTitle": "Create Service Category",
@@ -977,6 +974,12 @@
     "deleteProject": "Delete project"
   },
   "Building": {
+    "buildingDetail": {
+      "title": "Building detail",
+      "floorsLabel": "Number of floors",
+      "allFloors": "All",
+      "floorN": "Floor {n}"
+    },
     "buildingCode": "Building Code",
     "buildingName": "Building Name",
     "requestlist": "Building List",
@@ -998,7 +1001,6 @@
     "buildingcodename": "Building Code/ Building Name",
     "addBuilding": "Add Building",
     "return": "Return building list",
-    "buildingDetail": "Building detail",
     "addProject": "Add building",
     "inactive": "Inactive",
     "active": "Active",
@@ -1029,7 +1031,6 @@
     "selectMeterExcelFile": "Select meter Excel file",
     "exportMeterExcel": "Export meter Excel",
     "processedRows": "Processed {totalRows} rows:",
-    "success": "success",
     "errors": "errors",
     "row": "Row",
     "rowNumber": "Row {rowNumber}",
@@ -1040,18 +1041,6 @@
     "meterImportGuideDesc1": "Please set column <bold>buildingCode</bold> = <mono>{buildingCode}</mono> to load correct meters for this building.",
     "meterImportGuideDesc2": "Keep column names <bold>unitCode</bold>, <bold>serviceCode</bold>, <bold>installedAt</bold> unchanged and do not change the format.",
     "meterImportGuideDesc3": "Each template has an <bold>Available services</bold> table at the bottom to help you select valid service codes.",
-    "messages": {
-      "failedToLoadUnits": "Unable to load apartment list",
-      "failedToDownloadTemplate": "Failed to download template",
-      "failedToExportExcel": "Failed to export Excel",
-      "importFailed": "Import failed",
-      "failedToDownloadMeterTemplate": "Failed to download meter template",
-      "meterImportFailed": "Meter import failed",
-      "failedToExportMeterExcel": "Failed to export meter Excel",
-      "pleaseSelectUnitAndService": "Please select apartment and service",
-      "meterAddedSuccess": "Meter added successfully",
-      "failedToCreateMeter": "Unable to create meter"
-    },
     "selectCity": "Select city",
     "selectDistrict": "Select district",
     "selectWard": "Select ward",
@@ -1070,11 +1059,6 @@
     "updateBuildingSuccess": "Building updated successfully!",
     "updateBuildingError": "An error occurred while updating the building!",
     "updateError": "Error updating",
-    "placeholders": {
-      "selectCity": "Select city",
-      "selectDistrict": "Select district",
-      "selectWard": "Select ward"
-    },
     "codeError": "Code has already been taken",
     "projectError": "Please select a project",
     "error": "Please fix the errors before saving",
@@ -1120,6 +1104,7 @@
       "selectFileToImport": "Select Excel file to import",
       "exportBuildings": "Export Excel (Buildings)",
       "exportBuildingsWithUnits": "Export Excel (Buildings + Units)",
+      "viewDetail": "View details",
       "add": "Add Building",
       "edit": "Edit",
       "changeStatus": "Change Status"
@@ -1130,6 +1115,16 @@
       "inactive": "Inactive"
     },
     "messages": {
+      "failedToLoadUnits": "Unable to load apartment list",
+      "failedToDownloadTemplate": "Failed to download template",
+      "failedToExportExcel": "Failed to export Excel",
+      "importFailed": "Import failed",
+      "failedToDownloadMeterTemplate": "Failed to download meter template",
+      "meterImportFailed": "Meter import failed",
+      "failedToExportMeterExcel": "Failed to export meter Excel",
+      "pleaseSelectUnitAndService": "Please select apartment and service",
+      "meterAddedSuccess": "Meter added successfully",
+      "failedToCreateMeter": "Unable to create meter",
       "updateStatusError": "Failed to update building status",
       "downloadTemplateError": "Failed to download template",
       "exportError": "Failed to export Excel",
@@ -1482,23 +1477,24 @@
     "buildingRequired": "Building is required",
     "buildingFilter": {
       "title": "Building",
-      "description": "Select building to filter",
       "searchPlaceholder": "Search building",
-      "all": "All",
-      "noData": "No data"
+      "noData": "No data",
+      "allUnits": "All Units",
+      "unitCount": "{count} units"
     },
     "unitSearch": {
       "placeholder": "Search apartment"
     },
-    "summary": {
-      "total": "Total: {count} units",
-      "selectedBuilding": "Selected building: {count} units"
+    "bedroomFilter": {
+      "label": "Bedroom Type:",
+      "all": "All",
+      "count": "{count} bedrooms"
     },
     "statusChange": {
       "buttonTitle": "Change status",
       "confirmTitle": "Confirm status change",
-      "confirmDeactivate": "Are you sure you want to deactivate this apartment?",
-      "confirmActivate": "Are you sure you want to activate this apartment?",
+      "confirmDeactivate": "Deactivate",
+      "confirmActivate": "Activate",
       "updateFailed": "Failed to update apartment status"
     },
     "altText": {
@@ -1508,7 +1504,9 @@
       "delete": "Delete"
     },
     "unitNew": {
+      "autoCode": "Apartment Code (Automatic)",
       "title": "Add Apartment",
+      "history": "History",
       "nameMaxError": "Apartment name must not exceed 40 characters",
       "nameSpecialCharError": "Apartment name must not contain special characters",
       "bedroomsErrorRange": "Bedrooms must be between 1-9",
@@ -1984,7 +1982,6 @@
       "updateFailed": "Error updating news"
     },
     "newsNotFound": "News not found",
-    "publishDate": "Publish Date",
     "notAvailable": "N/A"
   },
   "AccountDetailRe": {
@@ -2183,72 +2180,6 @@
       "cannotDeleteActiveResident": "Cannot delete active resident account.",
       "cannotChangeAdminStatus": "Cannot change status of admin account."
     }
-  },
-  "Noti": {
-    "fetchBuildingError": "Can not load building list",
-    "titleRequired": "Please enter notification title",
-    "contentRequired": "Please enter notification content",
-    "checkRequiredFields": "Please check the required fields",
-    "selectTargetRole": "Please select target role for INTERNAL notification",
-    "createNotificationSuccess": "Notification created successfully",
-    "createNotificationError": "An error occurred while creating the notification",
-    "backToNotificationList": "Back to notification list",
-    "createNotification": "Add new notification",
-    "notificationType": "Notification type",
-    "info": "Information",
-    "request": "Request",
-    "bill": "Bill",
-    "contract": "Contract",
-    "meterReading": "Meter Reading",
-    "system": "System",
-    "selectNotificationType": "Select notification type",
-    "title": "Title",
-    "enterNotificationTitle": "Enter notification title",
-    "content": "Content",
-    "enterNotificationContent": "Enter notification content",
-    "building": "Building",
-    "selectBuilding": "Select building",
-    "allBuildings": "All buildings",
-    "actionUrl": "Action URL",
-    "enterActionUrl": "Enter Action URL (optional)",
-    "iconUrl": "Icon URL",
-    "enterIconUrl": "Enter Icon URL (optional)",
-    "save": "Save",
-    "cancel": "Cancel",
-    "saving": "Saving...",
-    "returnNewsList": "Return news list",
-    "draft": "Draft",
-    "scheduled": "Scheduled",
-    "published": "Published",
-    "hidden": "Hidden",
-    "archived": "Archived",
-    "expired": "Expired",
-    "fetchDetailError": "Cannot load notification detail",
-    "notificationDetail": "Notification Detail",
-    "information": "Information",
-    "warning": "Warning",
-    "alert": "Alert",
-    "success": "Success",
-    "announcement": "Announcement",
-    "goBack": "Go back",
-    "notFound": "Not found",
-    "createdAt": "Created at",
-    "status": "Status",
-    "scope": "Scope",
-    "targetRole": "Target role",
-    "referenceId": "Reference ID",
-    "referenceType": "Reference Type",
-    "updatedAt": "Updated at",
-    "editNotification": "Edit notification",
-    "update": "Update",
-    "updating": "Updating...",
-    "updateNotificationSuccess": "Update notification successfully",
-    "updateNotificationError": "An error occurred while updating the notification",
-    "type": "Type",
-    "action": "Action",
-    "external": "External",
-    "internal": "Internal",
-    "selectScope": "Select scope"
   },
   "Contracts": {
     "title": "Apartment contract management",
@@ -3190,12 +3121,10 @@
     },
     "errors": {
       "loadListFailed": "An error occurred while loading the notification list!",
-      "loadBuildings": "Error loading building list",
-      "createFailed": "Error creating notification",
-      "updateFailed": "Error updating notification",
       "loadBuildings": "Failed to load building list",
-      "selectTargetRole": "Please select target role",
-      "updateFailed": "Failed to update notification"
+      "createFailed": "Error creating notification",
+      "updateFailed": "Failed to update notification",
+      "selectTargetRole": "Please select target role"
     },
     "validation": {
       "typeRequired": "Notification type is required",

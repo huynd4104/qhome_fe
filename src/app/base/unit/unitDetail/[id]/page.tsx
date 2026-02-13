@@ -1,11 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import Arrow from '@/src/assets/Arrow.svg';
-import Delete from '@/src/assets/Delete.svg';
-import Edit from '@/src/assets/Edit.svg';
-import DetailField from '@/src/components/base-service/DetailField';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useUnitDetailPage } from '@/src/hooks/useUnitDetailPage';
@@ -13,6 +8,19 @@ import { getBuilding } from '@/src/services/base/buildingService';
 import PopupConfirm from '@/src/components/common/PopupComfirm';
 import { updateUnitStatus } from '@/src/services/base/unitService';
 import { useNotifications } from '@/src/hooks/useNotifications';
+import {
+    ArrowLeft,
+    Edit,
+    History,
+    Home,
+    Layers,
+    Maximize,
+    Bed,
+    Box,
+    Power,
+    Building2,
+    Loader2
+} from 'lucide-react';
 
 type ApiError = {
     message?: string;
@@ -103,15 +111,18 @@ export default function UnitDetail() {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                {t('load')}
+            <div className="flex justify-center items-center h-screen bg-slate-50">
+                <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+                    <span className="text-slate-500 font-medium">{t('load')}</span>
+                </div>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="flex justify-center items-center h-screen text-red-500">
+            <div className="flex justify-center items-center h-screen bg-slate-50 text-red-500 font-medium">
                 {t('error')}: {error.message}
             </div>
         );
@@ -119,14 +130,14 @@ export default function UnitDetail() {
 
     if (!unitData) {
         return (
-            <div className="flex justify-center text-xl font-bold items-center h-screen">
+            <div className="flex justify-center items-center h-screen bg-slate-50 text-slate-500 font-bold text-xl">
                 {t('noData')}
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen p-4 sm:p-8 font-sans">
+        <div className="min-h-screen bg-slate-50 p-4 sm:p-8 font-sans">
             <PopupConfirm
                 isOpen={isPopupOpen}
                 onClose={handleClosePopup}
@@ -136,99 +147,129 @@ export default function UnitDetail() {
                 isDanger={isUnitActive}
             />
 
-            <div
-                className="max-w-4xl mx-auto mb-6 flex items-center cursor-pointer"
-                onClick={handleBack}
-            >
-                <Image src={Arrow} alt={t('altText.back')} width={20} height={20} />
-                <span className="text-[#02542D] font-bold text-2xl ml-2">
-                    {t('returnUnitList')}
-                </span>
+            {/* Back Button */}
+            <div className="mb-6 flex items-center justify-between">
+                <button
+                    onClick={handleBack}
+                    className="group flex items-center gap-2 rounded-lg py-2 pl-2 pr-4 text-slate-500 transition-all hover:bg-white hover:text-emerald-700 hover:shadow-sm"
+                >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition-colors group-hover:ring-emerald-200">
+                        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                    </div>
+                    <span className="font-semibold">{t('returnUnitList')}</span>
+                </button>
             </div>
 
-            <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-md border">
-                <div className="flex justify-between items-start border-b pb-4 mb-6">
-                    <div className="flex items-center">
-                        <h1 className="text-2xl font-semibold text-[#02542D] mr-3">
-                            {t('unitDetail')}
-                        </h1>
-                        <span
-                            className={`text-sm font-semibold px-3 py-1 rounded-full ${unitData.status === 'INACTIVE'
-                                ? 'bg-[#EEEEEE] text-[#02542D]'
-                                : 'bg-[#739559] text-white'
-                                }`}
-                        >
-                            {t((unitData.status ?? '').toLowerCase())}
-                        </span>
+            <div className="mx-auto max-w-5xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="relative z-10 overflow-visible rounded-3xl border border-white/50 bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
+                    <div className="border-b border-slate-100 p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                                {t('unitDetail')}
+                            </h1>
+                            <div className="mt-2 flex items-center gap-2">
+                                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${unitData.status === 'INACTIVE'
+                                    ? 'bg-slate-100 text-slate-600 ring-slate-200'
+                                    : 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                                    }`}>
+                                    <span className={`h-1.5 w-1.5 rounded-full ${unitData.status === 'INACTIVE' ? 'bg-slate-400' : 'bg-emerald-500'
+                                        }`} />
+                                    {t((unitData.status ?? '').toLowerCase())}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                onClick={() => router.push(`/base/unit/unitHistory/${unitId}`)}
+                                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                            >
+                                <History className="mr-2 h-4 w-4 text-slate-500" />
+                                {t('unitNew.history')}
+                            </button>
+
+                            <button
+                                type="button"
+                                disabled={unitData.status?.toUpperCase() === 'INACTIVE'}
+                                onClick={() => unitData.status?.toUpperCase() !== 'INACTIVE' && router.push(`/base/unit/unitEdit/${unitId}`)}
+                                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-200 transition-all hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Edit className="mr-2 h-4 w-4" />
+                                {t('altText.edit')}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleStatusClick}
+                                className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${isUnitActive
+                                    ? 'bg-red-500 hover:bg-red-600 shadow-red-200 focus:ring-red-500'
+                                    : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200 focus:ring-emerald-500'
+                                    }`}
+                                title={t('statusChange.buttonTitle')}
+                            >
+                                <Power className="mr-2 h-4 w-4" />
+                                {isUnitActive ? t('statusChange.confirmDeactivate') : t('statusChange.confirmActivate')}
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="flex space-x-2">
-                        <button
-                            className="px-4 py-2 rounded-lg bg-blue-500 text-white"
-                            onClick={() =>
-                                router.push(`/base/unit/unitHistory/${unitId}`)
-                            }
-                        >
-                            Lịch sử
-                        </button>
+                    <div className="p-6 md:p-8 space-y-8">
+                        {/* Unit Info Section */}
+                        <div className="space-y-6">
 
-                        <button
-                            type="button"
-                            className={`p-2 rounded-lg ${unitData.status?.toUpperCase() === 'INACTIVE' ? 'bg-slate-300 cursor-not-allowed opacity-70' : 'bg-[#739559] hover:bg-opacity-90'}`}
-                            onClick={() => unitData.status?.toUpperCase() !== 'INACTIVE' && router.push(`/base/unit/unitEdit/${unitId}`)}
-                            disabled={unitData.status?.toUpperCase() === 'INACTIVE'}
-                            title={unitData.status?.toUpperCase() === 'INACTIVE' ? undefined : t('altText.edit')}
-                        >
-                            <Image src={Edit} alt={t('altText.edit')} width={24} height={24} />
-                        </button>
+                            <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
+                                <div className="group space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                        <Box className="h-4 w-4 text-emerald-500" />
+                                        {t('unitCode')}
+                                    </label>
+                                    <div className="h-11 w-full flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 shadow-sm">
+                                        {unitData.code ?? ''}
+                                    </div>
+                                </div>
 
-                        <button
-                            type="button"
-                            className={`p-2 min-w-[40px] min-h-[40px] rounded-lg font-bold text-white text-lg leading-none flex items-center justify-center transition ${
-                                isUnitActive ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'
-                            }`}
-                            onClick={handleStatusClick}
-                            title={t('statusChange.buttonTitle')}
-                        >
-                            O
-                        </button>
+                                <div className="group space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                        <Building2 className="h-4 w-4 text-emerald-500" />
+                                        {t('buildingName')}
+                                    </label>
+                                    <div className="h-11 w-full flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 shadow-sm">
+                                        {loadingBuilding ? '...' : buildingName}
+                                    </div>
+                                </div>
+
+                                <div className="group space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                        <Layers className="h-4 w-4 text-emerald-500" />
+                                        {t('floor')}
+                                    </label>
+                                    <div className="h-11 w-full flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 shadow-sm">
+                                        {unitData.floor ?? ''}
+                                    </div>
+                                </div>
+
+                                <div className="group space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                        <Bed className="h-4 w-4 text-emerald-500" />
+                                        {t('bedrooms')}
+                                    </label>
+                                    <div className="h-11 w-full flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 shadow-sm">
+                                        {unitData.bedrooms ?? ''}
+                                    </div>
+                                </div>
+
+                                <div className="group space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                        <Maximize className="h-4 w-4 text-emerald-500" />
+                                        {t('areaM2')}
+                                    </label>
+                                    <div className="h-11 w-full flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 shadow-sm">
+                                        {unitData.areaM2 ?? ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                    <DetailField
-                        label={t('unitCode')}
-                        value={unitData.code ?? ''}
-                        readonly
-                    />
-
-                    <DetailField
-                        label={t('buildingName')}
-                        value={
-                            loadingBuilding
-                                ? t('loading.building')
-                                : buildingName
-                        }
-                        readonly
-                    />
-
-                    <DetailField
-                        label={t('floor')}
-                        value={unitData.floor?.toString() ?? ''}
-                        readonly
-                    />
-
-                    <DetailField
-                        label={t('bedrooms')}
-                        value={unitData.bedrooms?.toString() ?? ''}
-                        readonly
-                    />
-
-                    <DetailField
-                        label={t('areaM2')}
-                        value={unitData.areaM2?.toString() ?? ''}
-                        readonly
-                    />
                 </div>
             </div>
         </div>

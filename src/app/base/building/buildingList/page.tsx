@@ -451,6 +451,14 @@ export default function BuildingListPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="flex items-center justify-end gap-2">
+                            {/* Detail */}
+                            <button
+                              onClick={() => router.push(`/base/building/buildingDetail/${item.id}`)}
+                              className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                              title={t('actions.viewDetail') || 'View Detail'}
+                            >
+                              <AlertCircle className="w-4 h-4" />
+                            </button>
                             {/* Edit */}
                             <button
                               onClick={() => router.push(`/base/building/buildingEdit/${item.id}`)} // Assuming edit route
@@ -506,6 +514,12 @@ export default function BuildingListPage() {
                       <div><span className="text-slate-400">Created:</span> {item.createdAt?.slice(0, 10)}</div>
                     </div>
                     <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
+                      <button
+                        onClick={() => router.push(`/base/building/buildingDetail/${item.id}`)}
+                        className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                      >
+                        <AlertCircle className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => router.push(`/base/building/buildingEdit/${item.id}`)}
                         className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

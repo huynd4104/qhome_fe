@@ -6,6 +6,20 @@ import { useTranslations } from 'next-intl';
 import { fetchHouseholdsByUnit, fetchAllHouseholdMembersByHousehold, type HouseholdDto, type HouseholdMemberDto } from '@/src/services/base/householdService';
 import { fetchContractsByUnit, fetchContractDetail, type ContractSummary, type ContractDetail } from '@/src/services/base/contractService';
 import { getUnit } from '@/src/services/base/unitService';
+import {
+  ArrowLeft,
+  Calendar,
+  FileText,
+  Users,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
+  Loader2,
+  History
+} from 'lucide-react';
 
 interface TimelineItem {
   id: string;
@@ -65,16 +79,13 @@ export default function UnitHistoryPage() {
         householdsData.map(async (household) => {
           try {
             const members = await fetchAllHouseholdMembersByHousehold(household.id);
-            console.log(`Loaded ${members.length} members for household ${household.id}`, members);
             membersMap.set(household.id, members);
           } catch (err: any) {
             console.error(`Failed to load members for household ${household.id}:`, err);
-            console.error('Error details:', err?.response?.data || err?.message);
             membersMap.set(household.id, []);
           }
         })
       );
-      console.log('All members loaded:', membersMap);
       setHouseholdMembers(membersMap);
     } catch (err: any) {
       console.error('Failed to load unit history:', err);
@@ -86,7 +97,6 @@ export default function UnitHistoryPage() {
 
   // Create timeline items - only contracts (households are shown in ContractDetails component)
   const timelineItems = useMemo(() => {
-    console.log('Creating timeline items:', { contracts: contracts.length, households: households.length, householdMembers: householdMembers.size });
     const items: TimelineItem[] = [];
 
     // Sort contracts by startDate (newest first)
@@ -111,7 +121,7 @@ export default function UnitHistoryPage() {
     });
 
     return items;
-  }, [contracts, households, householdMembers]);
+  }, [contracts]);
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Đang diễn ra';
@@ -120,14 +130,6 @@ export default function UnitHistoryPage() {
       month: '2-digit',
       day: '2-digit',
     });
-  };
-
-  const formatCurrency = (amount: number | null | undefined) => {
-    if (amount === null || amount === undefined) return '-';
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(amount);
   };
 
   const toggleExpand = async (id: string, type: 'contract' | 'household', contractId?: string) => {
@@ -171,142 +173,193 @@ export default function UnitHistoryPage() {
     }
   };
 
-  const getStatusBadgeClass = (status: string) => {
+  const getStatusBadge = (status: string) => {
     const normalized = status.toLowerCase();
     if (normalized.includes('active') || normalized.includes('đang hoạt động')) {
-      return 'bg-green-100 text-green-800';
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          {status}
+        </span>
+      );
     }
     if (normalized.includes('completed') || normalized.includes('đã kết thúc')) {
-      return 'bg-gray-100 text-gray-800';
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-0.5 text-sm font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          {status}
+        </span>
+      );
     }
     if (normalized.includes('pending')) {
-      return 'bg-yellow-100 text-yellow-800';
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-sm font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+          <AlertCircle className="h-3.5 w-3.5" />
+          {status}
+        </span>
+      );
     }
-    return 'bg-blue-100 text-blue-800';
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+        <HelpCircle className="h-3.5 w-3.5" />
+        {status}
+      </span>
+    );
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-lg">Đang tải...</div>
+      <div className="flex justify-center items-center h-screen bg-slate-50">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+          <span className="text-slate-500 font-medium">Đang tải...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-red-500">Lỗi: {error}</div>
+      <div className="flex justify-center items-center h-screen bg-slate-50 text-red-500 font-medium">
+        Lỗi: {error}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
-      <div className="mx-auto max-w-6xl">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Lịch sử căn hộ {unitCode}
-            </h1>
-            <p className="text-gray-600">Xem toàn bộ lịch sử hợp đồng và hộ gia đình</p>
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-8 font-sans">
+      {/* Back Button */}
+      <div className="mb-6 flex items-center justify-between">
+        <button
+          onClick={() => router.back()}
+          className="group flex items-center gap-2 rounded-lg py-2 pl-2 pr-4 text-slate-500 transition-all hover:bg-white hover:text-emerald-700 hover:shadow-sm"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition-colors group-hover:ring-emerald-200">
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
           </div>
-          <button
-            onClick={() => router.back()}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-          >
-            ← Quay lại
-          </button>
-        </div>
+          <span className="font-semibold">{t('return')}</span>
+        </button>
+      </div>
 
-        {/* Timeline */}
-        {timelineItems.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-            Chưa có lịch sử cho căn hộ này
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {timelineItems.map((item, index) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-lg shadow hover:shadow-md transition-shadow"
-              >
-                <div
-                  className="p-4 cursor-pointer"
-                  onClick={() => toggleExpand(
-                    item.id, 
-                    item.type, 
-                    item.type === 'contract' ? (item.data as ContractSummary).id : undefined
-                  )}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className={`w-3 h-3 rounded-full ${
-                          item.type === 'contract' ? 'bg-blue-500' : 'bg-green-500'
-                        }`} />
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {item.title}
-                        </h3>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(item.status)}`}>
-                          {item.status}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 ml-6 mb-2">{item.subtitle}</p>
-                      <div className="text-sm text-gray-500 ml-6">
-                        <span className="font-medium">Từ:</span> {formatDate(item.startDate)}
-                        {' - '}
-                        <span className="font-medium">Đến:</span> {formatDate(item.endDate)}
-                      </div>
-                    </div>
-                    <div className="ml-4">
-                      <svg
-                        className={`w-5 h-5 text-gray-400 transition-transform ${
-                          expandedItems.has(item.id) ? 'transform rotate-180' : ''
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Expanded content */}
-                {expandedItems.has(item.id) && (
-                  <div className="border-t border-gray-200 p-4 bg-gray-50">
-                    {item.type === 'contract' && (
-                      <ContractDetails 
-                        contract={item.data as ContractSummary}
-                        contractDetail={contractDetails.get((item.data as ContractSummary).id)}
-                        loading={loadingContractDetails.has((item.data as ContractSummary).id)}
-                        households={households.filter(h => h.contractId === (item.data as ContractSummary).id)}
-                        householdMembers={householdMembers}
-                      />
-                    )}
-                  </div>
-                )}
+      <div className="mx-auto max-w-5xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* Main Card */}
+        <div className="relative z-10 overflow-visible rounded-3xl border border-white/50 bg-white/80 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
+          <div className="border-b border-slate-100 p-6 md:p-8">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+                <History className="h-6 w-6" />
               </div>
-            ))}
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                  Lịch sử căn hộ {unitCode}
+                </h1>
+                <p className="text-sm text-slate-500">Xem toàn bộ lịch sử hợp đồng và hộ gia đình</p>
+              </div>
+            </div>
           </div>
-        )}
+
+          <div className="p-6 md:p-8">
+            {timelineItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mb-4">
+                  <History className="w-8 h-8 text-slate-300" />
+                </div>
+                <p className="text-slate-500 font-medium">Chưa có lịch sử cho căn hộ này</p>
+              </div>
+            ) : (
+              <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+                {timelineItems.map((item, index) => (
+                  <div key={item.id} className="relative flex items-start group">
+                    {/* Timeline Connector */}
+                    <div className="absolute left-0 top-0 ml-5 -translate-x-1/2 md:hidden">
+                      <div className={`w-3 h-3 rounded-full border-2 border-white ring-4 ring-white ${item.type === 'contract' ? 'bg-blue-500' : 'bg-emerald-500'
+                        }`} />
+                    </div>
+
+                    <div className="ml-12 md:ml-0 md:w-full">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md hover:border-emerald-200">
+                        <div
+                          className="cursor-pointer"
+                          onClick={() => toggleExpand(
+                            item.id,
+                            item.type,
+                            item.type === 'contract' ? (item.data as ContractSummary).id : undefined
+                          )}
+                        >
+                          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex flex-wrap items-center gap-3 mb-2">
+                                <div className={`p-1.5 rounded-lg ${item.type === 'contract' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
+                                  }`}>
+                                  {item.type === 'contract' ? <FileText className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+                                </div>
+                                <h3 className="text-base font-semibold text-slate-900">
+                                  {item.title}
+                                </h3>
+                                {getStatusBadge(item.status)}
+                              </div>
+
+                              <p className="text-sm font-medium text-slate-600 mb-3 flex items-center gap-2">
+                                {item.subtitle}
+                              </p>
+
+                              <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-500 bg-slate-50 rounded-lg px-3 py-2 w-fit">
+                                <div className="flex items-center gap-1.5">
+                                  <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                                  <span>Từ: <span className="text-slate-700">{formatDate(item.startDate)}</span></span>
+                                </div>
+                                <div className="w-px h-3 bg-slate-200" />
+                                <div className="flex items-center gap-1.5">
+                                  <Clock className="h-3.5 w-3.5 text-slate-400" />
+                                  <span>Đến: <span className="text-slate-700">{formatDate(item.endDate)}</span></span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="self-start">
+                              <div className={`p-2 rounded-full transition-colors ${expandedItems.has(item.id) ? 'bg-slate-100 text-slate-600' : 'text-slate-400 group-hover:bg-slate-50 group-hover:text-slate-500'}`}>
+                                {expandedItems.has(item.id) ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Expanded content */}
+                        {expandedItems.has(item.id) && (
+                          <div className="mt-5 pt-5 border-t border-slate-100 animate-in slide-in-from-top-2 duration-200">
+                            {item.type === 'contract' && (
+                              <ContractDetails
+                                contract={item.data as ContractSummary}
+                                contractDetail={contractDetails.get((item.data as ContractSummary).id)}
+                                loading={loadingContractDetails.has((item.data as ContractSummary).id)}
+                                households={households.filter(h => h.contractId === (item.data as ContractSummary).id)}
+                                householdMembers={householdMembers}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function ContractDetails({ 
-  contract, 
-  contractDetail, 
+function ContractDetails({
+  contract,
+  contractDetail,
   loading,
   households,
   householdMembers
-}: { 
-  contract: ContractSummary; 
-  contractDetail?: ContractDetail | null; 
+}: {
+  contract: ContractSummary;
+  contractDetail?: ContractDetail | null;
   loading?: boolean;
   households: HouseholdDto[];
   householdMembers: Map<string, HouseholdMemberDto[]>;
@@ -330,45 +383,48 @@ function ContractDetails({
 
   if (loading) {
     return (
-      <div className="text-sm text-gray-500">Đang tải chi tiết hợp đồng...</div>
+      <div className="flex items-center gap-2 text-sm text-slate-500 py-2">
+        <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />
+        Đang tải chi tiết hợp đồng...
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <span className="font-medium text-gray-700">Số hợp đồng:</span>
-          <span className="ml-2 text-gray-900">{contract.contractNumber || '-'}</span>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+        <div className="space-y-1">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Số hợp đồng</span>
+          <div className="font-medium text-slate-900">{contract.contractNumber || '-'}</div>
         </div>
-        <div>
-          <span className="font-medium text-gray-700">Loại hợp đồng:</span>
-          <span className="ml-2 text-gray-900">
+        <div className="space-y-1">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Loại hợp đồng</span>
+          <div className="font-medium text-slate-900">
             {contract.contractType === 'RENTAL' ? 'Thuê' : contract.contractType === 'PURCHASE' ? 'Mua' : contract.contractType || '-'}
-          </span>
+          </div>
         </div>
-        <div>
-          <span className="font-medium text-gray-700">Trạng thái:</span>
-          <span className="ml-2 text-gray-900">{contract.status || '-'}</span>
+        <div className="space-y-1">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Trạng thái</span>
+          <div className="font-medium text-slate-900">{contract.status || '-'}</div>
         </div>
         {contractDetail && (
           <>
             {contractDetail.monthlyRent && (
-              <div>
-                <span className="font-medium text-gray-700">Tiền thuê/tháng:</span>
-                <span className="ml-2 text-gray-900">{formatCurrency(contractDetail.monthlyRent)}</span>
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tiền thuê/tháng</span>
+                <div className="font-bold text-emerald-600">{formatCurrency(contractDetail.monthlyRent)}</div>
               </div>
             )}
             {contractDetail.totalRent && (
-              <div>
-                <span className="font-medium text-gray-700">Tổng tiền thuê:</span>
-                <span className="ml-2 text-gray-900">{formatCurrency(contractDetail.totalRent)}</span>
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tổng tiền thuê</span>
+                <div className="font-bold text-emerald-600">{formatCurrency(contractDetail.totalRent)}</div>
               </div>
             )}
             {contractDetail.purchasePrice && (
-              <div>
-                <span className="font-medium text-gray-700">Giá mua:</span>
-                <span className="ml-2 text-gray-900">{formatCurrency(contractDetail.purchasePrice)}</span>
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Giá mua</span>
+                <div className="font-bold text-emerald-600">{formatCurrency(contractDetail.purchasePrice)}</div>
               </div>
             )}
           </>
@@ -377,79 +433,85 @@ function ContractDetails({
 
       {/* Households and Members */}
       {households.length > 0 && (
-        <div className="mt-6 space-y-4">
-          <h4 className="font-medium text-gray-700 text-base">Hộ gia đình ({households.length})</h4>
+        <div className="space-y-4">
+          <h4 className="flex items-center gap-2 font-semibold text-slate-800 text-sm">
+            <Users className="h-4 w-4 text-emerald-500" />
+            Hộ gia đình ({households.length})
+          </h4>
           {households.map((household) => {
             const members = householdMembers.get(household.id) || [];
             return (
-              <div key={household.id} className="bg-white rounded-lg border border-gray-200 p-4">
-                <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                  <div>
-                    <span className="font-medium text-gray-700">Loại hộ:</span>
-                    <span className="ml-2 text-gray-900">
-                      {household.kind === 'OWNER' ? 'Chủ sở hữu' : household.kind === 'TENANT' ? 'Người thuê' : 'Dịch vụ'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Chủ hộ:</span>
-                    <span className="ml-2 text-gray-900">{household.primaryResidentName || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Ngày bắt đầu:</span>
-                    <span className="ml-2 text-gray-900">{formatDate(household.startDate)}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Ngày kết thúc:</span>
-                    <span className="ml-2 text-gray-900">{formatDate(household.endDate)}</span>
+              <div key={household.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div className="bg-slate-50/50 p-4 border-b border-slate-100">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-xs text-slate-500 block mb-1">Loại hộ</span>
+                      <span className="font-medium text-slate-900">
+                        {household.kind === 'OWNER' ? 'Chủ sở hữu' : household.kind === 'TENANT' ? 'Người thuê' : 'Dịch vụ'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-slate-500 block mb-1">Chủ hộ</span>
+                      <span className="font-medium text-slate-900">{household.primaryResidentName || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-slate-500 block mb-1">Ngày bắt đầu</span>
+                      <span className="font-medium text-slate-900">{formatDate(household.startDate)}</span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-slate-500 block mb-1">Ngày kết thúc</span>
+                      <span className="font-medium text-slate-900">{formatDate(household.endDate)}</span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Members list */}
-                {members.length > 0 && (
-                  <div>
-                    <h5 className="font-medium text-gray-700 mb-3 text-sm">Thành viên ({members.length})</h5>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-100">
-                          <tr>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Tên</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Quan hệ</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Ngày vào</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Ngày rời</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Vai trò</th>
+                {members.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-slate-100">
+                      <thead className="bg-white">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tên</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Quan hệ</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ngày vào</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ngày rời</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vai trò</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-slate-100">
+                        {members.map((member) => (
+                          <tr key={member.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                              {member.residentName || '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-600">
+                              {member.relation || '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-600">
+                              {formatDate(member.joinedAt)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-600">
+                              {formatDate(member.leftAt)}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              {member.isPrimary ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                  Chủ hộ
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+                                  Thành viên
+                                </span>
+                              )}
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {members.map((member) => (
-                            <tr key={member.id}>
-                              <td className="px-4 py-2 text-sm text-gray-900">
-                                {member.residentName || '-'}
-                              </td>
-                              <td className="px-4 py-2 text-sm text-gray-600">
-                                {member.relation || '-'}
-                              </td>
-                              <td className="px-4 py-2 text-sm text-gray-600">
-                                {formatDate(member.joinedAt)}
-                              </td>
-                              <td className="px-4 py-2 text-sm text-gray-600">
-                                {formatDate(member.leftAt)}
-                              </td>
-                              <td className="px-4 py-2 text-sm">
-                                {member.isPrimary ? (
-                                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                                    Chủ hộ
-                                  </span>
-                                ) : (
-                                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                                    Thành viên
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-sm text-slate-500 italic bg-gray-50/30">
+                    Chưa có thông tin thành viên
                   </div>
                 )}
               </div>
@@ -460,89 +522,3 @@ function ContractDetails({
     </div>
   );
 }
-
-function HouseholdDetails({ household, members }: { household: HouseholdDto; members: HouseholdMemberDto[] }) {
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <span className="font-medium text-gray-700">Loại hộ:</span>
-          <span className="ml-2 text-gray-900">
-            {household.kind === 'OWNER' ? 'Chủ sở hữu' : household.kind === 'TENANT' ? 'Người thuê' : 'Dịch vụ'}
-          </span>
-        </div>
-        <div>
-          <span className="font-medium text-gray-700">Chủ hộ:</span>
-          <span className="ml-2 text-gray-900">{household.primaryResidentName || '-'}</span>
-        </div>
-        {household.contractNumber && (
-          <div>
-            <span className="font-medium text-gray-700">Hợp đồng:</span>
-            <span className="ml-2 text-gray-900">{household.contractNumber}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Members list */}
-      <div>
-        <h4 className="font-medium text-gray-700 mb-3">Thành viên ({members.length})</h4>
-        {members.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Tên</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Quan hệ</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Ngày vào</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Ngày rời</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Vai trò</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {members.map((member) => (
-                  <tr key={member.id}>
-                    <td className="px-4 py-2 text-sm text-gray-900">
-                      {member.residentName || '-'}
-                    </td>
-                    <td className="px-4 py-2 text-sm text-gray-600">
-                      {member.relation || '-'}
-                    </td>
-                    <td className="px-4 py-2 text-sm text-gray-600">
-                      {formatDate(member.joinedAt)}
-                    </td>
-                    <td className="px-4 py-2 text-sm text-gray-600">
-                      {formatDate(member.leftAt)}
-                    </td>
-                    <td className="px-4 py-2 text-sm">
-                      {member.isPrimary ? (
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                          Chủ hộ
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                          Thành viên
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-sm text-gray-500 italic">Không có thành viên nào</div>
-        )}
-      </div>
-    </div>
-  );
-}
-

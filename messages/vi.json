@@ -23,9 +23,6 @@
       "templateDownloadFailed": "Không thể tải file template. Vui lòng thử lại."
     }
   },
-  "HomePage": {
-    "title": "CHÀO MỪNG ĐẾN VỚI </br> QHOME PMS"
-  },
   "ServiceCategory": {
     "listTitle": "Danh mục dịch vụ",
     "newTitle": "Tạo danh mục dịch vụ",
@@ -997,6 +994,12 @@
     "deleteProject": "Xóa dự án"
   },
   "Building": {
+    "buildingDetail": {
+      "title": "Chi tiết tòa nhà",
+      "floorsLabel": "Số tầng",
+      "allFloors": "Tất cả",
+      "floorN": "Tầng {n}"
+    },
     "buildingCode": "Mã tòa nhà",
     "buildingName": "Tên tòa nhà",
     "requestlist": "Danh sách tòa nhà",
@@ -1018,7 +1021,6 @@
     "buildingcodename": "Mã/Tên tòa nhà",
     "addBuilding": "Thêm tòa nhà",
     "return": "Quay lại danh sách tòa nhà",
-    "buildingDetail": "Chi tiết tòa nhà",
     "addProject": "Thêm tòa nhà",
     "inactive": "Ngưng hoạt động",
     "active": "Hoạt động",
@@ -1049,7 +1051,6 @@
     "selectMeterExcelFile": "Chọn file Excel công tơ",
     "exportMeterExcel": "Xuất Excel công tơ",
     "processedRows": "Đã xử lý {totalRows} dòng:",
-    "success": "thành công",
     "errors": "lỗi",
     "row": "Dòng",
     "rowNumber": "Dòng {rowNumber}",
@@ -1102,11 +1103,6 @@
     "updateBuildingSuccess": "Cập nhật tòa nhà thành công!",
     "updateBuildingError": "Có lỗi xảy ra khi cập nhật tòa nhà!",
     "updateError": "Lỗi khi cập nhật",
-    "placeholders": {
-      "selectCity": "Chọn thành phố",
-      "selectDistrict": "Chọn quận/huyện",
-      "selectWard": "Chọn phường/xã"
-    },
     "codeError": "Mã tòa nhà đã tồn tại",
     "projectError": "Vui lòng chọn dự án",
     "error": "Vui lòng sửa các lỗi trước khi lưu",
@@ -1152,6 +1148,7 @@
       "selectFileToImport": "Chọn file Excel để import",
       "exportBuildings": "Xuất Excel (Tòa nhà)",
       "exportBuildingsWithUnits": "Xuất Excel (Tòa + Căn hộ)",
+      "viewDetail": "Xem chi tiết",
       "add": "Thêm tòa nhà",
       "edit": "Chỉnh sửa",
       "changeStatus": "Đổi trạng thái"
@@ -1497,7 +1494,6 @@
     "codeError": "Mã căn hộ đã tồn tại",
     "projectError": "Vui lòng chọn dự án",
     "success": "Tạo căn hộ thành công",
-    "errorUnit": "Có lỗi xảy ra khi tạo căn hộ",
     "building": "Tòa nhà",
     "selectBuilding": "Chọn tòa nhà",
     "buildingRequired": "Vui lòng chọn tòa nhà.",
@@ -1509,23 +1505,24 @@
     "noData": "Không có dữ liệu",
     "buildingFilter": {
       "title": "Tòa nhà",
-      "description": "Chọn tòa nhà để lọc",
       "searchPlaceholder": "Tìm kiếm tòa nhà",
-      "all": "Tất cả",
-      "noData": "Không có dữ liệu"
+      "noData": "Không có dữ liệu",
+      "allUnits": "Tất cả căn hộ",
+      "unitCount": "{count} căn hộ"
     },
     "unitSearch": {
       "placeholder": "Tìm kiếm căn hộ"
     },
-    "summary": {
-      "total": "Tổng cộng: {count} căn hộ",
-      "selectedBuilding": "Tòa nhà được chọn: {count} căn hộ"
+    "bedroomFilter": {
+      "label": "Loại phòng:",
+      "all": "Tất cả",
+      "count": "{count} phòng ngủ"
     },
     "statusChange": {
       "buttonTitle": "Thay đổi trạng thái",
       "confirmTitle": "Xác nhận thay đổi trạng thái",
-      "confirmDeactivate": "Bạn có chắc muốn vô hiệu hoá căn hộ này?",
-      "confirmActivate": "Bạn có chắc muốn kích hoạt căn hộ này?",
+      "confirmDeactivate": "Vô hiệu hóa",
+      "confirmActivate": "Kích hoạt",
       "confirmActivateInInactiveBuilding": "Tòa nhà hiện không hoạt động. Bạn có chắc muốn kích hoạt lại căn hộ này?",
       "updateFailed": "Cập nhật trạng thái căn hộ thất bại",
       "buildingInactiveCannotAdd": "Không thể thêm căn hộ vì tòa nhà hiện không hoạt động."
@@ -1537,7 +1534,9 @@
       "delete": "Xóa"
     },
     "unitNew": {
+      "autoCode": "Mã căn hộ (Tự động)",
       "title": "Thêm Căn hộ",
+      "history": "Lịch sử",
       "nameMaxError": "Tên căn hộ không được vượt quá 40 ký tự",
       "nameSpecialCharError": "Tên căn hộ không được chứa ký tự đặc biệt",
       "bedroomsErrorRange": "Số phòng ngủ phải trong khoảng 1-9",
@@ -2013,7 +2012,6 @@
       "updateFailed": "Lỗi khi cập nhật tin tức"
     },
     "newsNotFound": "Không tìm thấy tin tức",
-    "publishDate": "Ngày xuất bản",
     "notAvailable": "N/A"
   },
   "AccountDetailRe": {
@@ -2213,72 +2211,6 @@
       "noPermissionToEditAdmin": "Bạn không có quyền xóa tài khoản admin."
     }
   },
-  "Noti": {
-    "fetchBuildingError": "Không thể tải danh sách tòa nhà",
-    "titleRequired": "Vui lòng nhập tiêu đề thông báo",
-    "contentRequired": "Vui lòng nhập nội dung thông báo",
-    "checkRequiredFields": "Vui lòng kiểm tra lại các trường bắt buộc",
-    "selectTargetRole": "Vui lòng chọn target role cho thông báo INTERNAL",
-    "createNotificationSuccess": "Tạo thông báo thành công",
-    "createNotificationError": "Có lỗi xảy ra khi tạo thông báo",
-    "backToNotificationList": "Quay lại danh sách thông báo",
-    "createNotification": "Thêm thông báo mới",
-    "notificationType": "Loại thông báo",
-    "info": "Thông tin",
-    "request": "Yêu cầu",
-    "bill": "Hóa đơn",
-    "contract": "Hợp đồng",
-    "meterReading": "Đọc điện nước",
-    "system": "Hệ thống",
-    "selectNotificationType": "Chọn loại thông báo",
-    "title": "Tiêu đề",
-    "enterNotificationTitle": "Nhập tiêu đề thông báo",
-    "content": "Nội dung",
-    "enterNotificationContent": "Nhập nội dung thông báo",
-    "building": "Tòa nhà",
-    "selectBuilding": "Chọn tòa nhà",
-    "allBuildings": "Tất cả tòa nhà",
-    "actionUrl": "Action URL",
-    "enterActionUrl": "Nhập Action URL (tùy chọn)",
-    "iconUrl": "Icon URL",
-    "enterIconUrl": "Nhập Icon URL (tùy chọn)",
-    "save": "Lưu",
-    "cancel": "Hủy",
-    "saving": "Đang lưu...",
-    "returnNewsList": "Quay lại danh sách tin tức",
-    "draft": "Nháp",
-    "scheduled": "Đã lên lịch",
-    "published": "Đã xuất bản",
-    "hidden": "Đã ẩn",
-    "archived": "Đã lưu trữ",
-    "expired": "Đã hết hạn",
-    "fetchDetailError": "Không thể tải chi tiết thông báo",
-    "notificationDetail": "Chi tiết thông báo",
-    "information": "Thông tin",
-    "warning": "Cảnh báo",
-    "alert": "Khẩn cấp",
-    "success": "Thành công",
-    "announcement": "Thông báo chung",
-    "goBack": "Quay lại",
-    "notFound": "Không tìm thấy thông báo",
-    "createdAt": "Ngày tạo",
-    "status": "Trạng thái",
-    "scope": "Phạm vi",
-    "targetRole": "Vai trò mục tiêu",
-    "referenceId": "Reference ID",
-    "referenceType": "Loại tham chiếu",
-    "updatedAt": "Ngày cập nhật",
-    "editNotification": "Chỉnh sửa thông báo",
-    "update": "Cập nhật",
-    "updating": "Đang cập nhật...",
-    "updateNotificationSuccess": "Cập nhật thông báo thành công",
-    "updateNotificationError": "Có lỗi xảy ra khi cập nhật thông báo",
-    "type": "Loại",
-    "action": "Hành động",
-    "external": "Ngoại bộ",
-    "internal": "Nội bộ",
-    "selectScope": "Chọn phạm vi"
-  },
   "Contracts": {
     "title": "Quản lý hợp đồng căn hộ",
     "subtitle": "Tạo mới và theo dõi các hợp đồng thuê/mua của từng căn hộ trong dự án.",
@@ -2342,10 +2274,6 @@
     "contractTypes": {
       "rental": "Thuê (RENTAL)",
       "purchase": "Mua (PURCHASE)"
-    },
-    "status": {
-      "activeDefault": "Đang hiệu lực (mặc định)",
-      "active": "Đang hiệu lực"
     },
     "table": {
       "contractNumber": "Số hợp đồng",
@@ -3343,11 +3271,6 @@
     "fetchDetailError": "Không thể tải chi tiết thông báo",
     "createNotificationSuccess": "Tạo thông báo thành công!",
     "createNotificationError": "Có lỗi xảy ra khi tạo thông báo!",
-    "errors": {
-      "loadBuildings": "Lỗi khi tải danh sách tòa nhà",
-      "createFailed": "Lỗi khi tạo thông báo",
-      "updateFailed": "Lỗi khi cập nhật thông báo"
-    },
     "information": "Thông tin",
     "warning": "Cảnh báo",
     "alert": "Báo động",
@@ -4906,9 +4829,6 @@
       "completeInspection": "Hoàn thành kiểm tra thiết bị",
       "createInspectionWithReadings": "Đã tạo kiểm tra thiết bị và {readingCount} chỉ số đồng hồ đo",
       "completeInspectionWithReadings": "Đã hoàn thành kiểm tra thiết bị và {readingCount} chỉ số đồng hồ đo"
-    },
-    "errors": {
-      "someReadingsFailed": "Đã tạo kiểm tra thiết bị nhưng {count} chỉ số đồng hồ đo thất bại"
     },
     "notification": {
       "title": "Cần kiểm tra thiết bị",

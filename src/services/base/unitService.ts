@@ -61,7 +61,7 @@ export async function createUnit(data: Partial<Unit>): Promise<Unit> {
   }
 
   console.log("Creating unit with data:", JSON.stringify(data, null, 2));
-  
+
   try {
     const response = await axios.post(
       `${BASE_URL}/api/units`,
@@ -70,11 +70,16 @@ export async function createUnit(data: Partial<Unit>): Promise<Unit> {
     );
     return response.data;
   } catch (error: any) {
-    console.error("Create unit error:", {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message
-    });
+    console.error("Create unit error:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("Axios error details:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        headers: error.response?.headers,
+      });
+    } else {
+      console.error("Non-Axios error:", error);
+    }
     throw error;
   }
 }
@@ -110,9 +115,9 @@ export async function updateUnitStatus(id: string, status: string): Promise<void
   const response = await axios.patch(
     `${BASE_URL}/api/units/${id}/status`,
     null,
-    { 
+    {
       params: { status },
-      withCredentials: true 
+      withCredentials: true
     }
   );
   return response.data;
