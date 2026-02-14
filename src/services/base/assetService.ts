@@ -106,4 +106,27 @@ export async function exportAssetsToExcel(
   return response.data as Blob;
 }
 
+/**
+ * POST /api/assets/import
+ */
+export async function importAssets(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await axios.post(`${BASE_URL}/api/assets/import`, formData, {
+    withCredentials: true,
+    responseType: 'arraybuffer',
+    validateStatus: (status) => status === 200 || status === 400,
+  });
+  return response;
+}
 
+/**
+ * GET /api/assets/template
+ */
+export async function downloadAssetTemplate() {
+  const response = await axios.get(`${BASE_URL}/api/assets/template`, {
+    responseType: 'blob',
+    withCredentials: true,
+  });
+  return response.data;
+}

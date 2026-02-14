@@ -1713,7 +1713,7 @@ export default function TechnicianInspectionAssignmentsPage() {
 
                             return (
                               <InspectionItemRow
-                                key={`${item.id}-${asset?.id || 'no-asset'}-${asset?.purchasePrice || 'no-price'}`}
+                                key={`${item.id}-${asset?.id || 'no-asset'}`}
                                 item={item}
                                 asset={asset}
                                 onUpdate={(conditionStatus, notes, repairCost) => handleUpdateInspectionItem(item.id, conditionStatus, notes, repairCost)}
@@ -1733,20 +1733,7 @@ export default function TechnicianInspectionAssignmentsPage() {
                                 </div>
                                 <div className="space-y-3">
                                   {/* Original Price */}
-                                  {asset.purchasePrice !== undefined && asset.purchasePrice !== null && asset.purchasePrice > 0 ? (
-                                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                      <p className="text-sm font-medium text-blue-900">
-                                        <span>{t('modal.item.originalPrice', { defaultValue: 'Giá gốc' })}:</span>{' '}
-                                        <span className="text-lg">{asset.purchasePrice.toLocaleString('vi-VN')} VNĐ</span>
-                                      </p>
-                                    </div>
-                                  ) : (
-                                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                                      <p className="text-xs text-yellow-700">
-                                        {t('modal.item.noPrice', { defaultValue: '⚠️ Chưa có thông tin giá gốc' })}
-                                      </p>
-                                    </div>
-                                  )}
+                                  {/* purchasePrice removed from Asset type - show info if available from inspection item */}
 
                                   <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1759,22 +1746,10 @@ export default function TechnicianInspectionAssignmentsPage() {
                                         // Calculate default cost based on condition status
                                         let newRepairCost: number | undefined = undefined;
 
-                                        if (newStatus && asset.purchasePrice) {
+                                        if (newStatus) {
                                           switch (newStatus) {
                                             case 'GOOD':
                                               newRepairCost = 0;
-                                              break;
-                                            case 'DAMAGED':
-                                              newRepairCost = Math.round(asset.purchasePrice * 0.3);
-                                              break;
-                                            case 'MISSING':
-                                              newRepairCost = asset.purchasePrice;
-                                              break;
-                                            case 'REPAIRED':
-                                              newRepairCost = Math.round(asset.purchasePrice * 0.2);
-                                              break;
-                                            case 'REPLACED':
-                                              newRepairCost = asset.purchasePrice;
                                               break;
                                           }
                                         }
@@ -1809,32 +1784,12 @@ export default function TechnicianInspectionAssignmentsPage() {
                                       {(() => {
                                         const conditionStatus = tempInspectionData[asset.id]?.conditionStatus;
                                         const repairCost = tempInspectionData[asset.id]?.repairCost;
-                                        const purchasePrice = asset.purchasePrice;
                                         let explanation = '';
 
-                                        if (conditionStatus && purchasePrice && repairCost !== undefined) {
-                                          const percentage = Math.round((repairCost / purchasePrice) * 100);
-                                          if (conditionStatus === 'DAMAGED' && percentage === 30) {
-                                            explanation = t('modal.item.costExplanation.damaged', {
-                                              purchasePrice: purchasePrice.toLocaleString('vi-VN'),
-                                              repairCost: repairCost.toLocaleString('vi-VN'),
-                                              defaultValue: `Tự động tính: 30% giá gốc (${purchasePrice.toLocaleString('vi-VN')} VNĐ × 30% = ${repairCost.toLocaleString('vi-VN')} VNĐ)`
-                                            });
-                                          } else if ((conditionStatus === 'MISSING' || conditionStatus === 'REPLACED') && repairCost === purchasePrice) {
-                                            explanation = t('modal.item.costExplanation.replacement', {
-                                              defaultValue: `Tự động tính: 100% giá gốc (Thay thế hoàn toàn)`
-                                            });
-                                          } else if (conditionStatus === 'REPAIRED' && percentage === 20) {
-                                            explanation = t('modal.item.costExplanation.repaired', {
-                                              purchasePrice: purchasePrice.toLocaleString('vi-VN'),
-                                              repairCost: repairCost.toLocaleString('vi-VN'),
-                                              defaultValue: `Tự động tính: 20% giá gốc (${purchasePrice.toLocaleString('vi-VN')} VNĐ × 20% = ${repairCost.toLocaleString('vi-VN')} VNĐ)`
-                                            });
-                                          } else {
-                                            explanation = t('modal.item.costExplanation.custom', {
-                                              defaultValue: `Giá đã được chỉnh sửa thủ công`
-                                            });
-                                          }
+                                        if (conditionStatus && repairCost !== undefined) {
+                                          explanation = t('modal.item.costExplanation.custom', {
+                                            defaultValue: `Chi phí đã nhập thủ công`
+                                          });
                                         }
 
                                         return explanation ? (
@@ -2624,7 +2579,7 @@ function InspectionItemRow({
   const handleConditionChange = (newStatus: string) => {
     setConditionStatus(newStatus);
 
-    const price = asset?.purchasePrice || item.purchasePrice;
+    const price = item.purchasePrice;
     let costToSave: number | undefined = undefined;
 
     // When status changes, always auto-calculate (reset manual cost flag)
@@ -2666,7 +2621,7 @@ function InspectionItemRow({
     }
   };
 
-  const purchasePrice = asset?.purchasePrice || item.purchasePrice;
+  const purchasePrice = item.purchasePrice;
 
   // Sync local state with item prop when item is updated from backend
   // Use a ref to track if we're currently saving to avoid overwriting during save
