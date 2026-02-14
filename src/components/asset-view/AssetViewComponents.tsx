@@ -48,15 +48,6 @@ const ROOM_TYPE_LABELS: Record<RoomType, string> = {
 
 };
 
-const ROOM_TYPE_ICONS: Record<RoomType, string> = {
-  [RoomType.BATHROOM]: '🚿',
-  [RoomType.LIVING_ROOM]: '🛋️',
-  [RoomType.BEDROOM]: '🛏️',
-  [RoomType.KITCHEN]: '🍳',
-  [RoomType.HALLWAY]: '🚪',
-
-};
-
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   [AssetType.TOILET]: 'Bồn cầu',
   [AssetType.BATHROOM_SINK]: 'Chậu rửa nhà tắm',
@@ -113,33 +104,7 @@ const ASSET_TYPE_PREFIX: Record<AssetType, string> = {
   [AssetType.OTHER]: 'OTH',
 };
 
-const ASSET_TYPE_DEFAULT_PRICE: Record<AssetType, number> = {
-  [AssetType.TOILET]: 3000000,
-  [AssetType.BATHROOM_SINK]: 1500000,
-  [AssetType.WATER_HEATER]: 3000000,
-  [AssetType.SHOWER_SYSTEM]: 2000000,
-  [AssetType.BATHROOM_FAUCET]: 500000,
-  [AssetType.BATHROOM_LIGHT]: 300000,
-  [AssetType.BATHROOM_DOOR]: 2000000,
-  [AssetType.BATHROOM_ELECTRICAL]: 1000000,
-  [AssetType.LIVING_ROOM_DOOR]: 3000000,
-  [AssetType.LIVING_ROOM_LIGHT]: 500000,
-  [AssetType.AIR_CONDITIONER]: 8000000,
-  [AssetType.INTERNET_SYSTEM]: 1000000,
-  [AssetType.FAN]: 500000,
-  [AssetType.LIVING_ROOM_ELECTRICAL]: 1500000,
-  [AssetType.BEDROOM_ELECTRICAL]: 1500000,
-  [AssetType.BEDROOM_AIR_CONDITIONER]: 8000000,
-  [AssetType.BEDROOM_DOOR]: 2500000,
-  [AssetType.BEDROOM_WINDOW]: 1500000,
-  [AssetType.KITCHEN_LIGHT]: 400000,
-  [AssetType.KITCHEN_ELECTRICAL]: 1500000,
-  [AssetType.ELECTRIC_STOVE]: 5000000,
-  [AssetType.KITCHEN_DOOR]: 2000000,
-  [AssetType.HALLWAY_LIGHT]: 300000,
-  [AssetType.HALLWAY_ELECTRICAL]: 1000000,
-  [AssetType.OTHER]: 1000000,
-};
+
 
 const ASSET_TYPE_TO_ROOM: Record<AssetType, RoomType> = {
   [AssetType.TOILET]: RoomType.BATHROOM,
@@ -171,30 +136,14 @@ const ASSET_TYPE_TO_ROOM: Record<AssetType, RoomType> = {
 
 // ==================== Helpers ====================
 
-const formatCurrency = (amount: number | null | undefined): string => {
-  if (amount === null || amount === undefined) return '-';
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    minimumFractionDigits: 0,
-  }).format(amount);
-};
-
 const formatDate = (date: string | null | undefined): string => {
   if (!date) return '-';
   return new Date(date).toLocaleDateString('vi-VN');
 };
 
-const formatNumberWithDots = (value: number | null | undefined): string => {
-  if (value === null || value === undefined) return '';
-  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-};
-
-const parseFormattedNumber = (value: string): number | null => {
-  if (!value || value.trim() === '') return null;
-  const cleaned = value.replace(/\./g, '');
-  const parsed = parseFloat(cleaned);
-  return isNaN(parsed) ? null : parsed;
+const formatDateTime = (date: string | null | undefined): string => {
+  if (!date) return '-';
+  return new Date(date).toLocaleString('vi-VN');
 };
 
 // ==================== ExpandableRow ====================
@@ -606,7 +555,6 @@ const RoomSection = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const activeCount = assets.filter(a => a.active).length;
   const label = roomType ? ROOM_TYPE_LABELS[roomType] : 'Khác';
-  const icon = roomType ? ROOM_TYPE_ICONS[roomType] : '📦';
 
   return (
     <div className="border border-slate-200 rounded-lg overflow-hidden">
@@ -615,7 +563,6 @@ const RoomSection = ({
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2">
-          <span className="text-lg">{icon}</span>
           <span className="font-semibold text-slate-700">{label}</span>
           <span className="text-sm text-slate-500">
             ({assets.length} thiết bị • {activeCount} hoạt động)
@@ -670,11 +617,14 @@ const AssetRow = ({
             {asset.active ? 'Hoạt động' : 'Ngừng'}
           </span>
         </div>
-        <div className="flex items-center gap-4 text-xs text-slate-500 mt-1">
+        <div className="flex items-center gap-4 text-xs text-slate-500 mt-1 flex-wrap">
           <span>Mã: {asset.assetCode}</span>
           <span>Loại: {ASSET_TYPE_LABELS[asset.assetType]}</span>
-          {asset.purchasePrice != null && (
-            <span>Giá: {formatCurrency(asset.purchasePrice)}</span>
+          {asset.brand && (
+            <span>Hãng: {asset.brand}</span>
+          )}
+          {asset.serialNumber && (
+            <span>S/N: {asset.serialNumber}</span>
           )}
           {asset.installedAt && (
             <span>Lắp đặt: {formatDate(asset.installedAt)}</span>
@@ -741,8 +691,13 @@ const AssetDetailModal = ({
           <DetailRow label="Loại thiết bị" value={ASSET_TYPE_LABELS[asset.assetType] || asset.assetType} />
           <DetailRow label="Mã thiết bị" value={asset.assetCode} />
           <DetailRow label="Tên thiết bị" value={asset.name || '-'} />
+          <DetailRow label="Thương hiệu" value={asset.brand || '-'} />
+          <DetailRow label="Model" value={asset.model || '-'} />
+          <DetailRow label="Số serial" value={asset.serialNumber || '-'} />
+          <DetailRow label="Mô tả" value={asset.description || '-'} />
           <DetailRow label="Ngày lắp đặt" value={formatDate(asset.installedAt)} />
-          <DetailRow label="Giá mua" value={asset.purchasePrice != null ? formatCurrency(asset.purchasePrice) : '-'} />
+          <DetailRow label="Bảo hành đến" value={formatDate(asset.warrantyUntil)} />
+          <DetailRow label="Ngày gỡ bỏ" value={formatDate(asset.removedAt)} />
           <DetailRow
             label="Trạng thái"
             value={
@@ -751,6 +706,8 @@ const AssetDetailModal = ({
               </span>
             }
           />
+          <DetailRow label="Ngày tạo" value={formatDateTime(asset.createdAt)} />
+          <DetailRow label="Cập nhật lần cuối" value={formatDateTime(asset.updatedAt)} />
         </div>
 
         {/* Footer */}
@@ -782,9 +739,13 @@ interface AssetFormState {
   roomType: RoomType;
   assetCode: string;
   name: string;
+  brand: string;
+  model: string;
+  serialNumber: string;
+  description: string;
   active: boolean;
   installedAt: string;
-  purchasePrice: number | null;
+  warrantyUntil: string;
 }
 
 const AssetFormModal = ({
@@ -815,9 +776,13 @@ const AssetFormModal = ({
     roomType: initialRoomType,
     assetCode: editingAsset?.assetCode || '',
     name: editingAsset?.name || ASSET_TYPE_LABELS[initialAssetType],
+    brand: editingAsset?.brand || '',
+    model: editingAsset?.model || '',
+    serialNumber: editingAsset?.serialNumber || '',
+    description: editingAsset?.description || '',
     active: editingAsset?.active ?? true,
     installedAt: editingAsset?.installedAt ? editingAsset.installedAt.split('T')[0] : today,
-    purchasePrice: editingAsset?.purchasePrice ?? ASSET_TYPE_DEFAULT_PRICE[initialAssetType],
+    warrantyUntil: editingAsset?.warrantyUntil ? editingAsset.warrantyUntil.split('T')[0] : '',
   });
 
   const [saving, setSaving] = useState(false);
@@ -853,7 +818,6 @@ const AssetFormModal = ({
         assetCode: generatedCode,
         name: ASSET_TYPE_LABELS[form.assetType],
         roomType: ASSET_TYPE_TO_ROOM[form.assetType] || RoomType.LIVING_ROOM,
-        purchasePrice: ASSET_TYPE_DEFAULT_PRICE[form.assetType],
       }));
     }
   }, [form.assetType, isCreateMode, unitCode]);
@@ -892,9 +856,12 @@ const AssetFormModal = ({
             active: true,
             assetCode: form.assetCode.trim(),
             name: form.name.trim() || undefined,
-            roomType: form.roomType,
+            brand: form.brand.trim() || undefined,
+            model: form.model.trim() || undefined,
+            serialNumber: form.serialNumber.trim() || undefined,
+            description: form.description.trim() || undefined,
             installedAt: form.installedAt || undefined,
-            purchasePrice: form.purchasePrice ?? undefined,
+            warrantyUntil: form.warrantyUntil || undefined,
           };
           await updateAsset(existingInactive.id, payload);
         } else {
@@ -904,9 +871,13 @@ const AssetFormModal = ({
             roomType: form.roomType,
             assetCode: form.assetCode.trim(),
             name: form.name.trim() || undefined,
+            brand: form.brand.trim() || undefined,
+            model: form.model.trim() || undefined,
+            serialNumber: form.serialNumber.trim() || undefined,
+            description: form.description.trim() || undefined,
             active: form.active,
             installedAt: form.installedAt || undefined,
-            purchasePrice: form.purchasePrice ?? undefined,
+            warrantyUntil: form.warrantyUntil || undefined,
           };
           await createAsset(payload);
         }
@@ -925,11 +896,14 @@ const AssetFormModal = ({
 
         const payload: UpdateAssetRequest = {
           assetCode: form.assetCode.trim(),
-          roomType: form.roomType,
           name: form.name.trim() || undefined,
+          brand: form.brand.trim() || undefined,
+          model: form.model.trim() || undefined,
+          serialNumber: form.serialNumber.trim() || undefined,
+          description: form.description.trim() || undefined,
           active: form.active,
           installedAt: form.installedAt || undefined,
-          purchasePrice: form.purchasePrice ?? undefined,
+          warrantyUntil: form.warrantyUntil || undefined,
         };
         await updateAsset(editingAsset!.id, payload);
       }
@@ -1037,6 +1011,42 @@ const AssetFormModal = ({
             />
           </div>
 
+          {/* Brand */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Thương hiệu</label>
+            <input
+              type="text"
+              value={form.brand}
+              onChange={e => setForm(prev => ({ ...prev, brand: e.target.value }))}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+              placeholder="VD: Toto, Panasonic..."
+            />
+          </div>
+
+          {/* Model */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Model</label>
+            <input
+              type="text"
+              value={form.model}
+              onChange={e => setForm(prev => ({ ...prev, model: e.target.value }))}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+              placeholder="VD: CS767, CW-XU9ZKH-8..."
+            />
+          </div>
+
+          {/* Serial Number */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Số serial</label>
+            <input
+              type="text"
+              value={form.serialNumber}
+              onChange={e => setForm(prev => ({ ...prev, serialNumber: e.target.value }))}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+              placeholder="Số serial trên thiết bị"
+            />
+          </div>
+
           {/* Installed At */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Ngày lắp đặt</label>
@@ -1048,15 +1058,26 @@ const AssetFormModal = ({
             />
           </div>
 
-          {/* Purchase Price */}
+          {/* Warranty Until */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Giá mua (VNĐ)</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Bảo hành đến</label>
             <input
-              type="text"
-              value={formatNumberWithDots(form.purchasePrice)}
-              onChange={e => setForm(prev => ({ ...prev, purchasePrice: parseFormattedNumber(e.target.value) }))}
+              type="date"
+              value={form.warrantyUntil}
+              onChange={e => setForm(prev => ({ ...prev, warrantyUntil: e.target.value }))}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-              placeholder="VD: 8.000.000"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Mô tả</label>
+            <textarea
+              value={form.description}
+              onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none"
+              rows={3}
+              placeholder="Ghi chú thêm về thiết bị..."
             />
           </div>
 

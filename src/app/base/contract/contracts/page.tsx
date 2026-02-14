@@ -981,7 +981,6 @@ export default function ContractManagementPage() {
             name: ASSET_TYPE_LABELS[assetType],
             active: true,
             installedAt: new Date().toISOString().split('T')[0],
-            purchasePrice: ASSET_TYPE_DEFAULT_PRICE[assetType],
           };
 
           await createAsset(payload);

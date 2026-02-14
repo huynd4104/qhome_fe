@@ -70,8 +70,6 @@ export interface Asset {
   installedAt?: string;
   removedAt?: string;
   warrantyUntil?: string;
-  purchasePrice?: number;
-  purchaseDate?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -82,16 +80,24 @@ export interface CreateAssetRequest {
   roomType?: RoomType;
   assetCode: string;
   name?: string;
+  brand?: string;
+  model?: string;
+  serialNumber?: string;
+  description?: string;
   active?: boolean;
   installedAt?: string;
-  purchasePrice?: number;
+  warrantyUntil?: string;
 }
 
 export interface UpdateAssetRequest {
   assetCode?: string;
   roomType?: RoomType;
   name?: string;
+  brand?: string;
+  model?: string;
+  serialNumber?: string;
+  description?: string;
   active?: boolean;
   installedAt?: string;
-  purchasePrice?: number;
+  warrantyUntil?: string;
 }
