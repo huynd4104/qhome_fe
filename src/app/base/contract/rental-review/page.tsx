@@ -31,6 +31,28 @@ import {
 } from '@/src/services/base/assetInspectionService';
 import { fetchStaffAccounts, type UserAccountInfo } from '@/src/services/iam/userService';
 import Pagination from '@/src/components/customer-interaction/Pagination';
+import Select from '@/src/components/customer-interaction/Select';
+import {
+  Search,
+  Filter,
+  AlertCircle,
+  RefreshCw,
+  FileText,
+  Building2,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  ChevronDown,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  Eye,
+  Wrench,
+  Activity,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown
+} from 'lucide-react';
 import {
   getMetersByUnit,
   createMeterReading,
@@ -71,10 +93,12 @@ export default function RentalContractReviewPage() {
   const [buildingsMap, setBuildingsMap] = useState<Map<string, Building>>(new Map());
 
   // Filters
-  const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
-  const [selectedUnitId, setSelectedUnitId] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'expiring' | 'cancelled' | 'notInspected'>('all');
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string>('ALL');
+  const [selectedUnitId, setSelectedUnitId] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'EXPIRED' | 'EXPIRING' | 'CANCELLED' | 'NOT_INSPECTED'>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
+
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   // Map to track which contracts have inspections
   const [contractsWithInspection, setContractsWithInspection] = useState<Set<string>>(new Set());
@@ -112,6 +136,15 @@ export default function RentalContractReviewPage() {
   const [readingDate, setReadingDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [activeCycle, setActiveCycle] = useState<ReadingCycleDto | null>(null);
   const [activeAssignment, setActiveAssignment] = useState<MeterReadingAssignmentDto | null>(null);
+
+  const statusOptions = [
+    { id: 'ALL', label: t('filters.allStatus') },
+    { id: 'ACTIVE', label: t('filters.active') },
+    { id: 'EXPIRING', label: t('filters.expiring') },
+    { id: 'EXPIRED', label: t('filters.expired') },
+    { id: 'CANCELLED', label: t('filters.cancelled') },
+    { id: 'NOT_INSPECTED', label: t('filters.notInspected') },
+  ];
 
 
 
@@ -203,11 +236,11 @@ export default function RentalContractReviewPage() {
 
   // Load units when building changes
   useEffect(() => {
-    if (selectedBuildingId) {
+    if (selectedBuildingId && selectedBuildingId !== 'ALL') {
       loadUnits(selectedBuildingId);
     } else {
       setUnits([]);
-      setSelectedUnitId('');
+      setSelectedUnitId('ALL');
     }
   }, [selectedBuildingId]);
 
@@ -215,7 +248,7 @@ export default function RentalContractReviewPage() {
   useEffect(() => {
     const filterParam = searchParams.get('filter');
     if (filterParam === 'notInspected') {
-      setStatusFilter('notInspected');
+      setStatusFilter('NOT_INSPECTED');
     }
   }, [searchParams]);
 
@@ -685,7 +718,7 @@ export default function RentalContractReviewPage() {
     let filtered = [...contracts];
 
     // Filter by building
-    if (selectedBuildingId) {
+    if (selectedBuildingId && selectedBuildingId !== 'ALL') {
       const selectedBuilding = buildingsMap.get(selectedBuildingId);
       if (selectedBuilding) {
         filtered = filtered.filter(c => {
@@ -707,23 +740,23 @@ export default function RentalContractReviewPage() {
     }
 
     // Filter by unit
-    if (selectedUnitId) {
+    if (selectedUnitId && selectedUnitId !== 'ALL') {
       filtered = filtered.filter(c => c.unitId === selectedUnitId);
     }
 
     // Filter by status
-    if (statusFilter !== 'all') {
+    if (statusFilter !== 'ALL') {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       filtered = filtered.filter(c => {
-        if (statusFilter === 'active') {
+        if (statusFilter === 'ACTIVE') {
           if (c.status !== 'ACTIVE') return false;
           if (!c.endDate) return true;
           const endDate = new Date(c.endDate);
           endDate.setHours(0, 0, 0, 0);
           return endDate > today;
-        } else if (statusFilter === 'expired') {
+        } else if (statusFilter === 'EXPIRED') {
           // Chỉ hiển thị contracts có status = EXPIRED hoặc ACTIVE đã hết hạn
           if (c.status === 'EXPIRED') return true;
           if (c.status !== 'ACTIVE') return false;
@@ -751,7 +784,7 @@ export default function RentalContractReviewPage() {
           }
 
           return endDate < today;
-        } else if (statusFilter === 'expiring') {
+        } else if (statusFilter === 'EXPIRING') {
           // Hợp đồng còn <= 30 ngày nữa sẽ hết hạn (tính từ today đến endDate)
           if (c.status !== 'ACTIVE') return false;
           if (!c.endDate) return false;
@@ -783,9 +816,9 @@ export default function RentalContractReviewPage() {
           // Calculate remaining days: from today to end date
           const remainingDays = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
           return remainingDays <= 30 && remainingDays >= 0; // Còn <= 30 ngày nữa
-        } else if (statusFilter === 'cancelled') {
+        } else if (statusFilter === 'CANCELLED') {
           return c.status === 'CANCELLED' || c.status === 'CANCELED';
-        } else if (statusFilter === 'notInspected') {
+        } else if (statusFilter === 'NOT_INSPECTED') {
           // Chỉ hiển thị các hợp đồng chưa có inspection (hoặc chỉ có inspection với status PENDING)
           // Và hợp đồng phải là EXPIRED hoặc CANCELLED (theo điều kiện isContractExpired)
           const isExpiredOrCancelled = c.status === 'EXPIRED' || c.status === 'CANCELLED' || c.status === 'CANCELED';
@@ -815,15 +848,34 @@ export default function RentalContractReviewPage() {
     }
 
     // Sort by start date (newest first)
-    filtered.sort((a, b) => {
-      if (!a.startDate && !b.startDate) return 0;
-      if (!a.startDate) return 1;
-      if (!b.startDate) return -1;
-      return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
-    });
+    if (sortConfig !== null) {
+      filtered.sort((a, b) => {
+        let valA: any = a[sortConfig.key as keyof RentalContractWithUnit];
+        let valB: any = b[sortConfig.key as keyof RentalContractWithUnit];
+
+        if (valA === undefined || valA === null) valA = '';
+        if (valB === undefined || valB === null) valB = '';
+
+        if (sortConfig.key === 'startDate' || sortConfig.key === 'endDate') {
+          valA = new Date(valA || 0).getTime();
+          valB = new Date(valB || 0).getTime();
+        }
+
+        if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    } else {
+      filtered.sort((a, b) => {
+        if (!a.startDate && !b.startDate) return 0;
+        if (!a.startDate) return 1;
+        if (!b.startDate) return -1;
+        return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+      });
+    }
 
     return filtered;
-  }, [contracts, selectedBuildingId, selectedUnitId, statusFilter, searchTerm, unitsMap, buildingsMap, contractsWithInspection]);
+  }, [contracts, selectedBuildingId, selectedUnitId, statusFilter, searchTerm, unitsMap, buildingsMap, contractsWithInspection, sortConfig]);
 
   // Apply pagination to filtered contracts
   const contractsToDisplay = useMemo(() => {
@@ -847,20 +899,40 @@ export default function RentalContractReviewPage() {
 
   const getContractStatusLabel = (contract: RentalContractWithUnit) => {
     if (contract.status === 'CANCELLED' || contract.status === 'CANCELED') {
-      return { label: t('status.cancelled'), className: 'bg-red-100 text-red-700' };
+      return {
+        label: t('status.cancelled'),
+        className: 'bg-red-50 text-red-600 border border-red-100',
+        dot: 'bg-red-500'
+      };
     }
     if (contract.status === 'INACTIVE') {
-      return { label: t('status.inactive'), className: 'bg-gray-100 text-gray-700' };
+      return {
+        label: t('status.inactive'),
+        className: 'bg-slate-50 text-slate-500 border border-slate-100',
+        dot: 'bg-slate-400'
+      };
     }
     if (contract.status === 'EXPIRED') {
-      return { label: t('status.expired'), className: 'bg-red-100 text-red-700' };
+      return {
+        label: t('status.expired'),
+        className: 'bg-red-50 text-red-600 border border-red-100',
+        dot: 'bg-red-500'
+      };
     }
     if (contract.status !== 'ACTIVE') {
-      return { label: t('status.invalid'), className: 'bg-gray-100 text-gray-700' };
+      return {
+        label: t('status.invalid'),
+        className: 'bg-slate-50 text-slate-500 border border-slate-100',
+        dot: 'bg-slate-400'
+      };
     }
 
     if (!contract.endDate || !contract.startDate) {
-      return { label: t('status.active'), className: 'bg-green-100 text-green-700' };
+      return {
+        label: t('status.active'),
+        className: 'bg-emerald-50 text-emerald-600 border border-emerald-100',
+        dot: 'bg-emerald-500'
+      };
     }
 
     // Parse date string properly (YYYY-MM-DD format from API) - avoid timezone issues
@@ -905,17 +977,29 @@ export default function RentalContractReviewPage() {
     }
 
     if (endDate < today) {
-      return { label: t('status.expired'), className: 'bg-red-100 text-red-700' };
+      return {
+        label: t('status.expired'),
+        className: 'bg-red-50 text-red-600 border border-red-100',
+        dot: 'bg-red-500'
+      };
     }
 
     // Calculate remaining days: from today to end date (days until expiration)
     const daysUntilExpiry = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
     if (daysUntilExpiry <= 30 && daysUntilExpiry >= 0) {
-      return { label: t('status.expiring', { days: daysUntilExpiry }), className: 'bg-yellow-100 text-yellow-700' };
+      return {
+        label: t('status.expiring', { days: daysUntilExpiry }),
+        className: 'bg-amber-50 text-amber-600 border border-amber-100',
+        dot: 'bg-amber-500'
+      };
     }
 
-    return { label: t('status.active'), className: 'bg-green-100 text-green-700' };
+    return {
+      label: t('status.active'),
+      className: 'bg-emerald-50 text-emerald-600 border border-emerald-100',
+      dot: 'bg-emerald-500'
+    };
   };
 
   // Calculate statistics
@@ -1043,293 +1127,300 @@ export default function RentalContractReviewPage() {
     createInspectionNotification();
   }, [contractsNeedingInspection, contracts.length, loading, addNotification, t]);
 
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
-        <p className="text-gray-600 mt-2">{t('subtitle')}</p>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Header */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-800 to-emerald-600 bg-clip-text text-transparent">
+            {t('title')}
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">{t('subtitle')}</p>
+        </div>
       </div>
 
       {/* Statistics Cards */}
       {contracts.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="text-sm text-gray-600">{t('statistics.totalContracts')}</div>
-            <div className="text-2xl font-bold text-gray-900 mt-1">{contracts.length}</div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex items-center justify-between group hover:shadow-md transition-shadow">
+            <div>
+              <div className="text-sm font-medium text-slate-500 mb-1">{t('statistics.totalContracts')}</div>
+              <div className="text-2xl font-bold text-slate-800">{contracts.length}</div>
+            </div>
+            <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+              <FileText className="w-6 h-6" />
+            </div>
           </div>
           {expiringContractsCount > 0 && (
-            <div className="bg-yellow-50 rounded-lg shadow-sm border border-yellow-200 p-4">
-              <div className="text-sm text-yellow-700 font-medium">{t('statistics.expiringContracts')}</div>
-              <div className="text-2xl font-bold text-yellow-900 mt-1">{expiringContractsCount}</div>
-              <div className="text-xs text-yellow-600 mt-1">{t('statistics.expiringDays')}</div>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex items-center justify-between group hover:shadow-md transition-shadow">
+              <div>
+                <div className="text-sm font-medium text-amber-600 mb-1">{t('statistics.expiringContracts')}</div>
+                <div className="text-2xl font-bold text-amber-700">{expiringContractsCount}</div>
+                <div className="text-xs text-amber-500/80 font-medium mt-1">{t('statistics.expiringDays')}</div>
+              </div>
+              <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+                <AlertCircle className="w-6 h-6" />
+              </div>
             </div>
           )}
-          {/* Always show inspection card - red if > 0, gray if 0 (for debugging) */}
-          <div className={`rounded-lg shadow-sm border p-4 ${contractsNeedingInspection > 0
-              ? 'bg-red-50 border-red-200'
-              : 'bg-gray-50 border-gray-200 opacity-60'
+          {/* Always show inspection card - red if > 0, gray if 0 */}
+          <div className={`rounded-2xl shadow-sm border p-5 flex items-center justify-between group transition-all ${contractsNeedingInspection > 0
+            ? 'bg-white border-red-100 hover:shadow-md'
+            : 'bg-white border-slate-100 hover:shadow-md'
             }`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className={`text-sm font-medium ${contractsNeedingInspection > 0 ? 'text-red-700' : 'text-gray-500'
-                  }`}>
-                  {t('statistics.needingInspection', { defaultValue: 'Cần kiểm tra thiết bị' })}
-                </div>
-                <div className={`text-2xl font-bold mt-1 ${contractsNeedingInspection > 0 ? 'text-red-900' : 'text-gray-600'
-                  }`}>
-                  {contractsNeedingInspection}
-                </div>
-                <div className={`text-xs mt-1 ${contractsNeedingInspection > 0 ? 'text-red-600' : 'text-gray-400'
-                  }`}>
-                  {contractsNeedingInspection > 0
-                    ? t('statistics.needingInspectionDesc', { defaultValue: 'Hợp đồng đã hết hạn/hủy chưa kiểm tra' })
-                    : 'Tất cả hợp đồng đã được kiểm tra'
-                  }
-                </div>
+            <div>
+              <div className={`text-sm font-medium mb-1 ${contractsNeedingInspection > 0 ? 'text-red-600' : 'text-slate-500'
+                }`}>
+                {t('statistics.needingInspection', { defaultValue: 'Cần kiểm tra thiết bị' })}
               </div>
-              <div className="text-3xl">{contractsNeedingInspection > 0 ? '⚠️' : '✅'}</div>
+              <div className={`text-2xl font-bold ${contractsNeedingInspection > 0 ? 'text-red-700' : 'text-slate-800'
+                }`}>
+                {contractsNeedingInspection}
+              </div>
+              <div className={`text-xs font-medium mt-1 ${contractsNeedingInspection > 0 ? 'text-red-500' : 'text-slate-400'
+                }`}>
+                {contractsNeedingInspection > 0
+                  ? t('statistics.needingInspectionDesc', { defaultValue: 'Hợp đồng đã hết hạn/hủy chưa kiểm tra' })
+                  : 'Tất cả hợp đồng đã được kiểm tra'
+                }
+              </div>
+            </div>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${contractsNeedingInspection > 0 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+              {contractsNeedingInspection > 0 ? <ShieldAlert className="w-6 h-6" /> : <ShieldCheck className="w-6 h-6" />}
             </div>
           </div>
         </div>
       )}
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('filters.building')}
-            </label>
-            <select
-              value={selectedBuildingId}
-              onChange={(e) => {
-                setSelectedBuildingId(e.target.value);
-                setSelectedUnitId('');
-                setPageNo(0);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">{t('filters.allBuildings')}</option>
-              {buildings.map((building) => (
-                <option key={building.id} value={building.id}>
-                  {building.code} - {building.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('filters.unit')}
-            </label>
-            <select
-              value={selectedUnitId}
-              onChange={(e) => {
-                setSelectedUnitId(e.target.value);
-                setPageNo(0);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={!selectedBuildingId}
-            >
-              <option value="">{t('filters.allUnits')}</option>
-              {units.map((unit) => (
-                <option key={unit.id} value={unit.id}>
-                  {unit.code} - {unit.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('filters.status')}
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value as 'all' | 'active' | 'expired' | 'expiring' | 'cancelled' | 'notInspected');
-                setPageNo(0);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">{t('filters.allStatus')}</option>
-              <option value="active">{t('filters.active')}</option>
-              <option value="expiring">{t('filters.expiring')}</option>
-              <option value="expired">{t('filters.expired')}</option>
-              <option value="cancelled">{t('filters.cancelled')}</option>
-              <option value="notInspected">{t('filters.notInspected')}</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('filters.search')}
-            </label>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPageNo(0);
-              }}
-              placeholder={t('filters.searchPlaceholder')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Contracts Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-gray-500">{t('table.loading')}</div>
-        ) : filteredContracts.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            {contracts.length === 0
-              ? t('table.noContracts')
-              : t('table.noResults')}
-          </div>
-        ) : (
-          <>
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {t('table.contractList')} ({filteredContracts.length})
-                </h2>
-                <button
-                  onClick={loadContracts}
-                  className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800"
-                >
-                  {t('table.refresh')}
-                </button>
-              </div>
+      {/* Main Content Container */}
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white/50 overflow-hidden">
+        {/* Filters Bar */}
+        <div className="p-6 border-slate-100 space-y-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search */}
+            <div className="relative group w-full md:max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPageNo(0);
+                }}
+                placeholder={t('filters.searchPlaceholder')}
+                className="h-10 w-full pl-12 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-medium text-sm"
+              />
             </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('table.contractNumber')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('table.building')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('table.unit')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('table.startDate')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('table.endDate')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('table.monthlyRent')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('table.inspectionDate')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('table.status')}
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('table.actions')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {contractsToDisplay.map((contract) => {
-                    const statusInfo = getContractStatusLabel(contract);
-                    return (
-                      <tr key={contract.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {contract.contractNumber || '-'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {contract.buildingCode || '-'}
-                          </div>
-                          {contract.buildingName && (
-                            <div className="text-xs text-gray-500">
-                              {contract.buildingName}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {contract.unitCode || '-'}
-                          </div>
-                          {contract.unitName && (
-                            <div className="text-xs text-gray-500">
-                              {contract.unitName}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatDate(contract.startDate)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatDate(contract.endDate)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatCurrency(contract.monthlyRent)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {(() => {
-                            const inspection = inspectionsByContractId.get(contract.id);
-                            return inspection?.inspectionDate
-                              ? formatDate(inspection.inspectionDate)
-                              : '-';
-                          })()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-medium rounded ${statusInfo.className}`}>
-                            {statusInfo.label}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              onClick={() => handleViewDetail(contract.id)}
-                              className="text-blue-600 hover:text-blue-900"
-                            >
-                              {t('table.viewDetail')}
-                            </button>
-                            {isContractExpired(contract) && (
-                              <button
-                                onClick={() => handleOpenInspection(contract)}
-                                className="text-green-600 hover:text-green-900"
-                              >
-                                {t('table.inspectAssets')}
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {totalPages > 0 && (
-              <div className="px-6 py-4 border-t border-gray-200">
-                <Pagination
-                  currentPage={pageNo + 1}
-                  totalPages={totalPages}
-                  onPageChange={(page) => handlePageChange(page - 1)}
+
+            {/* Select Filters */}
+            <div className="flex flex-col sm:flex-row gap-3 md:ml-auto w-full md:w-auto">
+              <div className="w-full sm:w-48">
+                <Select
+                  options={[{ id: 'ALL', code: '', name: t('filters.allBuildings') }, ...buildings.map(b => ({ id: b.id, code: b.code, name: b.name }))]}
+                  value={selectedBuildingId || 'ALL'}
+                  onSelect={(op) => {
+                    setSelectedBuildingId(op.id === 'ALL' ? '' : op.id);
+                    setSelectedUnitId('');
+                    setPageNo(0);
+                  }}
+                  renderItem={(op) => op.id === 'ALL' ? op.name : `${op.code} - ${op.name}`}
+                  getValue={(op) => op.id}
+                  placeholder={t('filters.building')}
                 />
               </div>
-            )}
-          </>
-        )}
+              <div className="w-full sm:w-48">
+                <Select
+                  options={[{ id: 'ALL', code: '', name: t('filters.allUnits') }, ...units.map(u => ({ id: u.id, code: u.code, name: u.name }))]}
+                  value={selectedUnitId || 'ALL'}
+                  onSelect={(op) => {
+                    setSelectedUnitId(op.id === 'ALL' ? 'ALL' : op.id);
+                    setPageNo(0);
+                  }}
+                  renderItem={(op) => op.id === 'ALL' ? op.name : `${op.code} - ${op.name}`}
+                  getValue={(op) => op.id}
+                  placeholder={t('filters.unit')}
+                  disable={!selectedBuildingId || selectedBuildingId === 'ALL'}
+                />
+              </div>
+              <div className="w-full sm:w-48">
+                <Select
+                  options={statusOptions}
+                  value={statusFilter}
+                  onSelect={(op) => {
+                    setStatusFilter(op.id as any);
+                    setPageNo(0);
+                  }}
+                  renderItem={(op) => op.label}
+                  getValue={(op) => op.id}
+                  placeholder={t('filters.status')}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Contracts Table */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden m-6">
+          {loading ? (
+            <div className="p-8 text-center text-gray-500">{t('table.loading')}</div>
+          ) : filteredContracts.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              {contracts.length === 0
+                ? t('table.noContracts')
+                : t('table.noResults')}
+            </div>
+          ) : (
+            <>
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {t('table.contractList')} ({filteredContracts.length})
+                  </h2>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                      <th
+                        onClick={() => handleSort('contractNumber')}
+                        className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group select-none"
+                      >
+                        <div className="flex items-center gap-1">
+                          {t('table.contractNumber')}
+                          {sortConfig?.key === 'contractNumber' ? (
+                            sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : <ArrowDown className="w-3 h-3 text-emerald-600" />
+                          ) : <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-400" />}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => handleSort('buildingCode')}
+                        className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group select-none"
+                      >
+                        <div className="flex items-center gap-1">
+                          {t('table.building')}
+                          {sortConfig?.key === 'buildingCode' ? (
+                            sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : <ArrowDown className="w-3 h-3 text-emerald-600" />
+                          ) : <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-400" />}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => handleSort('unitCode')}
+                        className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group select-none"
+                      >
+                        <div className="flex items-center gap-1">
+                          {t('table.unit')}
+                          {sortConfig?.key === 'unitCode' ? (
+                            sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : <ArrowDown className="w-3 h-3 text-emerald-600" />
+                          ) : <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-400" />}
+                        </div>
+                      </th>
+
+                      <th
+                        onClick={() => handleSort('monthlyRent')}
+                        className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group select-none"
+                      >
+                        <div className="flex items-center gap-1">
+                          {t('table.monthlyRent')}
+                          {sortConfig?.key === 'monthlyRent' ? (
+                            sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : <ArrowDown className="w-3 h-3 text-emerald-600" />
+                          ) : <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-400" />}
+                        </div>
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        {t('table.status')}
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        {t('table.actions')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {contractsToDisplay.map((contract) => {
+                      const statusInfo = getContractStatusLabel(contract);
+                      return (
+                        <tr key={contract.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {contract.contractNumber || '-'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {contract.buildingName || contract.buildingCode || '-'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {contract.unitCode || '-'}
+                            </div>
+                            {contract.unitName && (
+                              <div className="text-xs text-gray-500">
+                                {contract.unitName}
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {formatCurrency(contract.monthlyRent)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs font-medium rounded ${statusInfo.className}`}>
+                              {statusInfo.label}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleViewDetail(contract.id)}
+                                className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                title={t('table.viewDetail')}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              {isContractExpired(contract) && (
+                                <button
+                                  onClick={() => handleOpenInspection(contract)}
+                                  className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                  title={t('table.inspectAssets')}
+                                >
+                                  <Wrench className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {totalPages > 0 && (
+                <div className="px-6 py-4 border-t border-slate-100">
+                  <Pagination
+                    currentPage={pageNo + 1}
+                    totalPages={totalPages}
+                    onPageChange={(page) => handlePageChange(page - 1)}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Detail Modal */}
       {detailModalOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setDetailModalOpen(false);
@@ -1337,9 +1428,11 @@ export default function RentalContractReviewPage() {
             }
           }}
         >
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col">
-            <div className="p-6 flex-shrink-0 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-900">{t('detailModal.title')}</h2>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">{t('detailModal.title')}</h2>
+              </div>
               <button
                 onClick={() => {
                   setDetailModalOpen(false);
@@ -1375,6 +1468,15 @@ export default function RentalContractReviewPage() {
                       <label className="block text-sm font-medium text-gray-700">{t('detailModal.endDate')}</label>
                       <p className="mt-1 text-sm text-gray-900">{formatDate(detailContract.endDate)}</p>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">{t('table.inspectionDate')}</label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {(() => {
+                          const inspection = inspectionsByContractId.get(detailContract.id);
+                          return inspection?.inspectionDate ? formatDate(inspection.inspectionDate) : '-';
+                        })()}
+                      </p>
+                    </div>
                     {detailContract.monthlyRent && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">{t('detailModal.monthlyRent')}</label>
@@ -1389,7 +1491,9 @@ export default function RentalContractReviewPage() {
                     )}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t('detailModal.status')}</label>
-                      <p className="mt-1 text-sm text-gray-900">{detailContract.status || '-'}</p>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {detailContract.status ? getContractStatusLabel(detailContract as unknown as RentalContractWithUnit).label : '-'}
+                      </p>
                     </div>
                   </div>
                   {detailContract.paymentTerms && (
@@ -1462,7 +1566,7 @@ export default function RentalContractReviewPage() {
       {/* Inspection Modal */}
       {inspectionModalOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setInspectionModalOpen(false);
@@ -1474,8 +1578,8 @@ export default function RentalContractReviewPage() {
             }
           }}
         >
-          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] flex flex-col">
-            <div className="p-6 flex-shrink-0 border-b border-gray-200 flex justify-between items-center">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <h2 className="text-xl font-bold text-gray-900">{t('inspectionModal.title')}</h2>
               <button
                 onClick={() => {
@@ -1522,7 +1626,7 @@ export default function RentalContractReviewPage() {
                           setSelectedTechnicianId(e.target.value);
                           // Admin chỉ gán technician, không cần load cycle/assignment
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         required
                       >
                         <option value="">{t('inspectionModal.selectPlaceholder')}</option>
@@ -1569,8 +1673,8 @@ export default function RentalContractReviewPage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t('inspectionModal.status')}</label>
                       <span className={`mt-1 inline-block px-2 py-1 text-xs font-medium rounded ${currentInspection.status === InspectionStatus.COMPLETED ? 'bg-green-100 text-green-700' :
-                          currentInspection.status === InspectionStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-700' :
-                            'bg-yellow-100 text-yellow-700'
+                        currentInspection.status === InspectionStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-700' :
+                          'bg-yellow-100 text-yellow-700'
                         }`}>
                         {currentInspection.status === InspectionStatus.PENDING ? t('inspectionModal.pending') :
                           currentInspection.status === InspectionStatus.IN_PROGRESS ? t('inspectionModal.inProgress') :
@@ -1763,9 +1867,9 @@ export default function RentalContractReviewPage() {
                                   <p className="text-sm text-gray-500">{item.assetType}</p>
                                 </div>
                                 <span className={`px-2 py-1 text-xs font-medium rounded ${item.conditionStatus === 'GOOD' ? 'bg-green-100 text-green-700' :
-                                    item.conditionStatus === 'DAMAGED' ? 'bg-red-100 text-red-700' :
-                                      item.conditionStatus === 'MISSING' ? 'bg-gray-100 text-gray-700' :
-                                        'bg-yellow-100 text-yellow-700'
+                                  item.conditionStatus === 'DAMAGED' ? 'bg-red-100 text-red-700' :
+                                    item.conditionStatus === 'MISSING' ? 'bg-gray-100 text-gray-700' :
+                                      'bg-yellow-100 text-yellow-700'
                                   }`}>
                                   {item.conditionStatus === 'GOOD' ? t('inspectionModal.condition.good') :
                                     item.conditionStatus === 'DAMAGED' ? t('inspectionModal.condition.damaged') :
@@ -1888,9 +1992,9 @@ function InspectionItemRow({
       {disabled && item.conditionStatus && (
         <div className="mt-2">
           <span className={`px-2 py-1 text-xs font-medium rounded ${item.conditionStatus === 'GOOD' ? 'bg-green-100 text-green-700' :
-              item.conditionStatus === 'DAMAGED' ? 'bg-red-100 text-red-700' :
-                item.conditionStatus === 'MISSING' ? 'bg-gray-100 text-gray-700' :
-                  'bg-yellow-100 text-yellow-700'
+            item.conditionStatus === 'DAMAGED' ? 'bg-red-100 text-red-700' :
+              item.conditionStatus === 'MISSING' ? 'bg-gray-100 text-gray-700' :
+                'bg-yellow-100 text-yellow-700'
             }`}>
             {item.conditionStatus === 'GOOD' ? t('condition.good') :
               item.conditionStatus === 'DAMAGED' ? t('condition.damaged') :
