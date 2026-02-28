@@ -13,7 +13,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         {/* Nội dung + Topbar */}
         <div className="flex-1 flex flex-col md:ml-64 min-w-0">
           <Topbar />
-          <main className="p-4 md:p-6 overflow-x-hidden">
+          <main className="p-4 md:p-6">
             <div className="max-w-[1280px] mx-auto">{children}</div>
           </main>
         </div>

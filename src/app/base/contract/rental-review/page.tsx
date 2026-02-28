@@ -1201,7 +1201,7 @@ export default function RentalContractReviewPage() {
       )}
 
       {/* Main Content Container */}
-      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white/50 overflow-hidden">
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white/50">
         {/* Filters Bar */}
         <div className="p-6 border-slate-100 space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
@@ -1244,7 +1244,7 @@ export default function RentalContractReviewPage() {
                     setSelectedUnitId(op.id === 'ALL' ? 'ALL' : op.id);
                     setPageNo(0);
                   }}
-                  renderItem={(op) => op.id === 'ALL' ? op.name : `${op.code} - ${op.name}`}
+                  renderItem={(op) => op.id === 'ALL' ? op.name : [op.code, op.name].filter(Boolean).join(' - ')}
                   getValue={(op) => op.id}
                   placeholder={t('filters.unit')}
                   disable={!selectedBuildingId || selectedBuildingId === 'ALL'}
@@ -1268,7 +1268,7 @@ export default function RentalContractReviewPage() {
         </div>
 
         {/* Contracts Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden m-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 m-6">
           {loading ? (
             <div className="p-8 text-center text-gray-500">{t('table.loading')}</div>
           ) : filteredContracts.length === 0 ? (
