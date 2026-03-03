@@ -40,98 +40,46 @@ import { type Building } from '@/src/services/base/buildingService';
 // ==================== Constants ====================
 
 const ROOM_TYPE_LABELS: Record<RoomType, string> = {
-  [RoomType.BATHROOM]: 'Nhà tắm & Vệ sinh',
-  [RoomType.LIVING_ROOM]: 'Phòng khách',
-  [RoomType.BEDROOM]: 'Phòng ngủ',
-  [RoomType.KITCHEN]: 'Nhà bếp',
-  [RoomType.HALLWAY]: 'Hành lang',
-
+  [RoomType.BATHROOM]: 'Nhà Tắm/WC',
+  [RoomType.LIVING_ROOM]: 'Phòng Khách',
+  [RoomType.BEDROOM]: 'Phòng Ngủ',
+  [RoomType.KITCHEN]: 'Nhà Bếp',
+  [RoomType.HALLWAY]: 'Hành Lang',
+  [RoomType.OTHER]: 'Khác',
 };
 
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   [AssetType.TOILET]: 'Bồn cầu',
-  [AssetType.BATHROOM_SINK]: 'Chậu rửa nhà tắm',
+  [AssetType.SINK]: 'Chậu rửa',
   [AssetType.WATER_HEATER]: 'Bình nóng lạnh',
-  [AssetType.SHOWER_SYSTEM]: 'Hệ sen vòi nhà tắm',
-  [AssetType.BATHROOM_FAUCET]: 'Vòi chậu rửa',
-  [AssetType.BATHROOM_LIGHT]: 'Đèn nhà tắm',
-  [AssetType.BATHROOM_DOOR]: 'Cửa nhà tắm',
-  [AssetType.BATHROOM_ELECTRICAL]: 'Hệ thống điện nhà vệ sinh',
-  [AssetType.LIVING_ROOM_DOOR]: 'Cửa phòng khách',
-  [AssetType.LIVING_ROOM_LIGHT]: 'Đèn phòng khách',
+  [AssetType.SHOWER_SYSTEM]: 'Hệ sen vòi',
+  [AssetType.FAUCET]: 'Vòi nước',
+  [AssetType.LIGHT]: 'Đèn',
+  [AssetType.DOOR]: 'Cửa',
+  [AssetType.WINDOW]: 'Cửa sổ',
+  [AssetType.ELECTRICAL_SYSTEM]: 'Hệ thống điện',
   [AssetType.AIR_CONDITIONER]: 'Điều hòa',
-  [AssetType.INTERNET_SYSTEM]: 'Hệ thống mạng Internet',
+  [AssetType.INTERNET_SYSTEM]: 'Hệ thống Internet',
   [AssetType.FAN]: 'Quạt',
-  [AssetType.LIVING_ROOM_ELECTRICAL]: 'Hệ thống điện phòng khách',
-  [AssetType.BEDROOM_ELECTRICAL]: 'Hệ thống điện phòng ngủ',
-  [AssetType.BEDROOM_AIR_CONDITIONER]: 'Điều hòa phòng ngủ',
-  [AssetType.BEDROOM_DOOR]: 'Cửa phòng ngủ',
-  [AssetType.BEDROOM_WINDOW]: 'Cửa sổ phòng ngủ',
-  [AssetType.KITCHEN_LIGHT]: 'Hệ thống đèn nhà bếp',
-  [AssetType.KITCHEN_ELECTRICAL]: 'Hệ thống điện nhà bếp',
   [AssetType.ELECTRIC_STOVE]: 'Bếp điện',
-  [AssetType.KITCHEN_DOOR]: 'Cửa bếp và logia',
-  [AssetType.HALLWAY_LIGHT]: 'Hệ thống đèn hành lang',
-  [AssetType.HALLWAY_ELECTRICAL]: 'Hệ thống điện hành lang',
   [AssetType.OTHER]: 'Khác',
 };
 
 const ASSET_TYPE_PREFIX: Record<AssetType, string> = {
   [AssetType.TOILET]: 'TLT',
-  [AssetType.BATHROOM_SINK]: 'BSK',
+  [AssetType.SINK]: 'SNK',
   [AssetType.WATER_HEATER]: 'WH',
   [AssetType.SHOWER_SYSTEM]: 'SHW',
-  [AssetType.BATHROOM_FAUCET]: 'BFC',
-  [AssetType.BATHROOM_LIGHT]: 'BLT',
-  [AssetType.BATHROOM_DOOR]: 'BDR',
-  [AssetType.BATHROOM_ELECTRICAL]: 'BEL',
-  [AssetType.LIVING_ROOM_DOOR]: 'LRD',
-  [AssetType.LIVING_ROOM_LIGHT]: 'LRL',
+  [AssetType.FAUCET]: 'FCT',
+  [AssetType.LIGHT]: 'LGT',
+  [AssetType.DOOR]: 'DR',
+  [AssetType.WINDOW]: 'WND',
+  [AssetType.ELECTRICAL_SYSTEM]: 'ELS',
   [AssetType.AIR_CONDITIONER]: 'AC',
   [AssetType.INTERNET_SYSTEM]: 'INT',
   [AssetType.FAN]: 'FAN',
-  [AssetType.LIVING_ROOM_ELECTRICAL]: 'LRE',
-  [AssetType.BEDROOM_ELECTRICAL]: 'BRE',
-  [AssetType.BEDROOM_AIR_CONDITIONER]: 'BAC',
-  [AssetType.BEDROOM_DOOR]: 'BRD',
-  [AssetType.BEDROOM_WINDOW]: 'BRW',
-  [AssetType.KITCHEN_LIGHT]: 'KLT',
-  [AssetType.KITCHEN_ELECTRICAL]: 'KEL',
   [AssetType.ELECTRIC_STOVE]: 'EST',
-  [AssetType.KITCHEN_DOOR]: 'KDR',
-  [AssetType.HALLWAY_LIGHT]: 'HLT',
-  [AssetType.HALLWAY_ELECTRICAL]: 'HEL',
   [AssetType.OTHER]: 'OTH',
-};
-
-
-
-const ASSET_TYPE_TO_ROOM: Record<AssetType, RoomType> = {
-  [AssetType.TOILET]: RoomType.BATHROOM,
-  [AssetType.BATHROOM_SINK]: RoomType.BATHROOM,
-  [AssetType.WATER_HEATER]: RoomType.BATHROOM,
-  [AssetType.SHOWER_SYSTEM]: RoomType.BATHROOM,
-  [AssetType.BATHROOM_FAUCET]: RoomType.BATHROOM,
-  [AssetType.BATHROOM_LIGHT]: RoomType.BATHROOM,
-  [AssetType.BATHROOM_DOOR]: RoomType.BATHROOM,
-  [AssetType.BATHROOM_ELECTRICAL]: RoomType.BATHROOM,
-  [AssetType.LIVING_ROOM_DOOR]: RoomType.LIVING_ROOM,
-  [AssetType.LIVING_ROOM_LIGHT]: RoomType.LIVING_ROOM,
-  [AssetType.AIR_CONDITIONER]: RoomType.LIVING_ROOM,
-  [AssetType.INTERNET_SYSTEM]: RoomType.LIVING_ROOM,
-  [AssetType.FAN]: RoomType.LIVING_ROOM,
-  [AssetType.LIVING_ROOM_ELECTRICAL]: RoomType.LIVING_ROOM,
-  [AssetType.BEDROOM_ELECTRICAL]: RoomType.BEDROOM,
-  [AssetType.BEDROOM_AIR_CONDITIONER]: RoomType.BEDROOM,
-  [AssetType.BEDROOM_DOOR]: RoomType.BEDROOM,
-  [AssetType.BEDROOM_WINDOW]: RoomType.BEDROOM,
-  [AssetType.KITCHEN_LIGHT]: RoomType.KITCHEN,
-  [AssetType.KITCHEN_ELECTRICAL]: RoomType.KITCHEN,
-  [AssetType.ELECTRIC_STOVE]: RoomType.KITCHEN,
-  [AssetType.KITCHEN_DOOR]: RoomType.KITCHEN,
-  [AssetType.HALLWAY_LIGHT]: RoomType.HALLWAY,
-  [AssetType.HALLWAY_ELECTRICAL]: RoomType.HALLWAY,
-  [AssetType.OTHER]: RoomType.LIVING_ROOM,
 };
 
 // ==================== Helpers ====================
@@ -397,7 +345,7 @@ const AssetModal = ({
     RoomType.BATHROOM,
     RoomType.KITCHEN,
     RoomType.HALLWAY,
-
+    RoomType.OTHER,
   ];
 
   return (
@@ -769,7 +717,7 @@ const AssetFormModal = ({
   const today = new Date().toISOString().split('T')[0];
 
   const initialAssetType = editingAsset?.assetType || AssetType.AIR_CONDITIONER;
-  const initialRoomType = editingAsset?.roomType || ASSET_TYPE_TO_ROOM[initialAssetType] || RoomType.LIVING_ROOM;
+  const initialRoomType = editingAsset?.roomType || RoomType.LIVING_ROOM;
 
   const [form, setForm] = useState<AssetFormState>({
     assetType: initialAssetType,
@@ -817,7 +765,6 @@ const AssetFormModal = ({
         ...prev,
         assetCode: generatedCode,
         name: ASSET_TYPE_LABELS[form.assetType],
-        roomType: ASSET_TYPE_TO_ROOM[form.assetType] || RoomType.LIVING_ROOM,
       }));
     }
   }, [form.assetType, isCreateMode, unitCode]);
@@ -920,13 +867,6 @@ const AssetFormModal = ({
     }
   };
 
-  // Group asset types by room for easier selection
-  const assetTypesByRoom: Record<string, AssetType[]> = {};
-  for (const [assetType, roomType] of Object.entries(ASSET_TYPE_TO_ROOM)) {
-    const key = roomType as string;
-    if (!assetTypesByRoom[key]) assetTypesByRoom[key] = [];
-    assetTypesByRoom[key].push(assetType as AssetType);
-  }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
@@ -953,15 +893,7 @@ const AssetFormModal = ({
             <label className="block text-sm font-medium text-slate-700 mb-1">Loại phòng</label>
             <select
               value={form.roomType}
-              onChange={e => {
-                const newRoomType = e.target.value as RoomType;
-                setForm(prev => {
-                  // Auto-select first asset type of the new room type
-                  const availableTypes = assetTypesByRoom[newRoomType] || [];
-                  const newAssetType = availableTypes.length > 0 ? availableTypes[0] : prev.assetType;
-                  return { ...prev, roomType: newRoomType, assetType: newAssetType };
-                });
-              }}
+              onChange={e => setForm(prev => ({ ...prev, roomType: e.target.value as RoomType }))}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
             >
               {Object.entries(ROOM_TYPE_LABELS).map(([key, label]) => (
@@ -970,7 +902,7 @@ const AssetFormModal = ({
             </select>
           </div>
 
-          {/* Asset Type - filtered by selected Room Type */}
+          {/* Asset Type - all types available */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Loại thiết bị</label>
             <select
@@ -979,9 +911,9 @@ const AssetFormModal = ({
               disabled={!isCreateMode}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-500"
             >
-              {(assetTypesByRoom[form.roomType] || []).map(at => (
-                <option key={at} value={at}>
-                  {ASSET_TYPE_LABELS[at]}
+              {Object.entries(ASSET_TYPE_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
                 </option>
               ))}
             </select>
