@@ -20,8 +20,8 @@ export interface AssetInspectionItem {
   checked: boolean;
   checkedAt?: string;
   checkedBy?: string;
-  repairCost?: number; // Frontend uses repairCost for display
-  damageCost?: number; // Backend returns damageCost - map this to repairCost
+  repairCost?: number;
+  damageCost?: number;
   purchasePrice?: number;
 }
 
@@ -31,6 +31,7 @@ export interface AssetInspection {
   unitId: string;
   unitCode?: string;
   inspectionDate: string;
+  scheduledDate?: string;
   status: InspectionStatus;
   inspectorName?: string;
   inspectorId?: string;
@@ -48,8 +49,6 @@ export interface CreateAssetInspectionRequest {
   contractId: string;
   unitId: string;
   inspectionDate: string;
-  inspectorName?: string;
-  inspectorId?: string;
   scheduledDate?: string;
 }
 
@@ -57,41 +56,54 @@ export interface UpdateAssetInspectionItemRequest {
   conditionStatus?: string;
   notes?: string;
   checked?: boolean;
-  checkedBy?: string;
-  damageCost?: number; // Backend uses 'damageCost', not 'repairCost'
+  damageCost?: number;
 }
 
+export interface AssignInspectorRequest {
+  inspectorId: string;
+  inspectorName: string;
+}
+
+// ==================== Helper ====================
+
+function mapInspectionItems(inspection: AssetInspection): AssetInspection {
+  if (inspection && inspection.items) {
+    inspection.items = inspection.items.map(item => ({
+      ...item,
+      repairCost: item.damageCost !== undefined && item.damageCost !== null
+        ? item.damageCost
+        : item.repairCost,
+    }));
+  }
+  return inspection;
+}
+
+function mapInspectionListItems(inspections: AssetInspection[]): AssetInspection[] {
+  return inspections.map(mapInspectionItems);
+}
+
+// ==================== API Functions ====================
+
+/**
+ * GET /api/asset-inspections/contract/:contractId
+ */
 export async function getInspectionByContractId(contractId: string): Promise<AssetInspection | null> {
   try {
     const response = await axios.get<AssetInspection>(
       `${BASE_URL}/api/asset-inspections/contract/${contractId}`,
     );
-    // Map damageCost from backend to repairCost for frontend compatibility
-    // Backend uses damageCost as source of truth, so always use it if available
-    if (response.data && response.data.items) {
-      response.data.items = response.data.items.map(item => ({
-        ...item,
-        repairCost: item.damageCost !== undefined && item.damageCost !== null 
-          ? item.damageCost 
-          : (item.repairCost !== undefined && item.repairCost !== null ? item.repairCost : undefined)
-      }));
-    }
-    console.log('📥 getInspectionByContractId: Mapped items:', response.data?.items?.map(item => ({
-      id: item.id,
-      assetName: item.assetName || item.assetCode,
-      damageCost: item.damageCost,
-      repairCost: item.repairCost
-    })));
-    return response.data;
+    return mapInspectionItems(response.data);
   } catch (error: any) {
     if (error?.response?.status === 404) {
       return null;
-
     }
     throw error;
   }
 }
 
+/**
+ * POST /api/asset-inspections
+ */
 export async function createInspection(request: CreateAssetInspectionRequest): Promise<AssetInspection> {
   const response = await axios.post<AssetInspection>(
     `${BASE_URL}/api/asset-inspections`,
@@ -100,61 +112,39 @@ export async function createInspection(request: CreateAssetInspectionRequest): P
   return response.data;
 }
 
+/**
+ * PUT /api/asset-inspections/items/:itemId
+ */
 export async function updateInspectionItem(
   itemId: string,
   request: UpdateAssetInspectionItemRequest
 ): Promise<AssetInspectionItem> {
-  console.log('🌐 API: Updating inspection item:', {
-    itemId,
-    url: `${BASE_URL}/api/asset-inspections/items/${itemId}`,
-    request: JSON.stringify(request, null, 2),
-    requestKeys: Object.keys(request),
-    hasConditionStatus: 'conditionStatus' in request,
-    conditionStatusValue: (request as any).conditionStatus
-  });
-  
   const response = await axios.put<AssetInspectionItem>(
     `${BASE_URL}/api/asset-inspections/items/${itemId}`,
     request,
   );
-  
-  console.log('📥 API: Raw response from backend:', {
-    status: response.status,
-    data: JSON.stringify(response.data, null, 2),
-    conditionStatusInResponse: response.data.conditionStatus,
-    damageCostInResponse: response.data.damageCost
-  });
-  
-  // Map damageCost from backend to repairCost for frontend compatibility
+
   const mappedItem: AssetInspectionItem = {
     ...response.data,
-    repairCost: response.data.damageCost !== undefined ? response.data.damageCost : response.data.repairCost
+    repairCost: response.data.damageCost !== undefined ? response.data.damageCost : response.data.repairCost,
   };
-  
-  console.log('✅ API: Mapped item after update:', {
-    ...mappedItem,
-    conditionStatus: mappedItem.conditionStatus,
-    damageCost: mappedItem.damageCost,
-    repairCost: mappedItem.repairCost
-  });
-  
+
   return mappedItem;
 }
 
+/**
+ * PUT /api/asset-inspections/:inspectionId/start
+ */
 export async function startInspection(inspectionId: string): Promise<AssetInspection> {
   const response = await axios.put<AssetInspection>(
     `${BASE_URL}/api/asset-inspections/${inspectionId}/start`,
   );
-  // Map damageCost from backend to repairCost for frontend compatibility
-  if (response.data && response.data.items) {
-    response.data.items = response.data.items.map(item => ({
-      ...item,
-      repairCost: item.damageCost !== undefined ? item.damageCost : item.repairCost
-    }));
-  }
-  return response.data;
+  return mapInspectionItems(response.data);
 }
 
+/**
+ * PUT /api/asset-inspections/:inspectionId/complete
+ */
 export async function completeInspection(
   inspectionId: string,
   inspectorNotes?: string
@@ -168,65 +158,32 @@ export async function completeInspection(
       },
     }
   );
-  // Map damageCost from backend to repairCost for frontend compatibility
-  if (response.data && response.data.items) {
-    response.data.items = response.data.items.map(item => ({
-      ...item,
-      repairCost: item.damageCost !== undefined ? item.damageCost : item.repairCost
-    }));
-  }
-  return response.data;
+  return mapInspectionItems(response.data);
 }
 
+/**
+ * POST /api/asset-inspections/:inspectionId/recalculate-damage
+ */
 export async function recalculateDamageCost(inspectionId: string): Promise<AssetInspection> {
-  console.log('Calling recalculateDamageCost API for inspection:', inspectionId);
-  try {
-    const response = await axios.post<AssetInspection>(
-      `${BASE_URL}/api/asset-inspections/${inspectionId}/recalculate-damage`,
-    );
-    // Map damageCost from backend to repairCost for frontend compatibility
-    if (response.data && response.data.items) {
-      response.data.items = response.data.items.map(item => ({
-        ...item,
-        repairCost: item.damageCost !== undefined ? item.damageCost : item.repairCost
-      }));
-    }
-    console.log('RecalculateDamageCost API response:', response.data);
-    return response.data;
-  } catch (error: any) {
-    console.error('RecalculateDamageCost API error:', error);
-    console.error('Error response:', error?.response?.data);
-    throw error;
-  }
+  const response = await axios.post<AssetInspection>(
+    `${BASE_URL}/api/asset-inspections/${inspectionId}/recalculate-damage`,
+  );
+  return mapInspectionItems(response.data);
 }
 
+/**
+ * POST /api/asset-inspections/:inspectionId/generate-invoice
+ */
 export async function generateInvoice(inspectionId: string): Promise<AssetInspection> {
-  console.log('Calling generateInvoice API for inspection:', inspectionId);
-  try {
-    const response = await axios.post<AssetInspection>(
-      `${BASE_URL}/api/asset-inspections/${inspectionId}/generate-invoice`,
-    );
-    // Map damageCost from backend to repairCost for frontend compatibility
-    if (response.data && response.data.items) {
-      response.data.items = response.data.items.map(item => ({
-        ...item,
-        repairCost: item.damageCost !== undefined ? item.damageCost : item.repairCost
-      }));
-    }
-    console.log('GenerateInvoice API response:', response.data);
-    return response.data;
-  } catch (error: any) {
-    console.error('GenerateInvoice API error:', error);
-    console.error('Error response:', error?.response?.data);
-    throw error;
-  }
+  const response = await axios.post<AssetInspection>(
+    `${BASE_URL}/api/asset-inspections/${inspectionId}/generate-invoice`,
+  );
+  return mapInspectionItems(response.data);
 }
 
-export interface AssignInspectorRequest {
-  inspectorId: string;
-  inspectorName: string;
-}
-
+/**
+ * PUT /api/asset-inspections/:inspectionId/assign-inspector
+ */
 export async function assignInspector(
   inspectionId: string,
   request: AssignInspectorRequest
@@ -235,58 +192,37 @@ export async function assignInspector(
     `${BASE_URL}/api/asset-inspections/${inspectionId}/assign-inspector`,
     request,
   );
-  // Map damageCost from backend to repairCost for frontend compatibility
-  if (response.data && response.data.items) {
-    response.data.items = response.data.items.map(item => ({
-      ...item,
-      repairCost: item.damageCost !== undefined ? item.damageCost : item.repairCost
-    }));
-  }
-  return response.data;
+  return mapInspectionItems(response.data);
 }
 
+/**
+ * GET /api/asset-inspections
+ */
 export async function getAllInspections(
   inspectorId?: string,
   status?: InspectionStatus
 ): Promise<AssetInspection[]> {
   const params: Record<string, string> = {};
-  if (inspectorId) {
-    params.inspectorId = inspectorId;
-  }
-  if (status) {
-    params.status = status;
-  }
-  
+  if (inspectorId) params.inspectorId = inspectorId;
+  if (status) params.status = status;
+
   const response = await axios.get<AssetInspection[]>(
     `${BASE_URL}/api/asset-inspections`,
     { params }
   );
-  // Map damageCost from backend to repairCost for frontend compatibility
-  return response.data.map(inspection => ({
-    ...inspection,
-    items: inspection.items?.map(item => ({
-      ...item,
-      repairCost: item.damageCost !== undefined ? item.damageCost : item.repairCost
-    }))
-  }));
+  return mapInspectionListItems(response.data);
 }
 
+/**
+ * GET /api/asset-inspections/:inspectionId
+ */
 export async function getInspectionById(inspectionId: string): Promise<AssetInspection | null> {
   try {
     const response = await axios.get<AssetInspection>(
       `${BASE_URL}/api/asset-inspections/${inspectionId}`,
     );
-    // Map damageCost from backend to repairCost for frontend compatibility
-    if (response.data && response.data.items) {
-      response.data.items = response.data.items.map(item => ({
-        ...item,
-        repairCost: item.damageCost !== undefined ? item.damageCost : item.repairCost
-      }));
-    }
-    return response.data;
+    return mapInspectionItems(response.data);
   } catch (error: any) {
-    // If endpoint doesn't exist or returns error, return null instead of throwing
-    // This allows fallback to getInspectionByContractId
     if (error?.response?.status === 404 || error?.response?.status === 500) {
       console.warn(`getInspectionById failed (${error?.response?.status}), falling back to contract-based lookup`);
       return null;
@@ -295,9 +231,69 @@ export async function getInspectionById(inspectionId: string): Promise<AssetInsp
   }
 }
 
+/**
+ * GET /api/asset-inspections/technician/:technicianId
+ */
+export async function getInspectionsByTechnician(technicianId: string): Promise<AssetInspection[]> {
+  const response = await axios.get<AssetInspection[]>(
+    `${BASE_URL}/api/asset-inspections/technician/${technicianId}`,
+  );
+  return mapInspectionListItems(response.data);
+}
 
+/**
+ * GET /api/asset-inspections/my-assignments
+ */
+export async function getMyAssignments(): Promise<AssetInspection[]> {
+  const response = await axios.get<AssetInspection[]>(
+    `${BASE_URL}/api/asset-inspections/my-assignments`,
+  );
+  return mapInspectionListItems(response.data);
+}
 
+/**
+ * GET /api/asset-inspections/pending-approval
+ */
+export async function getPendingApprovalInspections(): Promise<AssetInspection[]> {
+  const response = await axios.get<AssetInspection[]>(
+    `${BASE_URL}/api/asset-inspections/pending-approval`,
+  );
+  return mapInspectionListItems(response.data);
+}
 
+/**
+ * POST /api/asset-inspections/:inspectionId/approve
+ */
+export async function approveInspection(inspectionId: string): Promise<AssetInspection> {
+  const response = await axios.post<AssetInspection>(
+    `${BASE_URL}/api/asset-inspections/${inspectionId}/approve`,
+  );
+  return mapInspectionItems(response.data);
+}
 
+/**
+ * POST /api/asset-inspections/:inspectionId/reject
+ */
+export async function rejectInspection(inspectionId: string, rejectionNotes?: string): Promise<AssetInspection> {
+  const response = await axios.post<AssetInspection>(
+    `${BASE_URL}/api/asset-inspections/${inspectionId}/reject`,
+    rejectionNotes,
+    {
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+    }
+  );
+  return mapInspectionItems(response.data);
+}
 
-
+/**
+ * PUT /api/asset-inspections/:inspectionId/scheduled-date
+ */
+export async function updateScheduledDate(inspectionId: string, scheduledDate: string): Promise<AssetInspection> {
+  const response = await axios.put<AssetInspection>(
+    `${BASE_URL}/api/asset-inspections/${inspectionId}/scheduled-date`,
+    { scheduledDate },
+  );
+  return mapInspectionItems(response.data);
+}

@@ -71,10 +71,26 @@ export async function updateAsset(id: string, data: UpdateAssetRequest): Promise
 }
 
 /**
- * DELETE /api/assets/:id
+ * DELETE /api/assets/:id (soft delete)
  */
 export async function deleteAsset(id: string): Promise<void> {
   await axios.delete(`${BASE_URL}/api/assets/${id}`);
+}
+
+/**
+ * PUT /api/assets/:id/restore
+ */
+export async function restoreAsset(id: string): Promise<Asset> {
+  const response = await axios.put(`${BASE_URL}/api/assets/${id}/restore`);
+  return response.data;
+}
+
+/**
+ * GET /api/assets/deleted
+ */
+export async function getDeletedAssets(): Promise<Asset[]> {
+  const response = await axios.get(`${BASE_URL}/api/assets/deleted`);
+  return response.data;
 }
 
 /**
@@ -82,6 +98,16 @@ export async function deleteAsset(id: string): Promise<void> {
  */
 export async function deactivateAsset(id: string): Promise<Asset> {
   const response = await axios.put(`${BASE_URL}/api/assets/${id}/deactivate`);
+  return response.data;
+}
+
+/**
+ * GET /api/assets/warranty-expiring
+ */
+export async function getWarrantyExpiringAssets(days: number = 30): Promise<Asset[]> {
+  const response = await axios.get(`${BASE_URL}/api/assets/warranty-expiring`, {
+    params: { days },
+  });
   return response.data;
 }
 
@@ -121,10 +147,10 @@ export async function importAssets(file: File) {
 }
 
 /**
- * GET /api/assets/template
+ * GET /api/assets/import/template
  */
 export async function downloadAssetTemplate() {
-  const response = await axios.get(`${BASE_URL}/api/assets/template`, {
+  const response = await axios.get(`${BASE_URL}/api/assets/import/template`, {
     responseType: 'blob',
     withCredentials: true,
   });
